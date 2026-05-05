@@ -68,13 +68,13 @@ public class StoredData
 	/// <param name="crit">要存储的抽象生物对象，如果是物品则为 null。</param>
 	/// <param name="index">在物品栏中的槽位索引。</param>
 	/// <returns>创建成功的 StoredObject 实例，若失败则返回 null。</returns>
-	public StoredData.StoredObject? NewStoredObject(AbstractPhysicalObject apo, AbstractCreature crit, int index)
+	public StoredData.StoredObject? NewStoredObject(AbstractPhysicalObject? apo, AbstractCreature? crit, int index)
 	{
 		// 确保存储列表已初始化
 		if (this.storedObjects == null)
 		{
 			this.storedObjects = new List<StoredData.StoredObject?>();
-			UDebug.Log("New StoredObject list created");
+			UDebug.Log("New StoredObject list created");           
 		}
 
 		UDebug.Log("Current list length: " + this.storedObjects.Count.ToString());
@@ -134,23 +134,23 @@ public class StoredData
 			return;
 		}
 
-		int listIndex = -1;
+		List<int> listIndexes = new();
 		// 查找列表中对应的对象，将其置 null（标记删除）
 		for (int i = 0; i < this.storedObjects.Count; i++)
 		{
 			if (this.storedObjects[i] != null && this.storedObjects[i]!.index == index)
 			{
-				listIndex = i;
+				listIndexes.Add(i);
 				this.storedObjects[i] = null;
 			}
 		}
 
-		// 移除 list 中的 null 项（此处仅移除第一个找到的索引）
-		if (listIndex != -1)
-		{
-			this.storedObjects.RemoveAt(listIndex);
-		}
-		UDebug.Log("Removed object from inventory at index " + index.ToString());
+		// 移除 list 中的 null 项
+        for (int i = listIndexes.Count - 1; i >= 0; i--)
+        {
+            this.storedObjects.RemoveAt(listIndexes[i]);
+        }
+        UDebug.Log("Removed object from inventory at index " + index.ToString());
 	}
 
 	/// <summary>
@@ -169,22 +169,22 @@ public class StoredData
 			{
 				if (this.storedObjects[i] != null)
 				{
-					objectData += "<SObj>";
+                    objectData += "<SObj>";
 					objectData += this.storedObjects[i]!.ToDataString();
 				}
 			}
 		}
 
-		int invType = (int)StoredData.inventoryType;
+		//int invType = (int)StoredData.inventoryType;
 		// 组合最终的存档字符串
 		return string.Concat(new string[]
 		{
-			invType.ToString(),
+            slots.ToString(),
 			"<V>",
-			StoredData.invSize.x.ToString(),
-			"<V>",
-			StoredData.invSize.y.ToString(),
-			"<V>",
+			//StoredData.invSize.x.ToString(),
+			//"<V>",
+			//StoredData.invSize.y.ToString(),
+			//"<V>",
 			objectData
 		});
 	}
@@ -197,12 +197,12 @@ public class StoredData
 	{
 		// 按 <V> 切割：物品栏类型、宽度、高度、对象列表
 		string[] invData = Regex.Split(data, "<V>");
-		StoredData.inventoryType = (StoredData.InventoryType)int.Parse(invData[0]);
-		StoredData.invSize.x = int.Parse(invData[1]);
-		StoredData.invSize.y = int.Parse(invData[2]);
+        slots = int.Parse(invData[0]);
+		//StoredData.invSize.x = int.Parse(invData[1]);
+		//StoredData.invSize.y = int.Parse(invData[2]);
 
 		// 按 <SObj> 切割出每个存储对象的数据段
-		string[] objectData = Regex.Split(invData[3], "<SObj>");
+		string[] objectData = Regex.Split(invData[1], "<SObj>");
 
 		// 重新初始化存储列表
 		this.storedObjects = new List<StoredData.StoredObject?>();
@@ -220,11 +220,14 @@ public class StoredData
 	/// </summary>
 	/// <param name="data">单个对象的序列化字符串。</param>
 	/// <returns>重建的 StoredObject 实例。</returns>
-	public StoredData.StoredObject GenerateStoredObjectFromString(string data)
+	public StoredData.StoredObject? GenerateStoredObjectFromString(string data)
 	{
-		// 创建一个空的模板对象（参数 null, null, -1 表示内部字段将全部从字符串读取）
-		StoredData.StoredObject SObj = new StoredData.StoredObject(null, null, -1);
 		string[] objData = Regex.Split(data, "<X>");
+
+		if (objData.Length != 8)
+		{
+			return null;
+		}
 
 		// 输出每个字段用于调试
 		for (int i = 0; i < objData.Length; i++)
@@ -232,8 +235,11 @@ public class StoredData
 			UDebug.Log(objData[i]);
 		}
 
-		// 按顺序解析各字段
-		SObj.type = new AbstractPhysicalObject.AbstractObjectType(objData[0], false);
+        // 创建一个空的模板对象（参数 null, null, -1 表示内部字段将全部从字符串读取）
+        StoredData.StoredObject SObj = new StoredData.StoredObject(null, null, -1);
+
+        // 按顺序解析各字段
+        SObj.type = new AbstractPhysicalObject.AbstractObjectType(objData[0], false);
 		UDebug.Log(SObj.type.ToString());
 		SObj.critType = new CreatureTemplate.Type(objData[1], false);
 		SObj.index = int.Parse(objData[2]);
@@ -293,9 +299,9 @@ public class StoredData
 	}
 
 	// --- 静态字段：物品栏的默认尺寸、类型、槽位数 ---
-	public static IntVector2 invSize = new IntVector2(3, 2);
-	//public static int invSlots = 7;
-	public static StoredData.InventoryType inventoryType = StoredData.InventoryType.Grid;
+	//public static IntVector2 invSize = new IntVector2(3, 2);
+	public int slots = 5;
+	//public static StoredData.InventoryType inventoryType = StoredData.InventoryType.Grid;
 
 	/// <summary>
 	/// 存储对象的列表。使用可空类型以支持空位（某些历史版本可能有 null 元素）。
@@ -308,11 +314,11 @@ public class StoredData
 	/// <summary>
 	/// 物品栏显示类型枚举。
 	/// </summary>
-	public enum InventoryType
+	/*public enum InventoryType
 	{
 		Grid,  // 网格排列
 		Cycle  // 轮盘/循环选择
-	}
+	}*/
 
 	/// <summary>
 	/// 代表一个存储的物品或生物，包含其类型、数据、图标等信息。
@@ -399,13 +405,14 @@ public class StoredData
 						// 使用 ID 作为随机种子生成颜色，保证同一 NPC 颜色一致
 						UnityEngine.Random.State state = UnityEngine.Random.state;
 						UnityEngine.Random.InitState(ID);
-						float Met = Mathf.Pow(UnityEngine.Random.Range(0f, 1f), 1.5f);
+                        float Met = Mathf.Pow(UnityEngine.Random.Range(0f, 1f), 1.5f);
 						float Stealth = Mathf.Pow(UnityEngine.Random.Range(0f, 1f), 1.5f);
 						float H = Mathf.Lerp(UnityEngine.Random.Range(0.15f, 0.58f), UnityEngine.Random.value, Mathf.Pow(UnityEngine.Random.value, 1.5f - Met));
 						float S = Mathf.Pow(UnityEngine.Random.Range(0f, 1f), 0.3f + Stealth * 0.3f);
 						float L = Mathf.Pow(UnityEngine.Random.Range((UnityEngine.Random.Range(0f, 1f) <= 0.3f + Stealth * 0.2f) ? 0.9f : 0.75f, 1f), 1.5f - Stealth);
 						this.spriteColor = Custom.HSL2RGB(H, S, L);
-					}
+                        UnityEngine.Random.state = state;
+                    }
 				}
 				catch
 				{

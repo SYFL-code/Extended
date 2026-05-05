@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Extended
 {
-	public class SaveState
+	public class Save
 	{
 		public static void SaveHooks()
 		{

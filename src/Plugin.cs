@@ -17,9 +17,11 @@ namespace Extended
 		{
 			On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 
-			// Put your custom hooks here!-在此放置你自己的钩子
+            // Put your custom hooks here!-在此放置你自己的钩子
 
-			SaveState.SaveHooks();
+            GlobalVar.HookOn();
+
+            Save.SaveHooks();
 			On.StoryGameSession.AddPlayer += this.StoryGameSession_AddPlayer;
 			On.SaveState.SessionEnded += this.SaveState_SessionEnded;
 
@@ -43,13 +45,13 @@ namespace Extended
 
 			if (survived && !newMalnourished)
 			{
-				SaveState.Save(saveSlot, slugcat);
+				Save.Save(saveSlot, slugcat);
 			}
 			else
 			{
 				if (!newMalnourished)
 				{
-					SaveState.Load(saveSlot, slugcat);
+					Save.Load(saveSlot, slugcat);
 				}
 			}
 		}
@@ -60,7 +62,7 @@ namespace Extended
 
 			if (!self.saveState.malnourished)
 			{
-				SaveState.Load(self.game.rainWorld.options.saveSlot, self.saveStateNumber);
+				Save.Load(self.game.rainWorld.options.saveSlot, self.saveStateNumber);
 			}
 		}
 
