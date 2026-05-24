@@ -21,18 +21,27 @@ namespace Extended
 
             GlobalVar.HookOn();
 
-            Save.SaveHooks();
+            SaveFile.SaveHooks();
 			On.StoryGameSession.AddPlayer += this.StoryGameSession_AddPlayer;
 			On.SaveState.SessionEnded += this.SaveState_SessionEnded;
 
-			/*On.Player.Jump += Player_Jump;
+            PlayersStoreRetrieve.HookAdd();
+
+            /*On.Player.Jump += Player_Jump;
 			//在玩家触发跳跃时执行Player_Jump
 			On.Player.Die += Player_Die;
 			On.Lizard.ctor += Lizard_ctor;*/
-		}
+        }
 
-		// Load any resources, such as sprites or sounds-加载任何资源 包括图像素材和音效
-		private void LoadResources(RainWorld rainWorld)
+		public void OnDisable()
+		{
+            // Unhook your hooks here!-在此取消你的钩子
+
+            PlayersStoreRetrieve.HookSubtract();
+        }
+
+        // Load any resources, such as sprites or sounds-加载任何资源 包括图像素材和音效
+        private void LoadResources(RainWorld rainWorld)
 		{
 		}
 
@@ -45,13 +54,13 @@ namespace Extended
 
 			if (survived && !newMalnourished)
 			{
-				Save.Save(saveSlot, slugcat);
+				SaveFile.Save(saveSlot, slugcat);
 			}
 			else
 			{
 				if (!newMalnourished)
 				{
-					Save.Load(saveSlot, slugcat);
+					SaveFile.Load(saveSlot, slugcat);
 				}
 			}
 		}
@@ -62,7 +71,7 @@ namespace Extended
 
 			if (!self.saveState.malnourished)
 			{
-				Save.Load(self.game.rainWorld.options.saveSlot, self.saveStateNumber);
+				SaveFile.Load(self.game.rainWorld.options.saveSlot, self.saveStateNumber);
 			}
 		}
 

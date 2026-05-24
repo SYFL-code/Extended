@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static StoredData;
+using static ExtendedData;
 
 namespace Extended
 {
@@ -12,74 +13,61 @@ namespace Extended
 	{
 		public static void StoreItem(Player player, AbstractPhysicalObject apo)
 		{
-			StoredData storedData = ExtendedData.StoredDatas[player.playerState.playerNumber];
+			StoredData storedData = ExtendedData.GetStoredData(player);
+			player.GetPlayerVar(out var pv);
 
 			if (storedData.storedObjects == null)
 			{
-				return;
+				UDebug.Log("StoreRetrieve_StoreItem: storedObjects");
+				storedData.storedObjects = new List<StoredObject?>();
 			}
 
-			List<int> listIndexes = new();
-			for (int i = 0; i < storedData.storedObjects.Count; i++)
-			{
-				StoredObject? item = storedData.storedObjects[i];
-				if (item != null)
-				{
-					listIndexes.Add(item.index);
-				}
-			}
-			listIndexes.Sort();
-
+			List<int> itemsIndexes = storedData.GetStoredIndexes();
 			int index = 0;
-
-			if (listIndexes.Count > 0) 
+			while (itemsIndexes.Contains(index) && index < 1000)
 			{
-				index = listIndexes[listIndexes.Count - 1] + 1;
+				index++;
+			}
+
+			if (itemsIndexes.Count >= pv.StorageCapacity)
+			{
+				UDebug.LogError("StoreRetrieve_StoreItem: StorageCapacity full!");
+				//player.room.PlaySound(SoundID.MENU_Error_Ping);
+				return;
 			}
 
 			StoreItem(player, apo, index);
 		}
 
-		public static void RetrieveItem(Player player)
+		public static AbstractPhysicalObject? RetrieveItem(Player player)
 		{
-			StoredData storedData = ExtendedData.StoredDatas[player.playerState.playerNumber];
+			StoredData storedData = ExtendedData.GetStoredData(player);
 
 			if (storedData.storedObjects == null)
 			{
-				return;
+				return null;
 			}
 
-			List<int> listIndexes = new();
-			for (int i = 0; i < storedData.storedObjects.Count; i++)
-			{
-				StoredObject? item = storedData.storedObjects[i];
-				if (item != null)
-				{
-					listIndexes.Add(item.index);
-				}
-			}
-			listIndexes.Sort();
+			List<int> itemsIndexes = storedData.GetStoredIndexes();
 
 			int index = 0;
 
-			if (listIndexes.Count > 0)
+			if (itemsIndexes.Count > 0)
 			{
-				index = listIndexes[listIndexes.Count - 1];
+				index = itemsIndexes[itemsIndexes.Count - 1];
 			}
 			else
 			{
-				return;
+				return null;
 			}
 
-			RetrieveItem(player, index);
+			return RetrieveItem(player, index);
 		}
 
 
 		public static void StoreItem(Player player, AbstractPhysicalObject apo, int index)
 		{
-			//AbstractPhysicalObject apo = player.grasps[i].grabbed.abstractPhysicalObject;
-
-			StoredData storedData = ExtendedData.StoredDatas[player.playerState.playerNumber];
+			StoredData storedData = ExtendedData.GetStoredData(player);
 
 			if (apo.type == AbstractPhysicalObject.AbstractObjectType.Creature && apo is AbstractCreature act)
 			{
@@ -87,12 +75,10 @@ namespace Extended
 
 				if (storedItem == null)
 				{
-					UDebug.LogException(new Exception("INV: Attempted to store invalid object: " + apo.type.value));
-					player.room.PlaySound(SoundID.MENU_Error_Ping);
+					UDebug.LogException(new Exception("StoreRetrieve_StoreItem: Attempted to store invalid object: " + apo.type.value));
+					//player.room.PlaySound(SoundID.MENU_Error_Ping);
 					return;
 				}
-				//UDebug.Log("INV: " + ((activeSlot.storedItem.type != null) ? activeSlot.storedItem.type.value : "Null apo type"));
-				//UDebug.Log("INV: " + ((activeSlot.storedItem.critType != null) ? (activeSlot.storedItem.critType.value + " | " + activeSlot.storedItem.data) : "Null crit type"));
 				try
 				{
 					act.realizedCreature.RemoveFromRoom();
@@ -107,8 +93,8 @@ namespace Extended
 				catch
 				{
 					storedData.RemoveStoredObject(index);
-					UDebug.LogException(new Exception("Failed to remove Creature from world when storing object, it may not support being Abstracized or was not created from a Spawner"));
-					player.room.PlaySound(SoundID.MENU_Error_Ping);
+					UDebug.LogException(new Exception("StoreRetrieve_StoreItem: Failed to remove Creature from world when storing object, it may not support being Abstracized or was not created from a Spawner"));
+					//player.room.PlaySound(SoundID.MENU_Error_Ping);
 					return;
 				}
 			}
@@ -120,8 +106,8 @@ namespace Extended
 
 					if (storedItem == null)
 					{
-						UDebug.LogException(new Exception("INV: Attempted to store invalid object: " + apo.type.value));
-						player.room.PlaySound(SoundID.MENU_Error_Ping);
+						UDebug.LogException(new Exception("StoreRetrieve_StoreItem: Attempted to store invalid object: " + apo.type.value));
+						//player.room.PlaySound(SoundID.MENU_Error_Ping);
 						return;
 					}
 					apo.Room.entities.Remove(apo);
@@ -139,119 +125,108 @@ namespace Extended
 			//activeSlot.itemSprite.color = activeSlot.storedItem.spriteColor;
 			//break;
 
-			player.room.PlaySound(SoundID.Slugcat_Stash_Spear_On_Back, player.mainBodyChunk, false, 2f, 0.9f);
+			//player.room.PlaySound(SoundID.Slugcat_Stash_Spear_On_Back, player.mainBodyChunk, false, 2f, 0.9f);
 		}
 
-		public static void RetrieveItem(Player player, int index)
+		public static AbstractPhysicalObject? RetrieveItem(Player player, int index)
 		{
-			/*int freeGrasp = 2;
-			for (int i = 0; i < player.grasps.Length; i++)
-			{
-				if (player.grasps[i] != null)
-				{
-					freeGrasp--;
-				}
-			}*/
+			StoredData storedData = ExtendedData.GetStoredData(player);
 
-			if (false)//(freeGrasp == 0)
+			if (storedData.storedObjects == null || storedData.storedObjects.Count == 0)
 			{
-				player.room.PlaySound(SoundID.MENU_Error_Ping);
+				//player.room.PlaySound(SoundID.MENU_Error_Ping);
+				return null;
+			}
+
+			//StoredObject storedObject = storedData.storedObjects[index]!;
+			StoredObject? storedObject = null;
+			foreach (var obj in storedData.storedObjects)
+			{
+				if (obj != null && obj.index == index)
+				{
+					storedObject = obj;
+					break;
+				}
+			}
+			if (storedObject == null)
+			{
+				/* 错误提示 */
+				UDebug.LogError("StoreRetrieve_RetrieveItem: Attempted to retrieve object from empty slot!");
+				//player.room.PlaySound(SoundID.MENU_Error_Ping);
+				return null;
+			}
+
+			AbstractPhysicalObject apo;
+			if (storedObject.type == AbstractPhysicalObject.AbstractObjectType.Creature)
+			{
+				string[] array = Regex.Split(storedObject.data, "<cA>");
+                if (array.Length < 4)
+                {
+                    UDebug.LogError("StoreRetrieve_RetrieveItem: Invalid creature data format");
+                    return null;
+                }
+
+                UDebug.Log(array[1] ?? "");
+				EntityID id = EntityID.FromString(Regex.Split(array[1], "<cB>")[0]);
+
+				apo = new AbstractCreature(player.room.world, StaticWorld.GetCreatureTemplate(storedObject.critType), null, player.coord, id);
+				if (apo is AbstractCreature act)
+				{
+					act.state.LoadFromString(Regex.Split(array[3], "<cB>"));
+					act.abstractAI?.NewWorld(player.room.world);
+				}
 			}
 			else
 			{
-				StoredData storedData = ExtendedData.StoredDatas[player.playerState.playerNumber];
+				apo = SaveState.AbstractPhysicalObjectFromString(player.room.world, storedObject.data);
 
-				if (storedData.storedObjects == null || storedData.storedObjects.Count == 0)
+				if (apo is AbstractConsumable aco)
 				{
-					player.room.PlaySound(SoundID.MENU_Error_Ping);
-					return;
+					aco.Consume();
 				}
+			}
+			player.room.abstractRoom.AddEntity(apo);
+			apo.pos = player.abstractCreature.pos;
+			apo.RealizeInRoom();
 
-				//StoredObject storedObject = storedData.storedObjects[index]!;
-				StoredObject? storedObject = null;
-				foreach (var obj in storedData.storedObjects)
+			/*if (apo.realizedObject != null)
+			{
+				apo.realizedObject.firstChunk.HardSetPosition(player.mainBodyChunk.pos);
+				for (int j = 0; j < 2; j++)
 				{
-					if (obj != null && obj.index == index) 
-					{ 
-						storedObject = obj; 
-						break; 
-					}
-				}
-				if (storedObject == null) 
-				{ 
-					/* 错误提示 */ 
-					UDebug.LogError("INV: Attempted to retrieve object from empty slot!");
-					player.room.PlaySound(SoundID.MENU_Error_Ping);
-					return; 
-				}
-
-				AbstractPhysicalObject apo;
-				if (storedObject.type == AbstractPhysicalObject.AbstractObjectType.Creature)
-				{
-					string[] array = Regex.Split(storedObject.data, "<cA>");
-					UDebug.Log(array[1] ?? "");
-					EntityID id = EntityID.FromString(Regex.Split(array[1], "<cB>")[0]);
-
-					apo = new AbstractCreature(player.room.world, StaticWorld.GetCreatureTemplate(storedObject.critType), null, player.coord, id);
-					if (apo is AbstractCreature act)
+					if (player.grasps[j] == null)
 					{
-						act.state.LoadFromString(Regex.Split(array[3], "<cB>"));
-					}
-				}
-				else
-				{
-					UDebug.Log("RECREATE FROM SAVE STRING");
-					apo = SaveState.AbstractPhysicalObjectFromString(player.room.world, storedObject.data);
-
-					if (apo is AbstractConsumable aco)
-					{
-						aco.Consume();
-					}
-				}
-				UDebug.Log("ADD ENTITY");
-				player.room.abstractRoom.AddEntity(apo);
-				apo.pos = player.abstractCreature.pos;
-				UDebug.Log("REALIZE OBJECT");
-				apo.RealizeInRoom();
-
-				if (apo.realizedObject != null)
-				{
-					apo.realizedObject.firstChunk.HardSetPosition(player.mainBodyChunk.pos);
-					for (int j = 0; j < 2; j++)
-					{
-						if (player.grasps[j] == null)
+						if (player.CanIPickThisUp(apo.realizedObject))
 						{
-							if (player.CanIPickThisUp(apo.realizedObject))
+							bool hasSpear = false;
+							for (int s = 0; s < 2; s++)
 							{
-								bool hasSpear = false;
-								for (int s = 0; s < 2; s++)
+								if (player.grasps[s] != null && player.grasps[s].grabbed != null)
 								{
-									if (player.grasps[s] != null && player.grasps[s].grabbed != null)
+									if (player.grasps[s].grabbed is Spear)
 									{
-										if (player.grasps[s].grabbed is Spear)
-										{
-											UDebug.Log("HAS SPEAR");
-											hasSpear = true;
-										}
+										UDebug.Log("HAS SPEAR");
+										hasSpear = true;
 									}
 								}
-								if (hasSpear && apo.type == AbstractPhysicalObject.AbstractObjectType.Spear && player.spearOnBack != null && !player.spearOnBack.HasASpear)
-								{
-									player.spearOnBack.SpearToBack(apo.realizedObject as Spear);
-								}
-								else
-								{
-									UDebug.Log("SLUGCAT GRAB");
-									player.SlugcatGrab(apo.realizedObject, j);
-								}
+							}
+							if (hasSpear && apo.type == AbstractPhysicalObject.AbstractObjectType.Spear && player.spearOnBack != null && !player.spearOnBack.HasASpear)
+							{
+								player.spearOnBack.SpearToBack(apo.realizedObject as Spear);
+							}
+							else
+							{
+								player.SlugcatGrab(apo.realizedObject, j);
 							}
 						}
 					}
 				}
-				player.room.PlaySound(SoundID.Slugcat_Stash_Spear_On_Back);
-				storedData.RemoveStoredObject(storedObject.index);
-				//storedData.storedObjects[index] = null;
-			}
+			}*/
+			//player.room.PlaySound(SoundID.Slugcat_Stash_Spear_On_Back);
+			storedData.RemoveStoredObject(storedObject.index);
+			//storedData.storedObjects[index] = null;
+
+			return apo;
 		}
 
 

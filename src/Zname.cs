@@ -253,7 +253,7 @@ namespace Extended
 }
 
 
-#region Creatures
+/*#region Creatures
 
 /// <summary>
 /// Cloudtail（云尾）自定义角色模块
@@ -1000,7 +1000,7 @@ public static class CloudtailModule
         }
     }
 }
-#endregion
+#endregion*/
 
 #region 胖世界 BPOptions
 /*public class BPOptions : OptionInterface
