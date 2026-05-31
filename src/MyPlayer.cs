@@ -9,20 +9,28 @@ namespace Extended
     public class MyPlayer
     {
 
-        public static void HookAdd()
+        public static void Hook()
         {
-            /*On.Player.ctor += Player_ctor;
+            On.Player.ctor += Player_ctor;
             On.Player.Update += Player_Update;
-            On.Player.SwallowObject += Player_SwallowObject;
-            On.Player.Regurgitate += Player_Regurgitate;*/
         }
-        public static void HookSubtract()
+        public static void Hook_()
         {
-            /*On.Player.ctor -= Player_ctor;
+            On.Player.ctor -= Player_ctor;
             On.Player.Update -= Player_Update;
-            On.Player.SwallowObject -= Player_SwallowObject;
-            On.Player.Regurgitate -= Player_Regurgitate;*/
         }
+
+        private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abs, World world)
+        {
+            orig(player, abs, world);
+        }
+
+        private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
+        {
+            orig(player, eu);
+        }
+
+
 
     }
 }

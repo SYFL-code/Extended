@@ -19,13 +19,16 @@ namespace Extended
 
             // Put your custom hooks here!-在此放置你自己的钩子
 
-            GlobalVar.HookOn();
+            GlobalVar.Hook();
 
+			// 保存加载
             SaveFile.SaveHooks();
 			On.StoryGameSession.AddPlayer += this.StoryGameSession_AddPlayer;
 			On.SaveState.SessionEnded += this.SaveState_SessionEnded;
 
-            PlayersStoreRetrieve.HookAdd();
+            MyPlayer.Hook();
+
+            //PlayersStoreRetrieve.Hook();
 
             /*On.Player.Jump += Player_Jump;
 			//在玩家触发跳跃时执行Player_Jump
@@ -37,7 +40,16 @@ namespace Extended
 		{
             // Unhook your hooks here!-在此取消你的钩子
 
-            PlayersStoreRetrieve.HookSubtract();
+            GlobalVar.Hook_();
+
+            // 保存加载
+            SaveFile.SaveHooks_();
+            On.StoryGameSession.AddPlayer -= this.StoryGameSession_AddPlayer;
+            On.SaveState.SessionEnded -= this.SaveState_SessionEnded;
+
+			MyPlayer.Hook_();
+
+            //PlayersStoreRetrieve.Hook_();
         }
 
         // Load any resources, such as sprites or sounds-加载任何资源 包括图像素材和音效
@@ -45,7 +57,7 @@ namespace Extended
 		{
 		}
 
-		private void SaveState_SessionEnded(On.SaveState.orig_SessionEnded orig, global::SaveState self, global::RainWorldGame game, bool survived, bool newMalnourished)
+        private void SaveState_SessionEnded(On.SaveState.orig_SessionEnded orig, global::SaveState self, global::RainWorldGame game, bool survived, bool newMalnourished)
 		{
 			orig(self, game, survived, newMalnourished);
 
@@ -65,7 +77,7 @@ namespace Extended
 			}
 		}
 
-		private void StoryGameSession_AddPlayer(On.StoryGameSession.orig_AddPlayer orig, global::StoryGameSession self, global::AbstractCreature player)
+        private void StoryGameSession_AddPlayer(On.StoryGameSession.orig_AddPlayer orig, global::StoryGameSession self, global::AbstractCreature player)
 		{
 			orig(self, player);
 
@@ -76,9 +88,9 @@ namespace Extended
 		}
 
 
-
-		// Implement MeanLizards-实现激怒蜥蜴的效果
-		/*private void Lizard_ctor(On.Lizard.orig_ctor orig, Lizard self, AbstractCreature abstractCreature, World world)
+        #region 默认钩子示例
+        // Implement MeanLizards-实现激怒蜥蜴的效果
+        /*private void Lizard_ctor(On.Lizard.orig_ctor orig, Lizard self, AbstractCreature abstractCreature, World world)
 		{
 			orig(self, abstractCreature, world);
 
@@ -89,8 +101,8 @@ namespace Extended
 		}*/
 
 
-		// Implement SuperJump-实现超高跳跃的效果
-		/*private void Player_Jump(On.Player.orig_Jump orig, Player self)
+        // Implement SuperJump-实现超高跳跃的效果
+        /*private void Player_Jump(On.Player.orig_Jump orig, Player self)
 		{
 			orig(self);//总不能挂完钩子把原本该执行的东西给弄丢吧 这一句就是为了再把它塞进来让它正常运行
 
@@ -100,8 +112,8 @@ namespace Extended
 			}
 		}*/
 
-		// Implement ExlodeOnDeath-实现死亡自爆效果
-		/*private void Player_Die(On.Player.orig_Die orig, Player self)
+        // Implement ExlodeOnDeath-实现死亡自爆效果
+        /*private void Player_Die(On.Player.orig_Die orig, Player self)
 		{
 			bool wasDead = self.dead;
 			//布尔值wasDead判断玩家是否死亡
@@ -139,8 +151,8 @@ namespace Extended
 				//游戏内噪声效果
 			}
 		}*/
+        #endregion
 
 
-
-	}
+    }
 }

@@ -1,74 +1,69 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static Extended.PlayersStoreRetrieve;
+
 
 namespace Extended
 {
 	public static class GlobalVar
 	{
-		public static ConditionalWeakTable<Player, PlayerVar> playerVars = new ConditionalWeakTable<Player, PlayerVar>();
+        //玩家变量
+        public static Dictionary<int, PlayerVar> playerVars = new();
+        //全局系统变量
+        public static RainWorldGame? game = null;
 
-		public static void HookOn()
+        #region 玩家变量
+        public static void Hook()
 		{
 			On.Player.ctor += Player_ctor;
 		}
+        public static void Hook_()
+        {
+            On.Player.ctor -= Player_ctor;
+        }
 
-		private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abstractCreature, World world)
+        private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abstractCreature, World world)
 		{
 			orig.Invoke(player, abstractCreature, world);
 
-			//playerVars.Add(player, new PlayerVar(player));
-			if (!playerVars.TryGetValue(player, out _))
+            //赋值给全局变量供其他函数使用
+            GlobalVar.game = player.room.world.game;
+
+			int N = player.playerState.playerNumber;
+
+            //playerVars.Add(player, new PlayerVar(player));
+            if (!playerVars.TryGetValue(N, out _))
 			{
-				playerVars.Add(player, new PlayerVar(player));
+				playerVars.Add(N, new PlayerVar(player));
 			}
 		}
 
 		public static PlayerVar GetPlayerVar(this Player player, out PlayerVar pv)
 		{
-			if (playerVars.TryGetValue(player, out PlayerVar pm_))
+            int N = player.playerState.playerNumber;
+
+            if (playerVars.TryGetValue(N, out PlayerVar pm_))
 			{
 				pv = pm_;
 				return pv;
 			}
 			pv = new PlayerVar(player);
-			playerVars.Add(player, pv);
+			playerVars.Add(N, pv);
 			return pv;
 		}
 		public static PlayerVar GetPlayerVar(this Player player)
 		{
-			if (playerVars.TryGetValue(player, out PlayerVar pv))
+            int N = player.playerState.playerNumber;
+
+            if (playerVars.TryGetValue(N, out PlayerVar pv))
 			{
 				return pv;
 			}
 			pv = new PlayerVar(player);
-			playerVars.Add(player, pv);
+			playerVars.Add(N, pv);
 			return pv;
 		}
-	}
-
-	public class PlayerVar
-	{
-		WeakReference<Player> playerRef;
-
-		//public PlayerStoreRetrieve playerStoreRetrieve;
-
-		//public bool StoreMore = false;
-		public int StorageCapacity = 1;
-
-
-		public PlayerVar(Player player)
-		{
-			playerRef = new WeakReference<Player>(player);
-
-			//playerStoreRetrieve = new PlayerStoreRetrieve(player);
-
-			if (true)
-			{
-				StorageCapacity = 5;
-			}
-		}
-	}
-
+        #endregion
+    }
 }
