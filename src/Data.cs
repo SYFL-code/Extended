@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,21 +9,46 @@ namespace Extended
 {
 	public static class Data
 	{
+		private static JsonSerializerSettings _settings = new JsonSerializerSettings
+		{
+			Formatting = Formatting.Indented
+		};
+
 		public static string Save()
 		{
-			return "";
+			// 自动序列化所有公开属性和字段
+			return JsonConvert.SerializeObject(GlobalVar.playerVars, _settings);
 		}
 
 		public static void Load(string data)
 		{
+			ClearAll();
 
+			if (string.IsNullOrEmpty(data)) return;
+
+			try
+			{
+				var loaded = JsonConvert.DeserializeObject<Dictionary<int, PlayerVar>>(data, _settings);
+				if (loaded != null)
+				{
+					foreach (var kvp in loaded)
+					{
+						GlobalVar.playerVars[kvp.Key] = kvp.Value;// playerRef = null
+					}
+				}
+			}
+			catch (JsonException ex)
+			{
+				UDebug.LogException(ex);
+
+				ClearAll();
+			}
 		}
 
 		public static void ClearAll()
 		{
-            GlobalVar.playerVars.Clear();
-
-        }
+			GlobalVar.playerVars.Clear();
+		}
 
 	}
 }
