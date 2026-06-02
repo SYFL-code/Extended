@@ -28,21 +28,22 @@ namespace Extended
 {
 	internal class Zname//Scrap 废案
 	{
-		#region Items
-		#endregion
-		#region Creatures
-		#endregion
+        #region Items
+        #endregion
+        #region Creatures
+        #endregion
 
 
 
 
-		//mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+        //mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
 
-		//<DefineConstants>MYDEBUG</DefineConstants>
+        //<DefineConstants>MYDEBUG</DefineConstants>
+
+        //UnityExplorer
 
 
-
-		public static string GenerateRandomText()
+        public static string GenerateRandomText()
 		{
 			string[] texts = {
 			"希望，希望，用这希望的盾，抗拒那空虚中的暗夜的袭来。",

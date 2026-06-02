@@ -12,8 +12,9 @@ namespace Extended
 	{
 		private static JsonSerializerSettings _settings = new JsonSerializerSettings
 		{
-			Formatting = Formatting.Indented
-		};
+			Formatting = Formatting.Indented,// 可读性好，方便调试
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore// 防止意外循环引用
+        };
 
 		public static string Save()
 		{

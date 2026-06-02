@@ -20,7 +20,7 @@ namespace Extended
         public WeakReference<Player?> PlayerRef => _playerRef;
 
 
-        public DateTime CreatedTime { get; set; } = DateTime.Now;
+        //public DateTime CreatedTime { get; set; } = DateTime.Now;
 
 
         public int StorageCapacity = 1;
