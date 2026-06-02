@@ -1,21 +1,35 @@
-﻿using System;
-using BepInEx;
+﻿using BepInEx;
+using BepInEx.Logging;
+using System;
 using UnityEngine;
 
 
 namespace Extended
 {
-	[BepInPlugin(MOD_ID, "Extended", "0.1.0")]
+	[BepInPlugin(GUID, Name, Version)]
 	class Plugin : BaseUnityPlugin
 	{
-		public const string MOD_ID = "Extended.Redlyn";
+        public const string GUID = "Extended.Redlyn";
+        public const string Name = "Extended";
+        public const string Version = "0.1.0";
+
+        private static bool isEnabled;
+
+        public static ManualLogSource Log { get; private set; }
 
 
-
-		// Add hooks-添加钩子
-		public void OnEnable()
+        // Add hooks-添加钩子
+        public void OnEnable()
 		{
-			On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
+            if (Plugin.isEnabled)
+            {
+                return;
+            }
+            Plugin.isEnabled = true;
+
+            Plugin.Log = base.Logger;
+
+            On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 
             // Put your custom hooks here!-在此放置你自己的钩子
 
@@ -38,6 +52,12 @@ namespace Extended
 
 		public void OnDisable()
 		{
+            if (!Plugin.isEnabled)
+            {
+                return;
+            }
+            Plugin.isEnabled = false;
+
             // Unhook your hooks here!-在此取消你的钩子
 
             GlobalVar.Hook_();

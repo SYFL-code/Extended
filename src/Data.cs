@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using static Extended.Plugin;
 
 namespace Extended
 {
@@ -39,7 +40,7 @@ namespace Extended
 			}
 			catch (JsonException ex)
 			{
-				UDebug.LogException(ex);
+				Log.LogError(ex);
 
 				ClearAll();
 			}

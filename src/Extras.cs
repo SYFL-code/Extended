@@ -1,6 +1,7 @@
 using System;
 using System.Security.Permissions;
 using UnityEngine;
+using static Extended.Plugin;
 
 /*
  * This file contains fixes to some common problems when modding Rain World.-这个文件为雨世界的mod制作中的一些常见问题提供修复
@@ -36,7 +37,7 @@ internal static class Extras
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+               Log.LogError(e);
             }
         };
     }

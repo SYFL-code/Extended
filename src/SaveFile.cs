@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
+using static Extended.Plugin;
 
 namespace Extended
 {
@@ -48,8 +49,8 @@ namespace Extended
 			return Path.Combine(path, fileName);
 		}
 
-		public static void WipeAll(int saveSlot)
-		{
+		public static void WipeAll(int saveSlot)// saveSlot 是存档槽位编号，范围是 0-2
+        {
 			// 确保目录存在
 			if (Directory.Exists(path))
 			{
@@ -77,7 +78,7 @@ namespace Extended
 						}
 						catch (Exception e)
 						{
-							UDebug.LogError($"Failed to delete {fileName}: {e.Message}");
+							Log.LogInfo($"Failed to delete {fileName}: {e.Message}");
 						}
 					}
 				}
@@ -90,6 +91,7 @@ namespace Extended
 			if (Directory.Exists(path))
 			{
 				// ExtendedData[存档槽编号][角色名称].txt
+				// 例如ExtendedData2White.txt
 				string save = GetSavePath(saveSlot, slugcat);
 
 				// 确保文件存在
@@ -119,12 +121,12 @@ namespace Extended
 				// 写入文件（覆盖已有内容）
 				File.WriteAllText(save, data);
 
-				UDebug.Log($"data={data}");
-				UDebug.Log("Saving Extended");
+				Log.LogInfo($"data={data}");
+				Log.LogInfo("Saving Extended");
 			}
 			catch (Exception ex)
 			{
-				UDebug.LogError($"Failed to save Extended data: {ex.Message}");
+				Log.LogError($"Failed to save Extended data: {ex.Message}");
 			}
 		}
 
@@ -149,22 +151,22 @@ namespace Extended
 					// 反序列化
 					Data.Load(data);//***
 
-					UDebug.Log($"data={data}");
+					Log.LogInfo($"data={data}");
 				}
 				catch (Exception ex)
 				{
-					UDebug.LogError($"Failed to load Extended save: {ex.Message}");
+					Log.LogError($"Failed to load Extended save: {ex.Message}");
 
 					Data.ClearAll();//***
 				}
 
-				UDebug.Log("Loading Extended - Exists");
+				Log.LogInfo("Loading Extended - Exists");
 			}
 			// 若文件不存在
 			else
 			{
-				//UDebug.Log($"data={data}");
-				UDebug.Log("Loading Extended - Non-Existent");
+				//Log.Log($"data={data}");
+				Log.LogInfo("Loading Extended - Non-Existent");
 
 				// 清空数据
 				Data.ClearAll();//***

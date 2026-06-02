@@ -16,9 +16,12 @@ namespace Extended
         {
             _playerRef = new WeakReference<Player?>(player);
         }
-
         [JsonIgnore]
         public WeakReference<Player?> PlayerRef => _playerRef;
+
+
+        public DateTime CreatedTime { get; set; } = DateTime.Now;
+
 
         public int StorageCapacity = 1;
         public List<string> Items = new List<string>();
