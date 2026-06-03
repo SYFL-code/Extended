@@ -1,7 +1,9 @@
 ﻿using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,23 +14,36 @@ namespace Extended
 		//public static ManualLogSource? log { get; private set; }
 		private static ManualLogSource? log;
 
-        public static bool EnableLog { get; set; } = true;
-		public static LogLevel CurrentLevel { get; set; } = LogLevel.Info;
+		public static bool EnableLog { get; set; } = true;
+		public static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
 
 		public static void SetLog(ManualLogSource logger) => log = logger;
 
-		public static void LogInfo(object obj) => Log_(LogLevel.Info, obj);
-        public static void LogWarning(object obj) => Log_(LogLevel.Warning, obj);
-		public static void LogError(object obj) => Log_(LogLevel.Error, obj);
-		public static void LogFatal(object obj) => Log_(LogLevel.Fatal, obj);
-        public static void LogDebug(object obj) => Log_(LogLevel.Debug, obj);
-        public static void LogMessage(object obj) => log?.LogMessage(obj);
+		//public static void LogInfo(object obj) => Log_(LogLevel.Info, obj);
+		public static void LogInfo(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Info, obj, caller, filePath);
+		public static void LogWarning(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Warning, obj, caller, filePath);
+		public static void LogError(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Error, obj, caller, filePath);
+		public static void LogFatal(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Fatal, obj, caller, filePath);
+		public static void LogDebug(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Debug, obj, caller, filePath);
+		public static void LogMessage(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
+			Log_(LogLevel.Message, obj, caller, filePath);
 
-        private static void Log_(LogLevel level, object obj)
+		private static void Log_(LogLevel level, object obj, string caller = "", string filePath = "")
 		{
 			if (log == null) return;
 
 			if (!ShouldLog(level)) return;
+
+			if (obj is string s)
+			{
+				string className = Path.GetFileNameWithoutExtension(filePath);
+				obj = $"[{className}.{caller}] {s}";
+			}
 
 			switch (level)
 			{
@@ -47,7 +62,10 @@ namespace Extended
 				case LogLevel.Debug:
 					log.LogDebug(obj);
 					break;
-                default:
+				case LogLevel.Message:
+					log.LogMessage(obj);
+					break;
+				default:
 					log.LogInfo(obj);
 					break;
 			}
@@ -57,7 +75,8 @@ namespace Extended
 		public enum LogLevel
 		{
 			None = 0,
-            Fatal = 1,
+			Message = 0,
+			Fatal = 1,
 			Error = 2,
 			Warning = 3,
 			Info = 4,

@@ -7,32 +7,53 @@ using System.Threading.Tasks;
 
 namespace Extended
 {
-    public class PlayerVar
+	public class PlayerVar
 	{
+		[JsonIgnore]
+		private WeakReference<Player?> _playerRef;
+		// 供外部重新绑定 Player 引用
+		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
+		[JsonIgnore]
+		public WeakReference<Player?> PlayerRef => _playerRef;
+
+
+		public int StorageCapacity = 1;
+
+		[JsonIgnore]
+		public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
+		public List<string> swallowedObjects
+		{
+			get
+			{
+				_playerRef.TryGetTarget(out Player? player);
+
+				List<string> strings = new();
+
+				foreach (var Object in objectsInStomach)
+				{
+					strings.Add(Helper.ObjectToString(Object, player != null ? player.coord :coord, true));
+				}
+				return strings;
+
+            }
+			set  // 暂存，延迟绑定
+			{
+                swallowedObjectsTemp = value;
+            }
+		}
         [JsonIgnore]
-        private WeakReference<Player?> _playerRef;
-        // 供外部重新绑定 Player 引用
-        public void SetPlayerRef(Player player)
-        {
-            _playerRef = new WeakReference<Player?>(player);
-        }
+		public List<string> swallowedObjectsTemp = new();
         [JsonIgnore]
-        public WeakReference<Player?> PlayerRef => _playerRef;
+		public WorldCoordinate coord;
 
 
-        //public DateTime CreatedTime { get; set; } = DateTime.Now;
 
-
-        public int StorageCapacity = 1;
-        public List<string> Items = new List<string>();
-
-        // 反序列化的无参构造函数
-        public PlayerVar()
-        {
-            _playerRef = new WeakReference<Player?>(null);
-        }
-
-        public PlayerVar(Player player)
+		// 反序列化的无参构造函数
+		public PlayerVar()
+		{
+			_playerRef = new WeakReference<Player?>(null);
+		}
+		public PlayerVar(Player player)
 		{
 			_playerRef = new WeakReference<Player?>(player);
 

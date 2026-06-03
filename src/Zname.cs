@@ -31,31 +31,46 @@ namespace Extended
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal class Zname//Scrap 废案
 	{
-		#region Items
-		#endregion
-		#region Creatures
-		#endregion
+        #region Items
+        #endregion
+        #region Creatures
+        #endregion
 
 
 
-		//mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+        //mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
 
-		//<DefineConstants>MYDEBUG</DefineConstants>
-		//<ItemGroup>
-		//	<Compile Remove = "Zname.cs" />
-		//<ItemGroup>
+        //<DefineConstants>MYDEBUG</DefineConstants>
 
-		//UnityExplorer
+        //bool ? true : false
 
-		public static string A()
+        public string strings
+        {
+            get
+            {
+                return strings;
+            }
+            set
+            {
+                strings = value;
+            }
+        }
+
+        //UnityExplorer
+
+        public static string Z()
 		{
-			//Log.log?.LogInfo("A");
+			if (Input.GetKey("v")) { }
 
-			return "";
+            return "";
 		}
 
-		#region More
-		private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+        //<ItemGroup>
+        //	<Compile Remove = "Zname.cs" />
+        //<ItemGroup>
+
+        #region More
+        private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
 		{
 			if (self.room.world.game.rainWorld.ExpeditionMode)//在探险模式里开启冰盾能力
 			{
