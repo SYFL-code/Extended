@@ -15,7 +15,7 @@ namespace Extended
 
         private static bool isEnabled;
 
-        public static ManualLogSource Log { get; private set; }
+        //public static ManualLogSource Log { get; private set; }
 
 
         // Add hooks-添加钩子
@@ -27,7 +27,7 @@ namespace Extended
             }
             Plugin.isEnabled = true;
 
-            Plugin.Log = base.Logger;
+            Log.SetLog(base.Logger);
 
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 

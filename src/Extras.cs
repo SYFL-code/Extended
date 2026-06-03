@@ -1,7 +1,7 @@
 using System;
 using System.Security.Permissions;
 using UnityEngine;
-using static Extended.Plugin;
+using Extended;
 
 /*
  * This file contains fixes to some common problems when modding Rain World.-这个文件为雨世界的mod制作中的一些常见问题提供修复

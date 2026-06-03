@@ -1,61 +1,57 @@
 ﻿#region using
 using BepInEx;
+using Expedition;
+using JetBrains.Annotations;
 //using static SlugBase.Features.FeatureTypes;
 using Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI.ValueTypes;
+using MoreSlugcats;
+using Noise;
+using RWCustom;
 //using SlugBase.Features;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using UnityEngine;
-using MoreSlugcats;
-using RWCustom;
-using JetBrains.Annotations;
-using Expedition;
-using Noise;
-using Random = UnityEngine.Random;
-using Color = UnityEngine.Color;
-using System.Linq;
-using System.Drawing;
 using System.Xml.Schema;
-using ObjType = AbstractPhysicalObject.AbstractObjectType;
+using UnityEngine;
 using static UnityEngine.Input;
+using Color = UnityEngine.Color;
+using ObjType = AbstractPhysicalObject.AbstractObjectType;
+using Random = UnityEngine.Random;
 #endregion
 
 namespace Extended
 {
+	[Obsolete("Scrap 废案")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal class Zname//Scrap 废案
 	{
-        #region Items
-        #endregion
-        #region Creatures
-        #endregion
+		#region Items
+		#endregion
+		#region Creatures
+		#endregion
 
 
 
+		//mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
 
-        //mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+		//<DefineConstants>MYDEBUG</DefineConstants>
+		//<ItemGroup>
+		//	<Compile Remove = "Zname.cs" />
+		//<ItemGroup>
 
-        //<DefineConstants>MYDEBUG</DefineConstants>
+		//UnityExplorer
 
-        //UnityExplorer
-
-
-        public static string GenerateRandomText()
+		public static string A()
 		{
-			string[] texts = {
-			"希望，希望，用这希望的盾，抗拒那空虚中的暗夜的袭来。",
-			"慢也好，步伐小也罢，是往前走就好。",
-			"眼泪无法洗去痛苦，但岁月可以抹去一切。",
-			"其实很多人都没去过自己家乡的景点，别问好不好玩了。",
-			"对于我们的幸福来说，别人的看法在本质上来讲并不十分重要。",
-			"小鸟......是无法追上飞龙的。",
-			"最初的鸟儿是不会飞翔的，飞翔是它们勇敢跃入峡谷的奖励。",
-            "瞬间即是永恒！",
-            };
-			return texts[UnityEngine.Random.Range(0, texts.Length)];
+			//Log.log?.LogInfo("A");
+
+			return "";
 		}
 
 		#region More
@@ -249,6 +245,20 @@ namespace Extended
 			};
 		#endregion
 
+		public static string GenerateRandomText()
+		{
+			string[] texts = {
+			"希望，希望，用这希望的盾，抗拒那空虚中的暗夜的袭来。",
+			"慢也好，步伐小也罢，是往前走就好。",
+			"眼泪无法洗去痛苦，但岁月可以抹去一切。",
+			"其实很多人都没去过自己家乡的景点，别问好不好玩了。",
+			"对于我们的幸福来说，别人的看法在本质上来讲并不十分重要。",
+			"小鸟......是无法追上飞龙的。",
+			"最初的鸟儿是不会飞翔的，飞翔是它们勇敢跃入峡谷的奖励。",
+			"瞬间即是永恒！",
+			};
+			return texts[UnityEngine.Random.Range(0, texts.Length)];
+		}
 
 	}
 }
@@ -262,744 +272,744 @@ namespace Extended
 /// </summary>
 public static class CloudtailModule
 {
-    /// <summary>
-    /// 判断指定玩家是否为 Cloudtail 角色
-    /// (通过 SlugBase 的角色类名识别)
-    /// </summary>
-    public static bool IsCloud(this Player pl)
-    {
-        return pl.SlugCatClass.value == "Cloudtail";
-    }
-
-    /// <summary>
-    /// 腹中仓储容量（最多同时存储 5 个物体）
-    /// </summary>
-    public static readonly int capacity = 5;
-
-    /// <summary>
-    /// 条件弱引用表，将 CloudData 实例安全绑定到 Player 对象上
-    /// 当 Player 被 GC 回收时，关联的 CloudData 自动清理，无需手动管理
-    /// </summary>
-    private static readonly ConditionalWeakTable<Player, CloudData> CloudCWT = new ConditionalWeakTable<Player, CloudData>();
-
-    /// <summary>
-    /// 获取玩家的 CloudData（懒初始化）
-    /// 首次访问时自动创建并绑定
-    /// </summary>
-    public static CloudData GetCloudData(this Player player)
-    {
-        return CloudCWT.GetValue(player, (Player _) => new CloudData(player));
-    }
-
-    /// <summary>
-    /// 安全获取 CloudData
-    /// 返回 true 且 out sailor 非空 仅当玩家是 Cloudtail
-    /// 否则返回 false, sailor = null
-    /// </summary>
-    public static bool TryGetCloud(this Player player, out CloudData? sailor)
-    {
-        bool result;
-        if (player.IsCloud())
-        {
-            sailor = player.GetCloudData();
-            result = true;
-        }
-        else
-        {
-            sailor = null;
-            result = false;
-        }
-        return result;
-    }
-
-    /// <summary>
-    /// Cloudtail 角色的核心数据与行为类
-    /// 每个 Cloudtail 玩家持有唯一实例，通过 ConditionalWeakTable 绑定
-    /// </summary>
-    public class CloudData
-    {
-        /// <summary>
-        /// 构造函数，初始化仓储数组和计数器
-        /// </summary>
-        public CloudData(Player player)
-        {
-            self = player;
-            Storage = new AbstractPhysicalObject[capacity]; // 容量 5
-            SwallowOrRegurgitateCoutner = 0;                // 吞咽/呕吐长按计数器
-            GraspToTakeFrom = -1;                            // 未被指定取物手
-            Rolltimer = 0;
-        }
-
-        /// <summary> 所属玩家对象 </summary>
-        public Player self;
-
-        /// <summary>
-        /// 存储数组，null 表示空槽位
-        /// 仅存储抽象对象 (AbstractPhysicalObject)，不保留物理实现层
-        /// </summary>
-        public AbstractPhysicalObject?[] Storage;
-
-        /// <summary> 记录触发吞咽时使用的“手”索引 (0或1) </summary>
-        public int GraspToTakeFrom;
-
-        /// <summary>
-        /// 仓储是否已满
-        /// (所有槽位均非空)
-        /// </summary>
-        public bool Stuffed
-        {
-            get
-            {
-                return Storage != null && FreeSlot() == -1;
-            }
-        }
-
-        /// <summary>
-        /// 是否具有漂浮效果
-        /// (腹中含有能量细胞时启用)
-        /// </summary>
-        public bool Floaty;
-
-        /// <summary>
-        /// 吞咽/呕吐蓄力计数器
-        /// 满足条件时每帧 +1，达到 90 帧触发动作
-        /// </summary>
-        public int SwallowOrRegurgitateCoutner;
-
-        /// <summary> 翻滚计时器 (目前未使用) </summary>
-        public int Rolltimer;
-
-        /// <summary>
-        /// 自定义存储按键检测
-        /// 根据玩家编号使用不同按键配置 (P1 ~ P4)
-        /// </summary>
-        public bool StorageInput
-        {
-            get
-            {
-                int num = self.playerState.playerNumber;
-
-                if (num == 0)
-                {
-                    return Input.GetKey(CloudtailOptions.Instance.KeyCode1.Value);
-                }
-                else if (num == 1)
-                {
-                    return Input.GetKey(CloudtailOptions.Instance.KeyCode2.Value);
-                }
-                else if (num == 2)
-                {
-                    return Input.GetKey(CloudtailOptions.Instance.KeyCode3.Value);
-                }
-                else
-                {
-                    return Input.GetKey(CloudtailOptions.Instance.KeyCode4.Value);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 紧急清空仓储：将所有存储物吐回世界
-        /// 注意：方法名称为 Save 但实际作用是清空（非持久化）
-        /// 典型调用时机：角色死亡、切换区域
-        /// </summary>
-        public void Save()
-        {
-            for (int i = 0; i < capacity; i++)
-            {
-                if (Storage[i] != null)
-                {
-                    var stomach = Storage[i]!;
-
-                    // 重新绑定世界引用
-                    stomach.world = self.room.world;
-
-                    // 若为生物，需重新关联 AI 到当前世界
-                    if (stomach is AbstractCreature cr)
-                    {
-                        cr.abstractAI?.NewWorld(self.room.world);
-                    }
-
-                    // 将抽象实体放回房间并实体化
-                    self.room.abstractRoom.AddEntity(stomach);
-                    stomach.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
-                    stomach.RealizeInRoom();
-
-                    // 清空槽位
-                    Storage[i] = null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 检查当前是否可以执行“吞入”操作
-        /// 条件：
-        ///   1. 无移动输入 + 按下自定义键
-        ///   2. 未在水中过深 (submersion <= 0.5)
-        ///   3. 腹中仍有空位
-        ///   4. 手中有非食用品 (或普通物品)
-        ///   5. 至少一只手非空
-        /// </summary>
-        public bool CanStore()
-        {
-            // 无方向键移动 + 按下自定义存储键
-            bool Storeinputs = self.input[0].x == 0 && self.input[0].y == 0 && StorageInput;
-
-            if (self.room == null) return false;              // 房间不存在
-            if (!Storeinputs) return false;                   // 未按下存储键
-            if (self.firstChunk.submersion > 0.5f) return false; // 半身入水时禁止
-            if (Stuffed) return false;                        // 腹中已满
-
-            // 双手均空，无法吞入
-            if (self.grasps[0] == null && self.grasps[1] == null) return false;
-
-            int handnum = -1;
-
-            // 检查手中物品
-            for (int i = 0; i < self.grasps.Length; i++)
-            {
-                // 如果是可食物品，不允许吞入（因可直接吃，防止绕过食物系统）
-                if (self.grasps[i] != null && self.grasps[i].grabbed is IPlayerEdible food && food.Edible)
-                    return false;
-
-                // 记录第一个非空手的索引
-                if (self.grasps[i] != null)
-                {
-                    handnum = i;
-                    break;
-                }
-            }
-
-            if (handnum == -1) return false;
-
-            // 记住将要拿取物品的手
-            GraspToTakeFrom = handnum;
-
-            return true;
-        }
-
-        /// <summary>
-        /// 检查当前是否可以执行“吐出”操作
-        /// 条件：
-        ///   1. 按下投掷键
-        ///   2. 未在吃肉动作中 (eatMeat <= 20)
-        ///   3. 未按拾取键 / 跳跃键
-        ///   4. 未在水中过深
-        ///   5. 至少一只手空闲
-        /// </summary>
-        public bool CanRetrieve()
-        {
-            return self.input[0].thrw
-                && self.eatMeat <= 20
-                && !self.input[0].pckp
-                && !self.input[0].jmp
-                && self.firstChunk.submersion < 0.5f
-                && self.room != null
-                && self.FreeHand() != -1;
-        }
-
-        /// <summary>
-        /// 每帧更新
-        /// - 检测吞/吐条件，累积计数器
-        /// - 达到 90 帧阈值时执行吞或吐
-        /// - 更新 Floaty 状态 (是否含能量细胞)
-        /// </summary>
-        public void Update()
-        {
-            if (self.room == null) return; // 房间未就绪，跳过
-
-            bool s = CanStore();    // 是否可吞
-            bool r = CanRetrieve(); // 是否可吐
-
-            // 满足任一条件，累加蓄力计数器
-            if (r || s)
-            {
-                SwallowOrRegurgitateCoutner++;
-
-                // 蓄力满 90 帧 (~1.5秒)，触发动作
-                if (SwallowOrRegurgitateCoutner > 90)
-                {
-                    if (s)
-                    {
-                        Swallow(GraspToTakeFrom);
-
-                        // 触发吞物动画效果
-                        if (self.graphicsModule != null)
-                            (self.graphicsModule as PlayerGraphics).swallowing = 20;
-                    }
-                    else
-                    {
-                        Regurgitate();
-                    }
-
-                    SwallowOrRegurgitateCoutner = 0; // 重置计数器
-                }
-            }
-            else
-            {
-                // 条件不满足，立即归零（避免误触）
-                SwallowOrRegurgitateCoutner = 0;
-            }
-
-            // 未在合成物品时，重置原生吞/吐计数器
-            if (!self.craftingObject)
-                self.swallowAndRegurgitateCounter = 0;
-
-            // 检测是否含有能量细胞 (用于悬浮效果)
-            Floaty = StorageContains(MoreSlugcatsEnums.AbstractObjectType.EnergyCell, false, null);
-        }
-
-        /// <summary>
-        /// 更新吞咽/呕吐时的动画特效
-        /// 让角色身体部件产生上下/前后波动，模拟反胃感
-        /// </summary>
-        public void UpdateRegurgitationGraphics(PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser)
-        {
-            // 蓄力超 15 帧开始眨眼
-            if (SwallowOrRegurgitateCoutner > 15)
-            {
-                self.blink = 5;
-            }
-
-            // 计算波动强度 (num10) 和波动频率参数 (num11)
-            float num10 = Mathf.InverseLerp(0f, 110f, (float)SwallowOrRegurgitateCoutner);
-            float num11 = (float)SwallowOrRegurgitateCoutner / Mathf.Lerp(30f, 15f, num10);
-
-            if (self.player.standing)
-            {
-                // === 站立姿态：身体呈上下垂直波动 ===
-                sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-                sLeaser.sprites[1].y += -Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 3f;
-                sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-                sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-            }
-            else
-            {
-                // === 非站立姿态 (匍匐/倒挂等)：加入水平方向波动 ===
-                sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-                sLeaser.sprites[0].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-                sLeaser.sprites[1].y += Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 2f;
-                sLeaser.sprites[1].x += -Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 3f;
-                sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-                sLeaser.sprites[3].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-                sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-                sLeaser.sprites[9].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-            }
-        }
-
-        /// <summary>
-        /// 执行吞入操作
-        /// 将手中物品/生物的抽象对象存入 Storage 数组，并从世界中移除其物理对象
-        /// </summary>
-        /// <param name="grasp">要吞入的手的索引 (0 或 1)</param>
-        public void Swallow(int grasp)
-        {
-            // 获取手中抓取的物理对象
-            PhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed;
-
-            // 寻找第一个空槽位
-            int storeindex = FreeSlot();
-            if (storeindex == -1) return; // 无空槽位，取消
-
-            // ————— 特殊物品处理 —————
-
-            // 矛：清除插墙计数器（防止吞入卡状态的矛）
-            if (abstractPhysicalObject is Spear)
-            {
-                (abstractPhysicalObject as Spear).abstractSpear.stuckInWallCycles = 0;
-            }
-
-            // 带电电矛：不能吞入，触发强烈电击惩罚
-            if (abstractPhysicalObject is ElectricSpear && (abstractPhysicalObject as ElectricSpear).abstractSpear.electricCharge > 0)
-            {
-                self.room.AddObject(new ZapCoil.ZapFlash(self.firstChunk.pos, 10f));
-                self.room.PlaySound(SoundID.Zapper_Zap, self.firstChunk.pos, 1f, 1.5f + Random.value * 1.5f);
-
-                // 若在水中，产生更强电击扩散
-                if (self.Submersion > 0.5f)
-                {
-                    self.room.AddObject(new UnderwaterShock(self.room, null, self.firstChunk.pos, 10, 800f, 2f, self, new Color(0.8f, 0.8f, 1f)));
-                }
-
-                self.Stun(200);                                        // 晕眩 200 帧
-                self.room.AddObject(new CreatureSpasmer(self, false, 200)); // 身体抽搐
-                return; // 终止吞入
-            }
-
-            // 水母：不能吞入，触发较弱电击惩罚
-            if (abstractPhysicalObject is JellyFish)
-            {
-                self.room.PlaySound(SoundID.Centipede_Shock, self.firstChunk.pos);
-                self.room.AddObject(new UnderwaterShock(self.room, self, self.firstChunk.pos, 10, 100f, 0f, null, new Color(0.8f, 0.8f, 1f)));
-                self.room.AddObject(new CreatureSpasmer(self, false, 60));
-                self.Stun(80);
-                return;
-            }
-
-            // ————— 正常吞入流程 —————
-
-            // 获取抽象对象（这是保存的关键）
-            var ToSwallow = abstractPhysicalObject.abstractPhysicalObject;
-
-            // 存入仓储数组
-            Storage[storeindex] = ToSwallow;
-
-            // 松开手
-            self.ReleaseGrasp(grasp);
-
-            // 从房间移除物理对象
-            abstractPhysicalObject.abstractPhysicalObject.realizedObject.RemoveFromRoom();
-
-            // 抽象化（保留抽象对象，销毁物理实体）
-            abstractPhysicalObject.abstractPhysicalObject.Abstractize(self.abstractCreature.pos);
-
-            // 从房间实体列表中移除
-            abstractPhysicalObject.abstractPhysicalObject.Room.RemoveEntity(abstractPhysicalObject.abstractPhysicalObject.ID);
-
-            // 身体小弹跳反馈
-            BodyChunk mainBodyChunk = self.mainBodyChunk;
-            mainBodyChunk.vel.y += 2f;
-
-            // 播放吞物音效
-            self.room.PlaySound(SoundID.Slugcat_Swallow_Item, self.mainBodyChunk);
-        }
-
-        /// <summary>
-        /// 执行吐出操作
-        /// LIFO (后进先出)：最后存入的物体优先吐出
-        /// 若仓储为空但有饱食度，可消耗 1 饱食度随机生成物品
-        /// 若两者皆空，产生晕眩惩罚
-        /// </summary>
-        public void Regurgitate()
-        {
-            // 从后往前查找最后一个非空槽位 (LIFO 栈顶)
-            int index = ItemInQueue();
-            AbstractPhysicalObject stomach;
-            bool PluckedFromNowhere = false; // 是否为凭空变出的物品
-
-            if (index == -1) // 仓储中没有存储物
-            {
-                // 角色胃中有正常食物点数 → 消耗饱食度凭空变物
-                if (self.FoodInStomach >= 1)
-                {
-                    stomach = RandItem(self);    // 从随机池中生成一个物品
-                    PluckedFromNowhere = true;   // 标记为凭空生成
-                }
-                else
-                {
-                    // 胃和仓储皆空 → 空吐惩罚：晕眩 + 增加劳累值
-                    self.Stun(80);
-                    self.AerobicIncrease(12f);
-                    return;
-                }
-            }
-            else
-            {
-                // 正常取出仓储中的抽象对象
-                stomach = Storage[index];
-            }
-
-            // ————— 将抽象对象重新实体化回世界 —————
-
-            // 重新绑定当前世界
-            stomach.world = self.abstractCreature.world;
-
-            // 如果是生物，重新绑定 AI 到当前世界
-            if (stomach is AbstractCreature c)
-            {
-                c.abstractAI?.NewWorld(self.room.world);
-            }
-
-            // 重新加入房间抽象实体列表
-            self.room.abstractRoom.AddEntity(stomach);
-
-            // 设置生成位置（在角色位置）
-            stomach.pos = self.abstractCreature.pos;
-
-            // 实体化：根据抽象对象生成物理对象
-            stomach.RealizeInRoom();
-
-            // 消耗 1 点饱食度（如果是凭空变出）
-            if (PluckedFromNowhere)
-            {
-                self.SubtractFood(1);
-            }
-
-            // ————— 物理反馈：从嘴部喷射出物体 —————
-
-            Vector2 vector = self.bodyChunks[0].pos;             // 头部位置
-            Vector2 a = Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos); // 身体方向
-            bool flag = false;
-
-            // 若角色近乎直立且头在上方，调整喷出方向和位置
-            if (Mathf.Abs(self.bodyChunks[0].pos.y - self.bodyChunks[1].pos.y) > Mathf.Abs(self.bodyChunks[0].pos.x - self.bodyChunks[1].pos.x)
-                && self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
-            {
-                vector += Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos) * 5f;
-                a *= -1f;
-                a.x += 0.4f * (float)self.flipDirection;
-                a.Normalize();
-                flag = true;
-            }
-
-            // 硬设置物体位置和速度（模拟吐出）
-            stomach.realizedObject.firstChunk.HardSetPosition(vector);
-            stomach.realizedObject.firstChunk.vel = Vector2.ClampMagnitude(
-                (a * 2f + Custom.RNV() * Random.value) / stomach.realizedObject.firstChunk.mass,
-                6f
-            );
-
-            // 反冲：角色身体轻微后退
-            self.bodyChunks[0].pos -= a * 2f;
-            self.bodyChunks[0].vel -= a * 2f;
-
-            // 头部抖动效果
-            if (self.graphicsModule != null)
-            {
-                (self.graphicsModule as PlayerGraphics).head.vel += Custom.RNV() * Random.value * 3f;
-            }
-
-            // 口水/水滴特效 x3
-            for (int i = 0; i < 3; i++)
-            {
-                self.room.AddObject(new WaterDrip(
-                    vector + Custom.RNV() * Random.value * 1.5f,
-                    Custom.RNV() * 3f * Random.value + a * Mathf.Lerp(2f, 6f, Random.value),
-                    false
-                ));
-            }
-
-            // 播放呕吐音效
-            self.room.PlaySound(SoundID.Slugcat_Regurgitate_Item, self.mainBodyChunk);
-
-            // 如果满足条件且有空手，自动抓住吐出的物体
-            if (flag && self.FreeHand() > -1)
-            {
-                self.SlugcatGrab(stomach.realizedObject, self.FreeHand());
-            }
-
-            // 清空对应槽位（如果是正常吐出而非凭空变物）
-            if (!PluckedFromNowhere)
-            {
-                Storage[index] = null;
-            }
-        }
-
-        /// <summary>
-        /// 计算腹中存储物带来的保暖效果
-        /// 每多一盏灯笼 (Lantern)，保暖倍数 +1
-        /// </summary>
-        public float HeatSources()
-        {
-            float heat = RainWorldGame.DefaultHeatSourceWarmth; // 基础温暖值
-            float num = 1; // 基础倍率
-
-            if (Storage == null) return heat;
-
-            // 统计灯笼数量
-            for (int i = 0; i < capacity; i++)
-            {
-                if (Storage[i] != null && Storage[i].type == ObjType.Lantern)
-                    num++;
-            }
-
-            heat *= num; // 应用倍率
-            return heat;
-        }
-
-        /// <summary>
-        /// 查找第一个空槽位的索引
-        /// 用于吞入时寻找存放位置
-        /// </summary>
-        /// <returns>空槽位索引，-1 表示已满</returns>
-        public int FreeSlot()
-        {
-            if (Storage == null) return -1;
-
-            for (int i = 0; i < capacity; i++)
-            {
-                if (Storage[i] == null) return i;
-            }
-
-            return -1; // 仓储已满
-        }
-
-        /// <summary>
-        /// 查找最后一个非空槽位的索引 (LIFO 栈顶)
-        /// 用于吐出时确定要取出的物体
-        /// </summary>
-        /// <returns>最后一个非空槽位的索引，-1 表示仓储为空</returns>
-        public int ItemInQueue()
-        {
-            if (Storage == null) return -1;
-
-            // 从后往前遍历，找到最后存入的物体
-            for (int i = capacity - 1; i >= 0; i--)
-            {
-                if (Storage[i] != null) return i;
-            }
-
-            return -1; // 仓储为空
-        }
-
-        /// <summary>
-        /// 检查腹中是否含有指定类型的物品或生物
-        /// </summary>
-        /// <param name="objType">物品的抽象对象类型</param>
-        /// <param name="CheckForCreatures">false=检查物品 / true=检查生物</param>
-        /// <param name="creatType">(仅 CheckForCreatures=true 时) 要匹配的生物类型</param>
-        /// <returns>是否包含</returns>
-        public bool StorageContains(ObjType objType, bool CheckForCreatures, CreatureTemplate.Type creatType)
-        {
-            if (!CheckForCreatures)
-            {
-                // 匹配物品类型
-                for (int i = 0; i < Storage.Length; i++)
-                {
-                    if (Storage[i]?.type == objType)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            else
-            {
-                // 匹配生物类型
-                for (int i = 0; i < Storage.Length; i++)
-                {
-                    if (Storage[i] != null && (Storage[i] as AbstractCreature)?.creatureTemplate.type == creatType)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// 随机生成一个物品/生物（用于凭空变物能力）
-        /// 按概率分布返回不同种类，并将消耗品标记为已消耗、不新鲜
-        /// </summary>
-        public static AbstractPhysicalObject RandItem(Player caller)
-        {
-            AbstractPhysicalObject abstractPhysicalObject;
-            float value = Random.value; // 0~1 随机数
-
-            // 被注释掉的代码：原本可能想生成 SlugNPC，现已移除
-
-            // ——— 按概率区间生成不同物品/生物 ———
-            // 概率分布由 if-else 区间的宽度决定
-
-            if (value <= 0.32894737f) // ~32.9%
-            {
-                // 鞭炮草
-                abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FirecrackerPlant, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-            }
-            else if (value <= 0.4276316f) // ~9.9%
-            {
-                // 闪光弹
-                abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FlareBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-            }
-            else if (value <= 0.5065789f) // ~7.9%
-            {
-                // 拾荒者炸弹
-                abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.ScavengerBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-            }
-            else if (value <= 0.6118421f) // ~10.5%
-            {
-                // 水坚果
-                abstractPhysicalObject = new WaterNut.AbstractWaterNut(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false);
-            }
-            else if (value <= 0.6644737f) // ~5.3%
-            {
-                // Yeek 生物 (More Slugcats 特有)
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.7302632f) // ~6.6%
-            {
-                // 灯笼鼠
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.LanternMouse), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.79605263f) // ~6.6%
-            {
-                // 管虫
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.TubeWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.82894737f) // ~3.3%
-            {
-                // 粉球
-                abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.PuffBall, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-            }
-            else if (value <= 0.8486842f) // ~2.0%
-            {
-                // 数据珍珠 (Rivulet_stomach 类型)
-                abstractPhysicalObject = new DataPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Rivulet_stomach);
-            }
-            else if (value <= 0.9144737f) // ~6.6%
-            {
-                // 泡泡草
-                abstractPhysicalObject = new BubbleGrass.AbstractBubbleGrass(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), 1f, -1, -1, null);
-            }
-            else if (value <= 0.93421054f) // ~2.0%
-            {
-                // 孢子植物 (半数概率自发光)
-                abstractPhysicalObject = new SporePlant.AbstractSporePlant(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false, (double)Random.value < 0.5);
-            }
-            else if (value <= 0.46710527f) // BUG: 此区间在之前的范围外，实际上不会被执行 (~3.9% 但顺序错误)
-            {
-                // 监察者尸体 (不同颜色代表不同迭代器)
-                Color color = new Color(1f, 0.8f, 0.3f);     // 默认金色 (五卵石)
-                int ownerIterator = 1;
-                if (Random.value <= 0.35f)
-                {
-                    color = new Color(0.44705883f, 0.9019608f, 0.76862746f); // 青色
-                    ownerIterator = 0; // 仰望皓月
-                }
-                else if (Random.value <= 0.05f)
-                {
-                    color = new Color(0f, 1f, 0f); // 绿色
-                    ownerIterator = 2;              // 无稽烦忧?
-                }
-                abstractPhysicalObject = new OverseerCarcass.AbstractOverseerCarcass(caller.room.world, null, caller.abstractPhysicalObject.pos, caller.room.game.GetNewID(), color, ownerIterator);
-            }
-            else if (value <= 0.4736842f) // ~0.7%
-            {
-                // 小针虫
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallNeedleWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.9934211f) // ~52.0% (大量填充区间)
-            {
-                // 小蜈蚣
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallCentipede), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.79605263f) // BUG: 此区间同样不会被触发 (重复区间)
-            {
-                // Yeek (再次出现，原设计可能想覆盖更多概率，但顺序错导致死区)
-                abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-            }
-            else if (value <= 0.8f) // ~0.7%
-            {
-                // 秃鹫面具 (5% 概率获得王鹫面具)
-                abstractPhysicalObject = new VultureMask.AbstractVultureMask(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), caller.abstractPhysicalObject.ID.RandomSeed, (double)Random.value <= 0.05);
-            }
-            else // 兜底 (~0.7%)
-            {
-                // 矛大师珍珠
-                abstractPhysicalObject = new SpearMasterPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Spearmasterpearl);
-            }
-
-            // 如果是消耗品类型，标记为已消耗 + 不新鲜
-            // (防止被当作可食物品吃下)
-            if (AbstractConsumable.IsTypeConsumable(abstractPhysicalObject.type))
-            {
-                (abstractPhysicalObject as AbstractConsumable).isFresh = false;
-                (abstractPhysicalObject as AbstractConsumable).isConsumed = true;
-            }
-
-            return abstractPhysicalObject;
-        }
-    }
+	/// <summary>
+	/// 判断指定玩家是否为 Cloudtail 角色
+	/// (通过 SlugBase 的角色类名识别)
+	/// </summary>
+	public static bool IsCloud(this Player pl)
+	{
+		return pl.SlugCatClass.value == "Cloudtail";
+	}
+
+	/// <summary>
+	/// 腹中仓储容量（最多同时存储 5 个物体）
+	/// </summary>
+	public static readonly int capacity = 5;
+
+	/// <summary>
+	/// 条件弱引用表，将 CloudData 实例安全绑定到 Player 对象上
+	/// 当 Player 被 GC 回收时，关联的 CloudData 自动清理，无需手动管理
+	/// </summary>
+	private static readonly ConditionalWeakTable<Player, CloudData> CloudCWT = new ConditionalWeakTable<Player, CloudData>();
+
+	/// <summary>
+	/// 获取玩家的 CloudData（懒初始化）
+	/// 首次访问时自动创建并绑定
+	/// </summary>
+	public static CloudData GetCloudData(this Player player)
+	{
+		return CloudCWT.GetValue(player, (Player _) => new CloudData(player));
+	}
+
+	/// <summary>
+	/// 安全获取 CloudData
+	/// 返回 true 且 out sailor 非空 仅当玩家是 Cloudtail
+	/// 否则返回 false, sailor = null
+	/// </summary>
+	public static bool TryGetCloud(this Player player, out CloudData? sailor)
+	{
+		bool result;
+		if (player.IsCloud())
+		{
+			sailor = player.GetCloudData();
+			result = true;
+		}
+		else
+		{
+			sailor = null;
+			result = false;
+		}
+		return result;
+	}
+
+	/// <summary>
+	/// Cloudtail 角色的核心数据与行为类
+	/// 每个 Cloudtail 玩家持有唯一实例，通过 ConditionalWeakTable 绑定
+	/// </summary>
+	public class CloudData
+	{
+		/// <summary>
+		/// 构造函数，初始化仓储数组和计数器
+		/// </summary>
+		public CloudData(Player player)
+		{
+			self = player;
+			Storage = new AbstractPhysicalObject[capacity]; // 容量 5
+			SwallowOrRegurgitateCoutner = 0;                // 吞咽/呕吐长按计数器
+			GraspToTakeFrom = -1;                            // 未被指定取物手
+			Rolltimer = 0;
+		}
+
+		/// <summary> 所属玩家对象 </summary>
+		public Player self;
+
+		/// <summary>
+		/// 存储数组，null 表示空槽位
+		/// 仅存储抽象对象 (AbstractPhysicalObject)，不保留物理实现层
+		/// </summary>
+		public AbstractPhysicalObject?[] Storage;
+
+		/// <summary> 记录触发吞咽时使用的“手”索引 (0或1) </summary>
+		public int GraspToTakeFrom;
+
+		/// <summary>
+		/// 仓储是否已满
+		/// (所有槽位均非空)
+		/// </summary>
+		public bool Stuffed
+		{
+			get
+			{
+				return Storage != null && FreeSlot() == -1;
+			}
+		}
+
+		/// <summary>
+		/// 是否具有漂浮效果
+		/// (腹中含有能量细胞时启用)
+		/// </summary>
+		public bool Floaty;
+
+		/// <summary>
+		/// 吞咽/呕吐蓄力计数器
+		/// 满足条件时每帧 +1，达到 90 帧触发动作
+		/// </summary>
+		public int SwallowOrRegurgitateCoutner;
+
+		/// <summary> 翻滚计时器 (目前未使用) </summary>
+		public int Rolltimer;
+
+		/// <summary>
+		/// 自定义存储按键检测
+		/// 根据玩家编号使用不同按键配置 (P1 ~ P4)
+		/// </summary>
+		public bool StorageInput
+		{
+			get
+			{
+				int num = self.playerState.playerNumber;
+
+				if (num == 0)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode1.Value);
+				}
+				else if (num == 1)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode2.Value);
+				}
+				else if (num == 2)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode3.Value);
+				}
+				else
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode4.Value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// 紧急清空仓储：将所有存储物吐回世界
+		/// 注意：方法名称为 Save 但实际作用是清空（非持久化）
+		/// 典型调用时机：角色死亡、切换区域
+		/// </summary>
+		public void Save()
+		{
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] != null)
+				{
+					var stomach = Storage[i]!;
+
+					// 重新绑定世界引用
+					stomach.world = self.room.world;
+
+					// 若为生物，需重新关联 AI 到当前世界
+					if (stomach is AbstractCreature cr)
+					{
+						cr.abstractAI?.NewWorld(self.room.world);
+					}
+
+					// 将抽象实体放回房间并实体化
+					self.room.abstractRoom.AddEntity(stomach);
+					stomach.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
+					stomach.RealizeInRoom();
+
+					// 清空槽位
+					Storage[i] = null;
+				}
+			}
+		}
+
+		/// <summary>
+		/// 检查当前是否可以执行“吞入”操作
+		/// 条件：
+		///   1. 无移动输入 + 按下自定义键
+		///   2. 未在水中过深 (submersion <= 0.5)
+		///   3. 腹中仍有空位
+		///   4. 手中有非食用品 (或普通物品)
+		///   5. 至少一只手非空
+		/// </summary>
+		public bool CanStore()
+		{
+			// 无方向键移动 + 按下自定义存储键
+			bool Storeinputs = self.input[0].x == 0 && self.input[0].y == 0 && StorageInput;
+
+			if (self.room == null) return false;              // 房间不存在
+			if (!Storeinputs) return false;                   // 未按下存储键
+			if (self.firstChunk.submersion > 0.5f) return false; // 半身入水时禁止
+			if (Stuffed) return false;                        // 腹中已满
+
+			// 双手均空，无法吞入
+			if (self.grasps[0] == null && self.grasps[1] == null) return false;
+
+			int handnum = -1;
+
+			// 检查手中物品
+			for (int i = 0; i < self.grasps.Length; i++)
+			{
+				// 如果是可食物品，不允许吞入（因可直接吃，防止绕过食物系统）
+				if (self.grasps[i] != null && self.grasps[i].grabbed is IPlayerEdible food && food.Edible)
+					return false;
+
+				// 记录第一个非空手的索引
+				if (self.grasps[i] != null)
+				{
+					handnum = i;
+					break;
+				}
+			}
+
+			if (handnum == -1) return false;
+
+			// 记住将要拿取物品的手
+			GraspToTakeFrom = handnum;
+
+			return true;
+		}
+
+		/// <summary>
+		/// 检查当前是否可以执行“吐出”操作
+		/// 条件：
+		///   1. 按下投掷键
+		///   2. 未在吃肉动作中 (eatMeat <= 20)
+		///   3. 未按拾取键 / 跳跃键
+		///   4. 未在水中过深
+		///   5. 至少一只手空闲
+		/// </summary>
+		public bool CanRetrieve()
+		{
+			return self.input[0].thrw
+				&& self.eatMeat <= 20
+				&& !self.input[0].pckp
+				&& !self.input[0].jmp
+				&& self.firstChunk.submersion < 0.5f
+				&& self.room != null
+				&& self.FreeHand() != -1;
+		}
+
+		/// <summary>
+		/// 每帧更新
+		/// - 检测吞/吐条件，累积计数器
+		/// - 达到 90 帧阈值时执行吞或吐
+		/// - 更新 Floaty 状态 (是否含能量细胞)
+		/// </summary>
+		public void Update()
+		{
+			if (self.room == null) return; // 房间未就绪，跳过
+
+			bool s = CanStore();    // 是否可吞
+			bool r = CanRetrieve(); // 是否可吐
+
+			// 满足任一条件，累加蓄力计数器
+			if (r || s)
+			{
+				SwallowOrRegurgitateCoutner++;
+
+				// 蓄力满 90 帧 (~1.5秒)，触发动作
+				if (SwallowOrRegurgitateCoutner > 90)
+				{
+					if (s)
+					{
+						Swallow(GraspToTakeFrom);
+
+						// 触发吞物动画效果
+						if (self.graphicsModule != null)
+							(self.graphicsModule as PlayerGraphics).swallowing = 20;
+					}
+					else
+					{
+						Regurgitate();
+					}
+
+					SwallowOrRegurgitateCoutner = 0; // 重置计数器
+				}
+			}
+			else
+			{
+				// 条件不满足，立即归零（避免误触）
+				SwallowOrRegurgitateCoutner = 0;
+			}
+
+			// 未在合成物品时，重置原生吞/吐计数器
+			if (!self.craftingObject)
+				self.swallowAndRegurgitateCounter = 0;
+
+			// 检测是否含有能量细胞 (用于悬浮效果)
+			Floaty = StorageContains(MoreSlugcatsEnums.AbstractObjectType.EnergyCell, false, null);
+		}
+
+		/// <summary>
+		/// 更新吞咽/呕吐时的动画特效
+		/// 让角色身体部件产生上下/前后波动，模拟反胃感
+		/// </summary>
+		public void UpdateRegurgitationGraphics(PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser)
+		{
+			// 蓄力超 15 帧开始眨眼
+			if (SwallowOrRegurgitateCoutner > 15)
+			{
+				self.blink = 5;
+			}
+
+			// 计算波动强度 (num10) 和波动频率参数 (num11)
+			float num10 = Mathf.InverseLerp(0f, 110f, (float)SwallowOrRegurgitateCoutner);
+			float num11 = (float)SwallowOrRegurgitateCoutner / Mathf.Lerp(30f, 15f, num10);
+
+			if (self.player.standing)
+			{
+				// === 站立姿态：身体呈上下垂直波动 ===
+				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+				sLeaser.sprites[1].y += -Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+			}
+			else
+			{
+				// === 非站立姿态 (匍匐/倒挂等)：加入水平方向波动 ===
+				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[0].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+				sLeaser.sprites[1].y += Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 2f;
+				sLeaser.sprites[1].x += -Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[3].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[9].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+			}
+		}
+
+		/// <summary>
+		/// 执行吞入操作
+		/// 将手中物品/生物的抽象对象存入 Storage 数组，并从世界中移除其物理对象
+		/// </summary>
+		/// <param name="grasp">要吞入的手的索引 (0 或 1)</param>
+		public void Swallow(int grasp)
+		{
+			// 获取手中抓取的物理对象
+			PhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed;
+
+			// 寻找第一个空槽位
+			int storeindex = FreeSlot();
+			if (storeindex == -1) return; // 无空槽位，取消
+
+			// ————— 特殊物品处理 —————
+
+			// 矛：清除插墙计数器（防止吞入卡状态的矛）
+			if (abstractPhysicalObject is Spear)
+			{
+				(abstractPhysicalObject as Spear).abstractSpear.stuckInWallCycles = 0;
+			}
+
+			// 带电电矛：不能吞入，触发强烈电击惩罚
+			if (abstractPhysicalObject is ElectricSpear && (abstractPhysicalObject as ElectricSpear).abstractSpear.electricCharge > 0)
+			{
+				self.room.AddObject(new ZapCoil.ZapFlash(self.firstChunk.pos, 10f));
+				self.room.PlaySound(SoundID.Zapper_Zap, self.firstChunk.pos, 1f, 1.5f + Random.value * 1.5f);
+
+				// 若在水中，产生更强电击扩散
+				if (self.Submersion > 0.5f)
+				{
+					self.room.AddObject(new UnderwaterShock(self.room, null, self.firstChunk.pos, 10, 800f, 2f, self, new Color(0.8f, 0.8f, 1f)));
+				}
+
+				self.Stun(200);                                        // 晕眩 200 帧
+				self.room.AddObject(new CreatureSpasmer(self, false, 200)); // 身体抽搐
+				return; // 终止吞入
+			}
+
+			// 水母：不能吞入，触发较弱电击惩罚
+			if (abstractPhysicalObject is JellyFish)
+			{
+				self.room.PlaySound(SoundID.Centipede_Shock, self.firstChunk.pos);
+				self.room.AddObject(new UnderwaterShock(self.room, self, self.firstChunk.pos, 10, 100f, 0f, null, new Color(0.8f, 0.8f, 1f)));
+				self.room.AddObject(new CreatureSpasmer(self, false, 60));
+				self.Stun(80);
+				return;
+			}
+
+			// ————— 正常吞入流程 —————
+
+			// 获取抽象对象（这是保存的关键）
+			var ToSwallow = abstractPhysicalObject.abstractPhysicalObject;
+
+			// 存入仓储数组
+			Storage[storeindex] = ToSwallow;
+
+			// 松开手
+			self.ReleaseGrasp(grasp);
+
+			// 从房间移除物理对象
+			abstractPhysicalObject.abstractPhysicalObject.realizedObject.RemoveFromRoom();
+
+			// 抽象化（保留抽象对象，销毁物理实体）
+			abstractPhysicalObject.abstractPhysicalObject.Abstractize(self.abstractCreature.pos);
+
+			// 从房间实体列表中移除
+			abstractPhysicalObject.abstractPhysicalObject.Room.RemoveEntity(abstractPhysicalObject.abstractPhysicalObject.ID);
+
+			// 身体小弹跳反馈
+			BodyChunk mainBodyChunk = self.mainBodyChunk;
+			mainBodyChunk.vel.y += 2f;
+
+			// 播放吞物音效
+			self.room.PlaySound(SoundID.Slugcat_Swallow_Item, self.mainBodyChunk);
+		}
+
+		/// <summary>
+		/// 执行吐出操作
+		/// LIFO (后进先出)：最后存入的物体优先吐出
+		/// 若仓储为空但有饱食度，可消耗 1 饱食度随机生成物品
+		/// 若两者皆空，产生晕眩惩罚
+		/// </summary>
+		public void Regurgitate()
+		{
+			// 从后往前查找最后一个非空槽位 (LIFO 栈顶)
+			int index = ItemInQueue();
+			AbstractPhysicalObject stomach;
+			bool PluckedFromNowhere = false; // 是否为凭空变出的物品
+
+			if (index == -1) // 仓储中没有存储物
+			{
+				// 角色胃中有正常食物点数 → 消耗饱食度凭空变物
+				if (self.FoodInStomach >= 1)
+				{
+					stomach = RandItem(self);    // 从随机池中生成一个物品
+					PluckedFromNowhere = true;   // 标记为凭空生成
+				}
+				else
+				{
+					// 胃和仓储皆空 → 空吐惩罚：晕眩 + 增加劳累值
+					self.Stun(80);
+					self.AerobicIncrease(12f);
+					return;
+				}
+			}
+			else
+			{
+				// 正常取出仓储中的抽象对象
+				stomach = Storage[index];
+			}
+
+			// ————— 将抽象对象重新实体化回世界 —————
+
+			// 重新绑定当前世界
+			stomach.world = self.abstractCreature.world;
+
+			// 如果是生物，重新绑定 AI 到当前世界
+			if (stomach is AbstractCreature c)
+			{
+				c.abstractAI?.NewWorld(self.room.world);
+			}
+
+			// 重新加入房间抽象实体列表
+			self.room.abstractRoom.AddEntity(stomach);
+
+			// 设置生成位置（在角色位置）
+			stomach.pos = self.abstractCreature.pos;
+
+			// 实体化：根据抽象对象生成物理对象
+			stomach.RealizeInRoom();
+
+			// 消耗 1 点饱食度（如果是凭空变出）
+			if (PluckedFromNowhere)
+			{
+				self.SubtractFood(1);
+			}
+
+			// ————— 物理反馈：从嘴部喷射出物体 —————
+
+			Vector2 vector = self.bodyChunks[0].pos;             // 头部位置
+			Vector2 a = Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos); // 身体方向
+			bool flag = false;
+
+			// 若角色近乎直立且头在上方，调整喷出方向和位置
+			if (Mathf.Abs(self.bodyChunks[0].pos.y - self.bodyChunks[1].pos.y) > Mathf.Abs(self.bodyChunks[0].pos.x - self.bodyChunks[1].pos.x)
+				&& self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
+			{
+				vector += Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos) * 5f;
+				a *= -1f;
+				a.x += 0.4f * (float)self.flipDirection;
+				a.Normalize();
+				flag = true;
+			}
+
+			// 硬设置物体位置和速度（模拟吐出）
+			stomach.realizedObject.firstChunk.HardSetPosition(vector);
+			stomach.realizedObject.firstChunk.vel = Vector2.ClampMagnitude(
+				(a * 2f + Custom.RNV() * Random.value) / stomach.realizedObject.firstChunk.mass,
+				6f
+			);
+
+			// 反冲：角色身体轻微后退
+			self.bodyChunks[0].pos -= a * 2f;
+			self.bodyChunks[0].vel -= a * 2f;
+
+			// 头部抖动效果
+			if (self.graphicsModule != null)
+			{
+				(self.graphicsModule as PlayerGraphics).head.vel += Custom.RNV() * Random.value * 3f;
+			}
+
+			// 口水/水滴特效 x3
+			for (int i = 0; i < 3; i++)
+			{
+				self.room.AddObject(new WaterDrip(
+					vector + Custom.RNV() * Random.value * 1.5f,
+					Custom.RNV() * 3f * Random.value + a * Mathf.Lerp(2f, 6f, Random.value),
+					false
+				));
+			}
+
+			// 播放呕吐音效
+			self.room.PlaySound(SoundID.Slugcat_Regurgitate_Item, self.mainBodyChunk);
+
+			// 如果满足条件且有空手，自动抓住吐出的物体
+			if (flag && self.FreeHand() > -1)
+			{
+				self.SlugcatGrab(stomach.realizedObject, self.FreeHand());
+			}
+
+			// 清空对应槽位（如果是正常吐出而非凭空变物）
+			if (!PluckedFromNowhere)
+			{
+				Storage[index] = null;
+			}
+		}
+
+		/// <summary>
+		/// 计算腹中存储物带来的保暖效果
+		/// 每多一盏灯笼 (Lantern)，保暖倍数 +1
+		/// </summary>
+		public float HeatSources()
+		{
+			float heat = RainWorldGame.DefaultHeatSourceWarmth; // 基础温暖值
+			float num = 1; // 基础倍率
+
+			if (Storage == null) return heat;
+
+			// 统计灯笼数量
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] != null && Storage[i].type == ObjType.Lantern)
+					num++;
+			}
+
+			heat *= num; // 应用倍率
+			return heat;
+		}
+
+		/// <summary>
+		/// 查找第一个空槽位的索引
+		/// 用于吞入时寻找存放位置
+		/// </summary>
+		/// <returns>空槽位索引，-1 表示已满</returns>
+		public int FreeSlot()
+		{
+			if (Storage == null) return -1;
+
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] == null) return i;
+			}
+
+			return -1; // 仓储已满
+		}
+
+		/// <summary>
+		/// 查找最后一个非空槽位的索引 (LIFO 栈顶)
+		/// 用于吐出时确定要取出的物体
+		/// </summary>
+		/// <returns>最后一个非空槽位的索引，-1 表示仓储为空</returns>
+		public int ItemInQueue()
+		{
+			if (Storage == null) return -1;
+
+			// 从后往前遍历，找到最后存入的物体
+			for (int i = capacity - 1; i >= 0; i--)
+			{
+				if (Storage[i] != null) return i;
+			}
+
+			return -1; // 仓储为空
+		}
+
+		/// <summary>
+		/// 检查腹中是否含有指定类型的物品或生物
+		/// </summary>
+		/// <param name="objType">物品的抽象对象类型</param>
+		/// <param name="CheckForCreatures">false=检查物品 / true=检查生物</param>
+		/// <param name="creatType">(仅 CheckForCreatures=true 时) 要匹配的生物类型</param>
+		/// <returns>是否包含</returns>
+		public bool StorageContains(ObjType objType, bool CheckForCreatures, CreatureTemplate.Type creatType)
+		{
+			if (!CheckForCreatures)
+			{
+				// 匹配物品类型
+				for (int i = 0; i < Storage.Length; i++)
+				{
+					if (Storage[i]?.type == objType)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+			else
+			{
+				// 匹配生物类型
+				for (int i = 0; i < Storage.Length; i++)
+				{
+					if (Storage[i] != null && (Storage[i] as AbstractCreature)?.creatureTemplate.type == creatType)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// 随机生成一个物品/生物（用于凭空变物能力）
+		/// 按概率分布返回不同种类，并将消耗品标记为已消耗、不新鲜
+		/// </summary>
+		public static AbstractPhysicalObject RandItem(Player caller)
+		{
+			AbstractPhysicalObject abstractPhysicalObject;
+			float value = Random.value; // 0~1 随机数
+
+			// 被注释掉的代码：原本可能想生成 SlugNPC，现已移除
+
+			// ——— 按概率区间生成不同物品/生物 ———
+			// 概率分布由 if-else 区间的宽度决定
+
+			if (value <= 0.32894737f) // ~32.9%
+			{
+				// 鞭炮草
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FirecrackerPlant, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.4276316f) // ~9.9%
+			{
+				// 闪光弹
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FlareBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.5065789f) // ~7.9%
+			{
+				// 拾荒者炸弹
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.ScavengerBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.6118421f) // ~10.5%
+			{
+				// 水坚果
+				abstractPhysicalObject = new WaterNut.AbstractWaterNut(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false);
+			}
+			else if (value <= 0.6644737f) // ~5.3%
+			{
+				// Yeek 生物 (More Slugcats 特有)
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.7302632f) // ~6.6%
+			{
+				// 灯笼鼠
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.LanternMouse), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.79605263f) // ~6.6%
+			{
+				// 管虫
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.TubeWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.82894737f) // ~3.3%
+			{
+				// 粉球
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.PuffBall, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.8486842f) // ~2.0%
+			{
+				// 数据珍珠 (Rivulet_stomach 类型)
+				abstractPhysicalObject = new DataPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Rivulet_stomach);
+			}
+			else if (value <= 0.9144737f) // ~6.6%
+			{
+				// 泡泡草
+				abstractPhysicalObject = new BubbleGrass.AbstractBubbleGrass(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), 1f, -1, -1, null);
+			}
+			else if (value <= 0.93421054f) // ~2.0%
+			{
+				// 孢子植物 (半数概率自发光)
+				abstractPhysicalObject = new SporePlant.AbstractSporePlant(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false, (double)Random.value < 0.5);
+			}
+			else if (value <= 0.46710527f) // BUG: 此区间在之前的范围外，实际上不会被执行 (~3.9% 但顺序错误)
+			{
+				// 监察者尸体 (不同颜色代表不同迭代器)
+				Color color = new Color(1f, 0.8f, 0.3f);     // 默认金色 (五卵石)
+				int ownerIterator = 1;
+				if (Random.value <= 0.35f)
+				{
+					color = new Color(0.44705883f, 0.9019608f, 0.76862746f); // 青色
+					ownerIterator = 0; // 仰望皓月
+				}
+				else if (Random.value <= 0.05f)
+				{
+					color = new Color(0f, 1f, 0f); // 绿色
+					ownerIterator = 2;              // 无稽烦忧?
+				}
+				abstractPhysicalObject = new OverseerCarcass.AbstractOverseerCarcass(caller.room.world, null, caller.abstractPhysicalObject.pos, caller.room.game.GetNewID(), color, ownerIterator);
+			}
+			else if (value <= 0.4736842f) // ~0.7%
+			{
+				// 小针虫
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallNeedleWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.9934211f) // ~52.0% (大量填充区间)
+			{
+				// 小蜈蚣
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallCentipede), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.79605263f) // BUG: 此区间同样不会被触发 (重复区间)
+			{
+				// Yeek (再次出现，原设计可能想覆盖更多概率，但顺序错导致死区)
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.8f) // ~0.7%
+			{
+				// 秃鹫面具 (5% 概率获得王鹫面具)
+				abstractPhysicalObject = new VultureMask.AbstractVultureMask(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), caller.abstractPhysicalObject.ID.RandomSeed, (double)Random.value <= 0.05);
+			}
+			else // 兜底 (~0.7%)
+			{
+				// 矛大师珍珠
+				abstractPhysicalObject = new SpearMasterPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Spearmasterpearl);
+			}
+
+			// 如果是消耗品类型，标记为已消耗 + 不新鲜
+			// (防止被当作可食物品吃下)
+			if (AbstractConsumable.IsTypeConsumable(abstractPhysicalObject.type))
+			{
+				(abstractPhysicalObject as AbstractConsumable).isFresh = false;
+				(abstractPhysicalObject as AbstractConsumable).isConsumed = true;
+			}
+
+			return abstractPhysicalObject;
+		}
+	}
 }
 #endregion*/
 
