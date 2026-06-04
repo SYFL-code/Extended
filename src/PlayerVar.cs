@@ -52,7 +52,10 @@ namespace Extended
 		public PlayerVar()
 		{
 			_playerRef = new WeakReference<Player?>(null);
-		}
+
+			swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
+
+        }
 		public PlayerVar(Player player)
 		{
 			_playerRef = new WeakReference<Player?>(player);

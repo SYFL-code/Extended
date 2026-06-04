@@ -30,9 +30,23 @@ namespace Extended
 			player.GetPlayerVar(out var pv);
 
 			pv.coord = player.coord;
+
+            if (pv.swallowedObjectsTemp.Count != 0)
+			{
+                foreach (var s in pv.swallowedObjectsTemp)
+                {
+					var Object = Helper.ObjectFromString(s, player.room.world, player.coord, player.coord);
+					
+					if (Object != null)
+                    {
+                        pv.objectsInStomach.Add(Object);
+                    }
+                }
+				//pv.swallowedObjectsTemp.Clear();
+            }
         }
 
-		private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
+        private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
 		{
 			orig(player, eu);
 
@@ -40,7 +54,7 @@ namespace Extended
 
             pv.coord = player.coord;
 
-			if (pv.swallowedObjectsTemp.Count != 0)
+			/*if (pv.swallowedObjectsTemp.Count != 0)
 			{
                 foreach (var s in pv.swallowedObjectsTemp)
                 {
@@ -52,9 +66,9 @@ namespace Extended
                     }
                 }
 				pv.swallowedObjectsTemp.Clear();
-            }
+            }*/
 
-            if (Input.GetKey("m"))
+            if (Input.GetKey("n"))
 			{
 				if (player.objectInStomach != null)
 				{
@@ -63,9 +77,9 @@ namespace Extended
 				}
 			}
 
-			if (Input.GetKey("n"))
+			if (Input.GetKey("m"))
 			{
-				if (pv.objectsInStomach.Count > 0)
+				if (pv.objectsInStomach.Count > 0 && player.objectInStomach == null)
 				{
 					player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
 					pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
