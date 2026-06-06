@@ -26,10 +26,33 @@ namespace Extended
 		public List<string> swallowedObjects = new();
 		[JsonIgnore]
 		public WorldCoordinate coord;
-		#endregion
 
-		#region Save Load
-		[OnSerializing]// 保存时自动调用
+        // 获取胃部容量
+        public int GetStomachCapacity(Player player)
+        {
+            int Capacity = StorageCapacity;
+
+            /*if (MyOptions.Instance?.StomachCapacity != null)
+            {
+                Capacity = MyOptions.Instance.StomachCapacity.Value;
+            }*/
+            /*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
+            {
+                Capacity += 2;
+            }*/
+
+            return Capacity;
+        }
+
+        // 检查是否有空间
+        public bool HasSpace(Player player)
+        {
+            return objectsInStomach.Count < GetStomachCapacity(player);
+        }
+        #endregion
+
+        #region Save Load
+        [OnSerializing]// 保存时自动调用
 		internal void OnSerializing(StreamingContext context)
 		{
 			Save();

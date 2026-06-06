@@ -66,6 +66,9 @@ namespace Extended
 		}
         //swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
+        //Before
+        //After
+
         //<ItemGroup>
         //	<Compile Remove = "Zname.cs" />
         //<ItemGroup>
