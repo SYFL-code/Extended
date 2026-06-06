@@ -53,7 +53,26 @@ namespace Extended
 			}
 		}
 
-		public static void ClearAll()
+		public static void Malnourished_Save()
+		{
+            try
+            {
+                foreach (var item in GlobalVar.playerVars)
+                {
+					var pv = item.Value;
+
+					pv.Malnourished_Save();
+                }
+            }
+            catch (JsonException ex)
+            {
+                Log.LogError(ex);
+
+                ClearAll();
+            }
+        }
+
+        public static void ClearAll()
 		{
 			GlobalVar.playerVars.Clear();
 		}

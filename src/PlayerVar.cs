@@ -26,11 +26,15 @@ namespace Extended
 		public List<string> swallowedObjects = new();
 		[JsonIgnore]
 		public WorldCoordinate coord;
-        #endregion
+		#endregion
 
-        #region Save Load
-        [OnSerializing]// 保存时自动调用
+		#region Save Load
+		[OnSerializing]// 保存时自动调用
 		internal void OnSerializing(StreamingContext context)
+		{
+			Save();
+		}
+		public void Save()
 		{
 			_playerRef.TryGetTarget(out Player? player);
 			swallowedObjects.Clear();
@@ -41,10 +45,19 @@ namespace Extended
 				swallowedObjects.Add(objString);
 			}
 		}
+		public void Malnourished_Save()
+		{
+			Save();
 
+			objectsInStomach.Clear();
+		}
 
 		[OnDeserialized]// 加载时自动调用
 		internal void OnDeserialized(StreamingContext context)
+		{
+			Load();
+		}
+		public void Load()
 		{
 			/*_playerRef.TryGetTarget(out Player? player);
 			objectsInStomach.Clear();

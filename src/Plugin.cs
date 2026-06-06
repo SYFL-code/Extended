@@ -37,8 +37,6 @@ namespace Extended
 
 			// 保存加载
             SaveFile.SaveHooks();
-			On.StoryGameSession.AddPlayer += this.StoryGameSession_AddPlayer;
-			On.SaveState.SessionEnded += this.SaveState_SessionEnded;
 
             MyPlayer.Hook();
 
@@ -64,8 +62,6 @@ namespace Extended
 
             // 保存加载
             SaveFile.SaveHooks_();
-            On.StoryGameSession.AddPlayer -= this.StoryGameSession_AddPlayer;
-            On.SaveState.SessionEnded -= this.SaveState_SessionEnded;
 
 			MyPlayer.Hook_();
 
@@ -77,35 +73,7 @@ namespace Extended
 		{
 		}
 
-        private void SaveState_SessionEnded(On.SaveState.orig_SessionEnded orig, global::SaveState self, global::RainWorldGame game, bool survived, bool newMalnourished)
-		{
-			orig(self, game, survived, newMalnourished);
 
-			int saveSlot = game.rainWorld.options.saveSlot;
-			global::SlugcatStats.Name slugcat = self.saveStateNumber;
-
-			if (survived && !newMalnourished)
-			{
-				SaveFile.Save(saveSlot, slugcat);
-			}
-			else
-			{
-				if (!newMalnourished)
-				{
-					SaveFile.Load(saveSlot, slugcat);
-				}
-			}
-		}
-
-        private void StoryGameSession_AddPlayer(On.StoryGameSession.orig_AddPlayer orig, global::StoryGameSession self, global::AbstractCreature player)
-		{
-			orig(self, player);
-
-			if (!self.saveState.malnourished)
-			{
-				SaveFile.Load(self.game.rainWorld.options.saveSlot, self.saveStateNumber);
-			}
-		}
 
 
         #region 默认钩子示例
