@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,43 +10,55 @@ namespace Extended
 {
 	public class PlayerVar
 	{
+		#region PlayerRef
 		[JsonIgnore]
 		private WeakReference<Player?> _playerRef;
-		// 供外部重新绑定 Player 引用
-		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
 		[JsonIgnore]
 		public WeakReference<Player?> PlayerRef => _playerRef;
+		// 供外部重新绑定 Player 引用
+		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
+		#endregion
 
-
+		#region swallowedObjects
 		public int StorageCapacity = 1;
-
 		[JsonIgnore]
 		public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
-		public List<string> swallowedObjects
-		{
-			get
-			{
-				_playerRef.TryGetTarget(out Player? player);
-
-				List<string> strings = new();
-
-				foreach (var Object in objectsInStomach)
-				{
-					strings.Add(Helper.ObjectToString(Object, player != null ? player.coord :coord, true));
-				}
-				return strings;
-
-            }
-			set  // 暂存，延迟绑定
-			{
-                swallowedObjectsTemp = value;
-            }
-		}
-        [JsonIgnore]
-		public List<string> swallowedObjectsTemp = new();
-        [JsonIgnore]
+		public List<string> swallowedObjects = new();
+		[JsonIgnore]
 		public WorldCoordinate coord;
+        #endregion
 
+        #region Save Load
+        [OnSerializing]// 保存时自动调用
+		internal void OnSerializing(StreamingContext context)
+		{
+			_playerRef.TryGetTarget(out Player? player);
+			swallowedObjects.Clear();
+
+			foreach (var obj in objectsInStomach)
+			{
+				string objString = Helper.ObjectToString(obj, player != null ? player.coord : coord, true);
+				swallowedObjects.Add(objString);
+			}
+		}
+
+
+		[OnDeserialized]// 加载时自动调用
+		internal void OnDeserialized(StreamingContext context)
+		{
+			/*_playerRef.TryGetTarget(out Player? player);
+			objectsInStomach.Clear();
+
+			foreach (string objString in _savedSwallowedObjects)
+			{
+				AbstractPhysicalObject obj = Helper.StringToObject(objString, player != null ? player.coord : coord);
+				if (obj != null)
+				{
+					objectsInStomach.Add(obj);
+				}
+			}*/
+		}
+		#endregion
 
 
 		// 反序列化的无参构造函数
@@ -53,15 +66,13 @@ namespace Extended
 		{
 			_playerRef = new WeakReference<Player?>(null);
 
-			swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
-
-        }
+		}
 		public PlayerVar(Player player)
 		{
 			_playerRef = new WeakReference<Player?>(player);
 
-
 		}
+
 
 
 	}

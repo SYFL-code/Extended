@@ -14,8 +14,8 @@ namespace Extended
 		//public static ManualLogSource? log { get; private set; }
 		private static ManualLogSource? log;
 
-		public static bool EnableLog { get; set; } = true;
-		public static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
+		private static bool EnableLog { get; set; } = true;
+		private static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
 
 		public static void SetLog(ManualLogSource logger) => log = logger;
 
@@ -72,7 +72,7 @@ namespace Extended
 
 		}
 
-		public enum LogLevel
+		private enum LogLevel
 		{
 			None = 0,
 			Message = 0,

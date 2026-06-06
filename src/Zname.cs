@@ -64,6 +64,7 @@ namespace Extended
 
             return "";
 		}
+        //swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
         //<ItemGroup>
         //	<Compile Remove = "Zname.cs" />
@@ -263,13 +264,6 @@ namespace Extended
 		public static string GenerateRandomText()
 		{
 			string[] texts = {
-			"希望，希望，用这希望的盾，抗拒那空虚中的暗夜的袭来。",
-			"慢也好，步伐小也罢，是往前走就好。",
-			"眼泪无法洗去痛苦，但岁月可以抹去一切。",
-			"其实很多人都没去过自己家乡的景点，别问好不好玩了。",
-			"对于我们的幸福来说，别人的看法在本质上来讲并不十分重要。",
-			"小鸟......是无法追上飞龙的。",
-			"最初的鸟儿是不会飞翔的，飞翔是它们勇敢跃入峡谷的奖励。",
 			"瞬间即是永恒！",
 			};
 			return texts[UnityEngine.Random.Range(0, texts.Length)];

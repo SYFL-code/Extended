@@ -27,22 +27,27 @@ namespace Extended
 		{
 			orig(player, abs, world);
 
-			player.GetPlayerVar(out var pv);
+			Log.LogDebug("Player ctor");
+
+            player.GetPlayerVar(out var pv);
 
 			pv.coord = player.coord;
 
-            if (pv.swallowedObjectsTemp.Count != 0)
+            if (pv.swallowedObjects.Count != 0)
 			{
-                foreach (var s in pv.swallowedObjectsTemp)
+                foreach (var s in pv.swallowedObjects)
                 {
-					var Object = Helper.ObjectFromString(s, player.room.world, player.coord, player.coord);
+					Log.LogDebug($"Trying to spawn {s}");
+
+                    var Object = Helper.ObjectFromString(s, player.room.world, player.coord, player.coord);
 					
 					if (Object != null)
                     {
+						Log.LogDebug($"Successfully spawn {s}");
                         pv.objectsInStomach.Add(Object);
                     }
                 }
-				//pv.swallowedObjectsTemp.Clear();
+                pv.swallowedObjects.Clear();
             }
         }
 

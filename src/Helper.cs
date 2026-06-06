@@ -12,26 +12,24 @@ namespace Extended
         // 将物品转为字符串
         public static string ObjectToString(AbstractPhysicalObject Object, WorldCoordinate coord, bool setCoord)
         {
-            if (Object is AbstractCreature ac)
-            {
-                if (ac.world.GetAbstractRoom(ac.pos.room) == null)
-                {
-                    ac.pos = coord;
-                }
-                if (setCoord)
-                {
-                    ac.pos = coord;
-                }
-                return SaveState.AbstractCreatureToStringStoryWorld(ac, coord);
-            }
-
             try
             {
-
+                if (Object is AbstractCreature ac)
+                {
+                    if (ac.world.GetAbstractRoom(ac.pos.room) == null)
+                    {
+                        ac.pos = coord;
+                    }
+                    if (setCoord)
+                    {
+                        ac.pos = coord;
+                    }
+                    return SaveState.AbstractCreatureToStringStoryWorld(ac, coord);
+                }
             }
             catch (Exception ex)
             {
-                Log.LogWarning($"[StomachStorage] 将物品转为字符串失败: {ex.Message}");
+                Log.LogWarning($"将物品转为字符串失败: {ex.Message}");
             }
 
             return Object.ToString();
@@ -62,7 +60,7 @@ namespace Extended
             }
             catch (Exception ex)
             {
-                Log.LogWarning($"[StomachStorage] 从字符串解析物品失败: {ex.Message}");
+                Log.LogWarning($"从字符串解析物品失败: {ex.Message}");
             }
             return null;
         }
