@@ -31,50 +31,62 @@ namespace Extended
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal class Zname//Scrap 废案
 	{
-        #region Items
-        #endregion
-        #region Creatures
-        #endregion
+		#region Items
+		#endregion
+		#region Creatures
+		#endregion
 
 
 
-        //mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+		//mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
 
-        //<DefineConstants>MYDEBUG</DefineConstants>
+		//<DefineConstants>MYDEBUG</DefineConstants>
 
-        //bool ? true : false
+		//bool ? true : false
 
-        public string strings
-        {
-            get
-            {
-                return strings;
-            }
-            set
-            {
-                strings = value;
-            }
-        }
+		public string strings
+		{
+			get
+			{
+				return strings;
+			}
+			set
+			{
+				strings = value;
+			}
+		}
 
-        //UnityExplorer
+		//UnityExplorer
 
-        public static string Z()
+		public static string Z()
 		{
 			if (Input.GetKey("v")) { }
 
-            return "";
+			return "";
 		}
-        //swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
+		//swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
-        //Before
-        //After
+		//ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0		(AbstractPhysicalObject)
+		//ID.-1.2274<oB>0<oA>FirecrackerPlant<oA>SU_S01.23.17.0<oA>-1<oA>-1		(AbstractConsumable)
+		//ID.-1.1980<oB>0<oA>Rock<oA>SU_S01.23.16.0		(AbstractPhysicalObject)
+		//Hazer ID.-1.1982		(AbstractCreature)
 
-        //<ItemGroup>
-        //	<Compile Remove = "Zname.cs" />
-        //<ItemGroup>
+		//"swallowedObjects": [
+			//"ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0",
+			//"ID.-1.2274<oB>0<oA>FirecrackerPlant<oA>SU_S01.23.17.0<oA>-1<oA>-1",
+			//"ID.-1.1980<oB>0<oA>Rock<oA>SU_S01.23.16.0",
+			//"Hazer<cA>ID.-1.1982<cB>0<cA>SU_S01.0<cA>"
+		//]
 
-        #region More
-        private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+		//Before
+		//After
+
+		//<ItemGroup>
+		//	<Compile Remove = "Zname.cs" />
+		//<ItemGroup>
+
+		#region More
+		private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
 		{
 			if (self.room.world.game.rainWorld.ExpeditionMode)//在探险模式里开启冰盾能力
 			{

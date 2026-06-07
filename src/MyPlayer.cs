@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static Extended.Helper;
 
 namespace Extended
 {
@@ -55,7 +56,20 @@ namespace Extended
 				}
 				pv.swallowedObjects.Clear();
 			}
-		}
+
+            (bool, List<int>) result = IncludeById(pv.objectsInStomach, player.objectInStomach);
+
+			Log.LogInfo($"IncludeById result : {result}");
+
+			if (!result.Item1 && player.objectInStomach != null)
+			{
+                pv.objectsInStomach.Add(player.objectInStomach);
+            }
+            else
+            {
+                player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
+            }
+        }
 
 		private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
 		{
