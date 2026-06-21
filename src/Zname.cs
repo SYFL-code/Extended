@@ -25,7 +25,7 @@ using ObjType = AbstractPhysicalObject.AbstractObjectType;
 using Random = UnityEngine.Random;
 #endregion
 
-namespace Extended
+namespace ExtensionLib
 {
 	[Obsolete("Scrap 废案")]
 	[EditorBrowsable(EditorBrowsableState.Never)]

@@ -4,13 +4,13 @@ using System;
 using UnityEngine;
 
 
-namespace Extended
+namespace ExtensionLib
 {
 	[BepInPlugin(GUID, Name, Version)]
 	class Plugin : BaseUnityPlugin
 	{
-        public const string GUID = "Extended.Redlyn";
-        public const string Name = "Extended";
+        public const string GUID = "Extension-library.Redlyn";
+        public const string Name = "Extension library";
         public const string Version = "0.1.0";
 
         private static bool isEnabled;

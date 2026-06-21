@@ -1,6 +1,7 @@
 ﻿using On;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -8,9 +9,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
-using static Extended.Plugin;
+using static ExtensionLib.Plugin;
 
-namespace Extended
+namespace ExtensionLib
 {
 	public class SaveFile
 	{
@@ -49,7 +50,7 @@ namespace Extended
 			else if (survived && newMalnourished)
 			{
                 Log.LogInfo($"newMalnourished");
-                SaveFile.Malnourished_Save(saveSlot, slugcat);
+                SaveFile.MalnourishedSave(saveSlot, slugcat);
             }
 			else
 			{
@@ -90,15 +91,27 @@ namespace Extended
 		}
 
 
+		private static Dictionary<string, Data> Datum = new();
 
-		// 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
-		// 这里组合成 "[persistentDataPath]/ExtendedData" 目录
-		private static string path => Path.Combine(Application.persistentDataPath, "ExtendedData");
-
-		private static string GetSavePath(int saveSlot, SlugcatStats.Name slugcat)
+        public static void AddData(Data data, string id)
 		{
-			string fileName = $"ExtendedData{saveSlot}{slugcat.value}.txt";
-			return Path.Combine(path, fileName);
+            if (Datum.ContainsKey(id))
+			{
+				Log.LogError($"Datum with id '{id}' already exists. Overwriting.");
+                Datum[id] = data;
+				return;
+            }
+            Datum.Add(id, data);
+        }
+
+        // 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
+        // 这里组合成 "[persistentDataPath]/[id]" 目录
+        private static string path(string id) => Path.Combine(Application.persistentDataPath, id);//"ExtendedData"
+
+        private static string GetSavePath(string id, int saveSlot, SlugcatStats.Name slugcat)
+		{
+			string fileName = $"{id}{saveSlot}{slugcat.value}.txt";
+			return Path.Combine(path(id), fileName);
 		}
 
         #region Wipe
@@ -108,38 +121,44 @@ namespace Extended
 
 			try
 			{
-				// 确保目录存在
-				if (Directory.Exists(path))
+                foreach (var item in Datum)
 				{
-					// 获取目录下所有文件的完整路径
-					string[] files = Directory.GetFiles(path);
+                    Data data_ = item.Value;
+                    string id = item.Key;
 
-					// 预编译
-					Regex pattern = new Regex($"^ExtendedData{saveSlot}.+\\.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                    // 确保目录存在
+                    if (Directory.Exists(path(id)))
+                    {
+                        // 获取目录下所有文件的完整路径
+                        string[] files = Directory.GetFiles(path(id));
 
-					// 遍历每个文件
-					for (int i = 0; i < files.Length; i++)
-					{
-						// 检查文件名是否以 "ExtendedData{存档槽位编号}" 开头
-						// 注意：StartsWith 的参数构成为 path + 目录分隔符 + "ExtendedData" + saveSlot.ToString()
-						// 例如 path 为 "/.../ExtendedData"，那么前缀就是 "/.../ExtendedData/ExtendedData1"（假设 saveSlot=1）
+                        // 预编译
+                        Regex pattern = new Regex($"^{id}{saveSlot}.+\\.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-						string fileName = Path.GetFileName(files[i]);
-						if (pattern.IsMatch(fileName))
-						//if (files[i].StartsWith(path + Path.DirectorySeparatorChar.ToString() + "ExtendedData" + saveSlot.ToString()))
-						{
-							try
-							{
-								// 删除文件
-								File.Delete(files[i]);
-							}
-							catch (Exception e)
-							{
-								Log.LogInfo($"Failed to delete {fileName}: {e.Message}");
-							}
-						}
-					}
-				}
+                        // 遍历每个文件
+                        for (int i = 0; i < files.Length; i++)
+                        {
+                            // 检查文件名是否以 "[id]{存档槽位编号}" 开头
+                            // 注意：StartsWith 的参数构成为 path + 目录分隔符 + [id] + saveSlot.ToString()
+                            // 例如 path 为 "/.../[id]"，那么前缀就是 "/.../[id]/[id]1"（假设 saveSlot=1）
+
+                            string fileName = Path.GetFileName(files[i]);
+                            if (pattern.IsMatch(fileName))
+                            //if (files[i].StartsWith(path + Path.DirectorySeparatorChar.ToString() + [id] + saveSlot.ToString()))
+                            {
+                                try
+                                {
+                                    // 删除文件
+                                    File.Delete(files[i]);
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.LogInfo($"Failed to delete {fileName}: {e.Message}");
+                                }
+                            }
+                        }
+                    }
+                }
 			}
 			catch (Exception ex)
 			{
@@ -153,20 +172,27 @@ namespace Extended
 
 			try
 			{
-				// 确保目录存在
-				if (Directory.Exists(path))
+                foreach (var item in Datum)
 				{
-					// ExtendedData[存档槽编号][角色名称].txt
-					// 例如ExtendedData2White.txt
-					string save = GetSavePath(saveSlot, slugcat);
+                    Data data_ = item.Value;
+                    string id = item.Key;
 
-					// 确保文件存在
-					if (File.Exists(save))
-					{
-						// 删除文件
-						File.Delete(save);
-					}
-				}
+                    // 确保目录存在
+                    if (Directory.Exists(path(id)))
+                    {
+                        // [id][存档槽编号][角色名称].txt
+                        // 例如[id]2White.txt
+                        string save = GetSavePath(id, saveSlot, slugcat);
+
+                        // 确保文件存在
+                        if (File.Exists(save))
+                        {
+                            // 删除文件
+                            File.Delete(save);
+                        }
+                    }
+                }
+
 			}
 			catch (Exception ex)
 			{
@@ -182,26 +208,34 @@ namespace Extended
 
 			try
 			{
-				// 确保目录存在
-				if (!Directory.Exists(path))
-				{
-					Directory.CreateDirectory(path);
-				}
+                foreach (var item in Datum)
+                {
+					Data data_ = item.Value;
+                    string id = item.Key;
 
-				string save = GetSavePath(saveSlot, slugcat);
+                    // 确保目录存在
+                    if (!Directory.Exists(path(id)))
+                    {
+                        Directory.CreateDirectory(path(id));
+                    }
 
-				// 序列化
-				string data = Data.Save();//***
+                    string save = GetSavePath(id, saveSlot, slugcat);
 
-				// 写入文件（覆盖已有内容）
-				File.WriteAllText(save, data);
+                    // 序列化
+                    string data = data_.Save();//***
 
-				Log.LogInfo($"data={data}");
+                    // 写入文件（覆盖已有内容）
+                    File.WriteAllText(save, data);
+
+                    Log.LogInfo($"id={id}");
+                    Log.LogInfo($"data={data}");
+                }
+
 				Log.LogInfo("Saving Extended");
 			}
 			catch (Exception ex)
 			{
-				Log.LogError($"Failed to save Extended data: {ex.Message}");
+				Log.LogError($"Failed to save data: {ex.Message}");
 			}
 		}
 
@@ -209,50 +243,65 @@ namespace Extended
 		{
 			Log.LogInfo($"saveSlot : {saveSlot} , slugcat : {slugcat}");
 
-			// 确保目录存在
-			if (!Directory.Exists(path))
+            foreach (var item in Datum)
 			{
-				Directory.CreateDirectory(path);
-			}
+                Data data_ = item.Value;
+                string id = item.Key;
 
-			string save = GetSavePath(saveSlot, slugcat);
+                // 确保目录存在
+                if (!Directory.Exists(path(id)))
+                {
+                    Directory.CreateDirectory(path(id));
+                }
 
-			// 如果文件存在
-			if (File.Exists(save))
-			{
-				try
-				{
-					// 读取文件
-					string data = File.ReadAllText(save);
+                string save = GetSavePath(id, saveSlot, slugcat);
 
-					// 反序列化
-					Data.Load(data);//***
+                // 如果文件存在
+                if (File.Exists(save))
+                {
+                    try
+                    {
+                        // 读取文件
+                        string data = File.ReadAllText(save);
 
-					Log.LogInfo($"data={data}");
-				}
-				catch (Exception ex)
-				{
-					Log.LogError($"Failed to load Extended save: {ex.Message}");
+                        Log.LogInfo($"id={id}");
+                        Log.LogInfo($"data={data}");
 
-					Data.ClearAll();//***
-				}
+                        // 反序列化
+                        data_.Load(data);//***
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.LogError($"Failed to load id:{id} data: {ex.Message}");
 
-				Log.LogInfo("Loading Extended - Exists");
-			}
-			// 若文件不存在
-			else
-			{
-				//Log.Log($"data={data}");
-				Log.LogInfo("Loading Extended - Non-Existent");
+                        data_.ClearAll();//***
+                    }
 
-				// 清空数据
-				Data.ClearAll();//***
-			}
-		}
 
-        public static void Malnourished_Save(int saveSlot, global::SlugcatStats.Name slugcat)
+                }
+                // 若文件不存在
+                else
+                {
+                    //Log.Log($"data={data}");
+                    Log.LogInfo($"Loading id:{id} data - Non-Existent");
+
+                    // 清空数据
+                    data_.ClearAll();//***
+                }
+            }
+
+            Log.LogInfo("Loading - Exists");
+        }
+
+        public static void MalnourishedSave(int saveSlot, global::SlugcatStats.Name slugcat)
 		{
-            Data.Malnourished_Save();
+            foreach (var item in Datum)
+			{
+                Data data_ = item.Value;
+                string id = item.Key;
+
+                data_.MalnourishedSave();
+            }
         }
         #endregion
 

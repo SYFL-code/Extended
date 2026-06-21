@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Extended
+namespace ExtensionLib
 {
 	public static class Log
 	{

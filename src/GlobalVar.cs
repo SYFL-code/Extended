@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 
 
-namespace Extended
+namespace ExtensionLib
 {
 	public static class GlobalVar
 	{

@@ -4,12 +4,37 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using static Extended.Plugin;
+using static ExtensionLib.Plugin;
 
-namespace Extended
+namespace ExtensionLib
 {
-	public static class Data
+	public class Data
 	{
+        public virtual string Save()
+		{
+			return "";
+        }
+
+        public virtual void Load(string data)
+		{
+
+		}
+
+        public virtual void MalnourishedSave()
+		{
+
+		}
+
+        public virtual void ClearAll()
+        {
+            GlobalVar.playerVars.Clear();
+        }
+
+    }
+
+
+	public class LibData : Data
+    {
 		private static JsonSerializerSettings _settings = new JsonSerializerSettings
 		{
 			Formatting = Formatting.Indented,// 可读性好，方便调试
@@ -22,13 +47,13 @@ namespace Extended
 			}
 		};
 
-		public static string Save()
+        public override string Save()
 		{
 			// 自动序列化所有公开属性和字段
 			return JsonConvert.SerializeObject(GlobalVar.playerVars, _settings);
 		}
 
-		public static void Load(string data)
+        public override void Load(string data)
 		{
 			ClearAll();
 
@@ -53,7 +78,7 @@ namespace Extended
 			}
 		}
 
-		public static void Malnourished_Save()
+        public override void MalnourishedSave()
 		{
             try
             {
@@ -72,7 +97,7 @@ namespace Extended
             }
         }
 
-        public static void ClearAll()
+        public override void ClearAll()
 		{
 			GlobalVar.playerVars.Clear();
 		}

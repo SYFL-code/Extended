@@ -1,8 +1,8 @@
 ﻿{
-	"id": "Extended.Redlyn",
-	"name": "Extended",
+	"id": "Extension-library.Redlyn",
+	"name": "Extension library",
 	"version": "0.1.0",
 	"authors": "Redlyn",
-	"description": "Extended",
+	"description": "Extension library",
 	"tags": [ "Base", "Downpour", "Watcher", "Game Mechanics", "Dependency" ]
 }

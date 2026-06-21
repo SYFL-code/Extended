@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 
-/*namespace Extended
+/*namespace ExtensionLib
 {
 	/// <summary>
 	/// 标记技能方法的特性，用于自动注册到 Hook 管道

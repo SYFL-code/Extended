@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using static Extended.Helper;
+using static ExtensionLib.Helper;
 
-namespace Extended
+namespace ExtensionLib
 {
 	public class MyPlayer
 	{
