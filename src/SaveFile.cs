@@ -90,10 +90,14 @@ namespace ExtensionLib
 			WipeAll(progression.rainWorld.options.saveSlot);
 		}
 
-
+        
 		private static Dictionary<string, Data> Datum = new();
 
-        public static void AddData(Data data, string id)
+        public static void AddData(Data data)
+        {
+            AddData(data.id, data);
+        }
+        public static void AddData(string id, Data data)
 		{
             if (Datum.ContainsKey(id))
 			{
@@ -105,12 +109,13 @@ namespace ExtensionLib
         }
 
         // 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
-        // 这里组合成 "[persistentDataPath]/[id]" 目录
-        private static string path(string id) => Path.Combine(Application.persistentDataPath, id);//"ExtendedData"
+        // 这里组合成 "[persistentDataPath]/ExtensionData/[id]" 目录
+        private static string path(string id) => Path.Combine(pathMain, id);
+        private static string pathMain => Path.Combine(Application.persistentDataPath, "ExtensionData");//"ExtendedData""ExtensionData"
 
         private static string GetSavePath(string id, int saveSlot, SlugcatStats.Name slugcat)
 		{
-			string fileName = $"{id}{saveSlot}{slugcat.value}.txt";
+			string fileName = $"{id}{saveSlot}{slugcat.value}.json";
 			return Path.Combine(path(id), fileName);
 		}
 
@@ -133,7 +138,7 @@ namespace ExtensionLib
                         string[] files = Directory.GetFiles(path(id));
 
                         // 预编译
-                        Regex pattern = new Regex($"^{id}{saveSlot}.+\\.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                        Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                         // 遍历每个文件
                         for (int i = 0; i < files.Length; i++)
@@ -180,8 +185,8 @@ namespace ExtensionLib
                     // 确保目录存在
                     if (Directory.Exists(path(id)))
                     {
-                        // [id][存档槽编号][角色名称].txt
-                        // 例如[id]2White.txt
+                        // [id][存档槽编号][角色名称].json
+                        // 例如[id]2White.json
                         string save = GetSavePath(id, saveSlot, slugcat);
 
                         // 确保文件存在

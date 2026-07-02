@@ -10,31 +10,35 @@ namespace ExtensionLib
 {
 	public class Data
 	{
-        public virtual string Save()
+		public virtual string id { get; set; } = "Default";
+
+		public virtual string Save()
 		{
 			return "";
-        }
+		}
 
-        public virtual void Load(string data)
+		public virtual void Load(string data)
 		{
 
 		}
 
-        public virtual void MalnourishedSave()
+		public virtual void MalnourishedSave()
 		{
 
 		}
 
-        public virtual void ClearAll()
-        {
-            GlobalVar.playerVars.Clear();
-        }
+		public virtual void ClearAll()
+		{
+		}
 
-    }
+	}
 
 
 	public class LibData : Data
-    {
+	{
+		public override string id { get; set; } = "ExtensionLib";// 唯一标识符，确保不会与其他 mod 冲突
+
+
 		private static JsonSerializerSettings _settings = new JsonSerializerSettings
 		{
 			Formatting = Formatting.Indented,// 可读性好，方便调试
@@ -42,18 +46,17 @@ namespace ExtensionLib
 
 			ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
 			{
-				// 强制使用 setter
 				SerializeCompilerGeneratedMembers = false
-			}
+			},
 		};
 
-        public override string Save()
+		public override string Save()
 		{
 			// 自动序列化所有公开属性和字段
 			return JsonConvert.SerializeObject(GlobalVar.playerVars, _settings);
 		}
 
-        public override void Load(string data)
+		public override void Load(string data)
 		{
 			ClearAll();
 
@@ -78,26 +81,26 @@ namespace ExtensionLib
 			}
 		}
 
-        public override void MalnourishedSave()
+		public override void MalnourishedSave()
 		{
-            try
-            {
-                foreach (var item in GlobalVar.playerVars)
-                {
+			try
+			{
+				foreach (var item in GlobalVar.playerVars)
+				{
 					var pv = item.Value;
 
 					pv.Malnourished_Save();
-                }
-            }
-            catch (JsonException ex)
-            {
-                Log.LogError(ex);
+				}
+			}
+			catch (JsonException ex)
+			{
+				Log.LogError(ex);
 
-                ClearAll();
-            }
-        }
+				ClearAll();
+			}
+		}
 
-        public override void ClearAll()
+		public override void ClearAll()
 		{
 			GlobalVar.playerVars.Clear();
 		}

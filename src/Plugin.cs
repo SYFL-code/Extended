@@ -9,8 +9,8 @@ namespace ExtensionLib
 	[BepInPlugin(GUID, Name, Version)]
 	class Plugin : BaseUnityPlugin
 	{
-        public const string GUID = "Extension-library.Redlyn";
-        public const string Name = "Extension library";
+        public const string GUID = "extension-lib.Redlyn";
+        public const string Name = "Extension Library";
         public const string Version = "0.1.0";
 
         private static bool isEnabled;
@@ -36,6 +36,7 @@ namespace ExtensionLib
             GlobalVar.Hook();
 
 			// 保存加载
+			SaveFile.AddData(new LibData());
             SaveFile.SaveHooks();
 
             MyPlayer.Hook();

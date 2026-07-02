@@ -1,6 +1,6 @@
 ﻿{
-	"id": "Extension-library.Redlyn",
-	"name": "Extension library",
+	"id": "extension-lib.Redlyn",
+	"name": "Extension Library",
 	"version": "0.1.0",
 	"authors": "Redlyn",
 	"description": "Extension library",
