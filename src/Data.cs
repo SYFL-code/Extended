@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -44,11 +46,8 @@ namespace ExtensionLib
 			Formatting = Formatting.Indented,// 可读性好，方便调试
 			ReferenceLoopHandling = ReferenceLoopHandling.Ignore,// 防止意外循环引用
 
-			ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
-			{
-				SerializeCompilerGeneratedMembers = false
-			},
-		};
+            ContractResolver = new JsonPropertyOnlyContractResolver()
+        };
 
 		public override string Save()
 		{
@@ -106,4 +105,33 @@ namespace ExtensionLib
 		}
 
 	}
+
+
+    public class JsonPropertyOnlyContractResolver : DefaultContractResolver
+    {
+        protected override List<MemberInfo> GetSerializableMembers(Type objectType)
+        {
+            // ⭐ 只返回标记了 [JsonProperty] 的成员
+            var members = new List<MemberInfo>();
+
+            // 获取所有公共字段和属性
+            var allMembers = objectType.GetMembers(
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance
+            );
+
+            foreach (var member in allMembers)
+            {
+                // 检查是否有 [JsonProperty] 特性
+                if (member.GetCustomAttribute<JsonPropertyAttribute>() != null)
+                {
+                    members.Add(member);
+                }
+            }
+
+            return members;
+        }
+    }
+
 }

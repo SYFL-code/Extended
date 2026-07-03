@@ -33,7 +33,26 @@ namespace ExtensionLib
 		public static void LogMessage(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
 			Log_(LogLevel.Message, obj, caller, filePath);
 
-		private static void Log_(LogLevel level, object obj, string caller = "", string filePath = "")
+        public static object MessageLog(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
+		{
+            if (obj is string s)
+            {
+                string className = Path.GetFileNameWithoutExtension(filePath);
+                obj = $"[{className}.{caller}] {s}";
+            }
+			return obj;
+        }
+        public static string MessageLog(this string obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
+        {
+            if (obj is string s)
+            {
+                string className = Path.GetFileNameWithoutExtension(filePath);
+                obj = $"[{className}.{caller}] {s}";
+            }
+            return obj;
+        }
+
+        private static void Log_(LogLevel level, object obj, string caller = "", string filePath = "")
 		{
 			if (log == null) return;
 

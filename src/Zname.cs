@@ -1,6 +1,7 @@
 ﻿#region using
 using BepInEx;
 using Expedition;
+using ExtensionLib;
 using JetBrains.Annotations;
 //using static SlugBase.Features.FeatureTypes;
 using Menu.Remix.MixedUI;
@@ -16,9 +17,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Xml.Schema;
 using UnityEngine;
+using static ExtensionLib.PlayerVar;
 using static UnityEngine.Input;
 using Color = UnityEngine.Color;
 using ObjType = AbstractPhysicalObject.AbstractObjectType;
@@ -72,14 +75,18 @@ namespace ExtensionLib
 		//Hazer ID.-1.1982		(AbstractCreature)
 
 		//"swallowedObjects": [
-			//"ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0",
-			//"ID.-1.2274<oB>0<oA>FirecrackerPlant<oA>SU_S01.23.17.0<oA>-1<oA>-1",
-			//"ID.-1.1980<oB>0<oA>Rock<oA>SU_S01.23.16.0",
-			//"Hazer<cA>ID.-1.1982<cB>0<cA>SU_S01.0<cA>"
+		//"ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0",
+		//"ID.-1.2274<oB>0<oA>FirecrackerPlant<oA>SU_S01.23.17.0<oA>-1<oA>-1",
+		//"ID.-1.1980<oB>0<oA>Rock<oA>SU_S01.23.16.0",
+		//"Hazer<cA>ID.-1.1982<cB>0<cA>SU_S01.0<cA>"
 		//]
 
 		//Before
 		//After
+
+		//Input.GetKey("n")	按住期间每帧返回 true
+		//Input.GetKeyDown("n")   按下瞬间只返回 true 一次
+		//Input.GetKeyUp("n") 松开瞬间只返回 true 一次
 
 		//<ItemGroup>
 		//	<Compile Remove = "Zname.cs" />
@@ -287,6 +294,253 @@ namespace ExtensionLib
 	}
 }
 
+
+/*
+ using Kittehface.Framework20;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ExtensionLib
+{
+	public class PlayerVar
+	{
+		#region PlayerRef
+		[JsonIgnore]
+		private WeakReference<Player?> _playerRef;
+
+		[JsonIgnore]
+		public WeakReference<Player?> PlayerRef => _playerRef;
+
+
+		// 供外部重新绑定 Player 引用
+		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
+		#endregion
+
+		public StomachData stomachData;
+
+		[JsonIgnore]
+		public WorldCoordinate coord;
+
+		public class StomachData
+		{
+			[JsonIgnore]
+			public PlayerVar Owner;
+
+			[JsonIgnore]
+			public List<AbstractPhysicalObject> historyInStomach = new();  // 历史栈（不含当前）
+
+			[JsonProperty("capacity")]
+			public int capacity = 5;                               // 容量限制
+
+			[JsonProperty("historyInStomach")]
+			public List<string> _serializedHistory = new();
+
+
+			public StomachData(PlayerVar owner)
+			{
+				Owner = owner;
+			}
+			public AbstractPhysicalObject? Current      // 指向 player.objectInStomach
+			{
+				get
+				{
+					Owner._playerRef.TryGetTarget(out Player? player);
+					if (player == null)
+					{
+						throw new NullReferenceException("player == null".MessageLog());
+					}
+					return player.objectInStomach;
+				}
+				set
+				{
+					Owner._playerRef.TryGetTarget(out Player? player);
+					if (player == null)
+					{
+						throw new NullReferenceException("player == null".MessageLog());
+					}
+					player.objectInStomach = value;
+				}
+			}
+			public int HistoryCount => historyInStomach.Count;
+			public int TotalCount => (Current != null ? 1 : 0) + HistoryCount;
+			public bool IsEmpty => Current == null && HistoryCount == 0;
+			public bool IsFull => TotalCount >= capacity;
+			public int RemainingSpace => capacity - TotalCount;
+			public int Capacity { get => capacity; set => capacity = Math.Max(0, value); }
+
+			// 历史栈操作
+			public void Push(AbstractPhysicalObject obj) => historyInStomach.Add(obj);
+			public AbstractPhysicalObject? Pop()
+			{
+				if (HistoryCount == 0) return null;
+				var top = historyInStomach[HistoryCount - 1];
+				historyInStomach.RemoveAt(HistoryCount - 1);
+				return top;
+			}
+			public void ClearHistory() => historyInStomach.Clear();
+
+			// 吞入
+			public bool Swallow(AbstractPhysicalObject obj)
+			{
+				if (IsFull) return false;
+
+				// 当前变历史
+				if (Current != null)
+					Push(Current);
+
+				// 设置新当前
+				Current = obj;
+				return true;
+			}
+			// 吐出/消化（移除当前，从历史补位）
+			public AbstractPhysicalObject? PopCurrent()
+			{
+				var removed = Current;
+
+				// 从历史取出补位
+				if (HistoryCount > 0)
+				{
+					Current = Pop();
+				}
+				else
+				{
+					Current = null;
+				}
+
+				return removed;
+			}
+
+			// 清空全部
+			public void ClearAll()
+			{
+				ClearHistory();
+				Current = null;
+			}
+
+			// 获取完整内容（用于遍历/显示）
+			public List<AbstractPhysicalObject> GetAllContents()
+			{
+				var result = historyInStomach;  // 历史（从底到顶）
+				if (Current != null)
+					result.Add(Current);    // 当前（栈顶）
+				return result;
+			}
+		}
+
+
+
+		// 反序列化的无参构造函数
+		public PlayerVar()
+		{
+			_playerRef = new WeakReference<Player?>(null);
+
+			stomachData = new StomachData(this);
+			coord = new WorldCoordinate();
+		}
+		public PlayerVar(Player player)
+		{
+			_playerRef = new WeakReference<Player?>(player);
+
+			stomachData = new StomachData(this);
+			coord = player.coord;
+		}
+
+
+
+		#region swallowedObjects
+		//public int StorageCapacity = 1;
+		//[JsonIgnore]
+		//public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
+		//public List<string> swallowedObjects = new();
+		//[JsonIgnore]
+		//public WorldCoordinate coord;
+
+		//// 获取胃部容量
+		//public int GetStomachCapacity(Player player)
+		//{
+		//	int Capacity = StorageCapacity;
+
+		//	/*if (MyOptions.Instance?.StomachCapacity != null)
+		//          {
+		//              Capacity = MyOptions.Instance.StomachCapacity.Value;
+		//          }
+//	/*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
+//          {
+//              Capacity += 2;
+//          }
+
+//	return Capacity;
+//}
+
+//// 检查是否有空间
+//public bool HasSpace(Player player)
+//{
+//	return objectsInStomach.Count < GetStomachCapacity(player);
+//}
+#endregion
+
+#region Save/Load
+
+[OnSerializing]// 保存时自动调用
+internal void OnSerializing(StreamingContext context)
+{
+	Save();
+}
+public void Save()
+{
+	_playerRef.TryGetTarget(out Player? player);
+
+	stomachData._serializedHistory.Clear();
+
+	foreach (var obj in stomachData.historyInStomach)
+	{
+		string objString = Helper.ObjectToString(obj, player != null ? player.coord : coord, true);
+		stomachData._serializedHistory.Add(objString);
+	}
+	Log.LogDebug($"Save: 保存了 {stomachData.historyInStomach.Count} 个对象");
+}
+public void Malnourished_Save()
+{
+	Save();
+
+	stomachData.historyInStomach.Clear();
+}
+
+[OnDeserialized]// 加载时自动调用
+internal void OnDeserialized(StreamingContext context)
+{
+	Load();
+}
+public void Load()
+{
+	/*_playerRef.TryGetTarget(out Player? player);
+	objectsInStomach.Clear();
+
+	foreach (string objString in _savedSwallowedObjects)
+	{
+		AbstractPhysicalObject obj = Helper.StringToObject(objString, player != null ? player.coord : coord);
+		if (obj != null)
+		{
+			objectsInStomach.Add(obj);
+		}
+	}
+}
+		#endregion
+
+
+
+
+
+
+	}
+}
+
+*/
 
 /*#region Creatures
 
@@ -1920,9 +2174,6 @@ public static class CloudtailModule
 
 }*/
 #endregion
-
-
-
 
 /*#region Creatures
 

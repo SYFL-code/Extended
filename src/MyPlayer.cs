@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using static ExtensionLib.Helper;
+using static ExtensionLib.PlayerVar;
 
 namespace ExtensionLib
 {
@@ -30,34 +31,39 @@ namespace ExtensionLib
 			On.Player.Regurgitate -= Player_Regurgitate;
 		}
 
+
+
+
 		private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abs, World world)
 		{
 			orig(player, abs, world);
 
+
 			Log.LogDebug("Player ctor");
 
 			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
 
 			pv.coord = player.coord;
 
-			if (pv.swallowedObjects.Count != 0)
+			if (stomachData._serializedHistory.Count != 0)
 			{
-				foreach (var s in pv.swallowedObjects)
+				foreach (var s in stomachData._serializedHistory)
 				{
 					Log.LogDebug($"Trying to spawn {s}");
 
 					var Object = Helper.ObjectFromString(s, player.room.world, player.coord, player.coord);
-					
+
 					if (Object != null)
 					{
 						Log.LogDebug($"Successfully spawn {s}");
-						pv.objectsInStomach.Add(Object);
+						stomachData.historyInStomach.Add(Object);
 					}
 				}
-				pv.swallowedObjects.Clear();
+				stomachData._serializedHistory.Clear();
 			}
 
-            (bool, List<int>) result = IncludeById(pv.objectsInStomach, player.objectInStomach);
+			/*(bool, List<int>) result = IncludeById(pv.objectsInStomach, player.objectInStomach);
 
 			Log.LogInfo($"IncludeById result : {result}");
 
@@ -68,14 +74,21 @@ namespace ExtensionLib
             else
             {
                 player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
-            }
-        }
+            }*/
+		}
 
 		private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
 		{
-			orig(player, eu);
+            // 防御层：补位逻辑
+            player.GetPlayerVar(out var pv);
+            var stomachData = pv.stomachData;
 
-			player.GetPlayerVar(out var pv);
+			if (stomachData.Current == null && stomachData.HistoryCount > 0)
+			{
+				stomachData.Current = stomachData.Pop();
+			}
+
+			orig(player, eu);
 
 			pv.coord = player.coord;
 
@@ -93,23 +106,62 @@ namespace ExtensionLib
 				pv.swallowedObjectsTemp.Clear();
 			}*/
 
-			if (Input.GetKey("n"))
+			if (Input.GetKeyDown("n"))
 			{
-				if (player.objectInStomach != null)
+                int grasp = -1;
+                for (int i = 0; i < player.grasps.Length; i++)
+                {
+                    if (player.grasps[i]?.grabbed.abstractPhysicalObject != null)
+                    {
+                        grasp = i;
+                    }
+                }
+
+				if (grasp >= 0)
+				{
+                    player.SwallowObject(grasp);
+                }
+
+                /*if (player.objectInStomach != null)
 				{
 					pv.objectsInStomach.Add(player.objectInStomach);
 					player.objectInStomach = null;
-				}
-			}
+				}*/
+            }
 
-			if (Input.GetKey("m"))
+			if (Input.GetKeyDown("m"))
 			{
-				if (pv.objectsInStomach.Count > 0 && player.objectInStomach == null)
+				player.Regurgitate();
+
+                /*int grasp = -1;
+				for (int i = 0; i < player.grasps.Length; i++)
+				{
+					if (player.grasps[i]?.grabbed.abstractPhysicalObject == null)
+					{
+						grasp = i;
+					}
+				}
+				if (grasp >= 0)
+				{
+					AbstractPhysicalObject? obj = PopCurrent(player);
+
+					if (obj != null)
+					{
+						if (player.grasps[grasp] == null)
+						{
+							player.grasps[grasp] = new Player.Grasp(player, grasp);
+						}
+
+						player.objectInStomach = obj;
+					}
+				}*/
+
+                /*if (pv.objectsInStomach.Count > 0 && player.objectInStomach == null)
 				{
 					player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
 					pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
-				}
-			}
+				}*/
+            }
 		}
 
 		private static void Player_Destroy(On.Player.orig_Destroy orig, Player player)
@@ -121,70 +173,96 @@ namespace ExtensionLib
 			orig(player);
 		}
 
-		private static void Player_SwallowObject(On.Player.orig_SwallowObject orig, Player player, int grasp)
+        // 吞咽
+        private static void Player_SwallowObject(On.Player.orig_SwallowObject orig, Player player, int grasp)
 		{
-            Log.LogInfo("===Before");
+			Log.LogInfo("===Before");
 
-            player.GetPlayerVar(out var pv);
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
 
-			if (!pv.HasSpace(player))
-			{
-				Log.LogInfo($"Has not space");
-				return;
-			}
-
-			player.objectInStomach = null;
+			stomachData.Swallow(null);
 
 			orig(player, grasp);
 
 			if (player.objectInStomach != null)
 			{
-				pv.objectsInStomach.Add(player.objectInStomach);
-
-				Log.LogInfo($"吞咽成功！胃部物品数量: {pv.objectsInStomach.Count}");
-				for (int i = 0; i < pv.objectsInStomach.Count; i++)
+				Log.LogInfo($"吞咽成功！胃部物品数量: {stomachData.TotalCount}");
+				for (int i = 0; i < stomachData.TotalCount; i++)
 				{
-					Log.LogInfo(pv.objectsInStomach[i].ToString());
+					Log.LogInfo(stomachData.GetAllContents()[i].ToString());
 				}
 			}
 			else
 			{
 				Log.LogInfo("原版吞咽函数没有处理物品");
 			}
-            Log.LogInfo("===After");
-        }
 
-		private static void Player_Regurgitate(On.Player.orig_Regurgitate orig, Player player)
+			Log.LogInfo("===After");
+		}
+
+        // 反刍
+        private static void Player_Regurgitate(On.Player.orig_Regurgitate orig, Player player)
 		{
-            Log.LogInfo("===Before");
-
-            player.GetPlayerVar(out var pv);
-
-            bool hasItems = pv.objectsInStomach.Count > 0;
-            AbstractPhysicalObject? lastItem = hasItems ? pv.objectsInStomach[pv.objectsInStomach.Count - 1] : null;
-
-            if (hasItems)
-            {
-                // 设置要吐出的物品
-                player.objectInStomach = lastItem;
-            }
+			Log.LogInfo("===Before");
 
             orig(player);
 
-            if (hasItems && player.objectInStomach == null)
-            {
-                // 吐出成功，从列表移除
-                pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
+            player.GetPlayerVar(out var pv);
+            var stomachData = pv.stomachData;
 
-                // 同步头指针到新的最后一个
-                if (pv.objectsInStomach.Count > 0)
+            stomachData.PopCurrent();
+
+            if (player.objectInStomach == null)
+            {
+                Log.LogInfo($"胃部物品数量: {stomachData.TotalCount}");
+                for (int i = 0; i < stomachData.TotalCount; i++)
                 {
-                    player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
+                    Log.LogInfo(stomachData.GetAllContents()[i].ToString());
                 }
             }
+            else
+            {
+                //Log.LogInfo("原版反刍函数没有处理物品");
+            }
+
+            //bool hasItems = pv.objectsInStomach.Count > 0;
+            //AbstractPhysicalObject? lastItem = hasItems ? pv.objectsInStomach[pv.objectsInStomach.Count - 1] : null;
+
+            // 从历史取出补位
+            /*AbstractPhysicalObject? lastItem;
+
+			if (stomachData.HistoryCount > 0)
+			{
+				lastItem = stomachData.Pop();
+			}
+			else
+			{
+				lastItem = null;
+			}
+
+			if (hasItems)
+			{
+				// 设置要吐出的物品
+				player.objectInStomach = lastItem;
+			}
+
+			orig(player);
+
+			if (hasItems && player.objectInStomach == null)
+			{
+				// 吐出成功，从列表移除
+				pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
+
+				// 同步头指针到新的最后一个
+				if (pv.objectsInStomach.Count > 0)
+				{
+					player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
+				}
+			}*/
 
             Log.LogInfo("===After");
-        }
+		}
 
 
 	}

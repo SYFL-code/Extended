@@ -39,7 +39,7 @@ namespace ExtensionLib
 				playerVars.Add(N, pv);
 			}
 
-		   player.BindPlayerRef(pv);
+			player.BindPlayerRef(pv);
 		}
 
 		public static PlayerVar GetPlayerVar(this Player player)
