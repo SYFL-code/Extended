@@ -61,7 +61,7 @@ namespace ExtensionLib
 			if (obj is string s)
 			{
 				string className = Path.GetFileNameWithoutExtension(filePath);
-				obj = $"[{className}.{caller}] {s}";
+				obj = $"[{Plugin.version}]-[{className}.{caller}] {s}";
 			}
 
 			switch (level)

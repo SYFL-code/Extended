@@ -63,10 +63,37 @@ namespace ExtensionLib
 
 		public static string Z()
 		{
-			if (Input.GetKey("v")) { }
+            // 1. 获取整个字典
+            var dict = ExtensionLib.GlobalVar.playerVars;
 
-			return "";
-		}
+            // 2. 查看字典中有哪些玩家
+            //dict.Keys.ToList().ForEach(Console.WriteLine);
+
+            // 3. 获取玩家0的数据
+            var pv0 = dict[0];
+
+			pv0.PlayerRef.TryGetTarget(out var player);
+
+			if (player != null) 
+			{
+				player.AddFood(1);
+            }
+
+            //pv0.swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
+
+            //Console.WriteLine($"StorageCapacity: {pv0.StorageCapacity}");
+
+            // 4. 检查 swallowedObjectsTemp
+            //Console.WriteLine($"swallowedObjectsTemp count: {pv0.swallowedObjectsTemp.Count}");
+
+            // 5. 检查 objectsInStomach
+            //Console.WriteLine($"objectsInStomach count: {pv0.objectsInStomach.Count}");
+
+            // 这样有用
+
+
+            return "";
+        }
 		//swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
 		//ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0		(AbstractPhysicalObject)
@@ -104,20 +131,29 @@ namespace ExtensionLib
 				//GlobalVar.glacier2_iceshield_lock = false;
 			}
 
-			#region room
-			//room
-			//player.room.game.Players
-			//player.room.game.GetStorySession.Players
-			//player.room.game.warpDeferPlayerSpawnRoomName
-			//player.room.abstractRoom.name
-			#endregion
-			#region Debug
-			//Debug
-			//Debug.Log("普通消息");
-			//Debug.LogWarning("警告消息");
-			//Debug.LogError("错误消息");
-			#endregion
-		}
+            Player player = self;
+            player.GetPlayerVar(out var pv);
+            var stomachData = pv.stomachData;
+
+			if (stomachData.IsFull)
+			{
+
+			}
+
+            #region room
+            //room
+            //player.room.game.Players
+            //player.room.game.GetStorySession.Players
+            //player.room.game.warpDeferPlayerSpawnRoomName
+            //player.room.abstractRoom.name
+            #endregion
+            #region Debug
+            //Debug
+            //Debug.Log("普通消息");
+            //Debug.LogWarning("警告消息");
+            //Debug.LogError("错误消息");
+            #endregion
+        }
 		#endregion
 
 		#region Save
