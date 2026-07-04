@@ -30,7 +30,7 @@ namespace ExtensionLib
 			On.Player.StomachGlowLightColor += Player_StomachGlowLightColor;
 
 			IL.Player.AddFood += Player_AddFood;
-			//IL.Player.GrabUpdate += Player_GrabUpdate;
+			IL.Player.GrabUpdate += Player_GrabUpdate;
 		}
 
 		public static void Hook_()
@@ -45,14 +45,12 @@ namespace ExtensionLib
 			On.Player.StomachGlowLightColor -= Player_StomachGlowLightColor;
 
 			IL.Player.AddFood -= Player_AddFood;
-			//IL.Player.GrabUpdate -= Player_GrabUpdate;
+			IL.Player.GrabUpdate -= Player_GrabUpdate;
 		}
 
 
 		private static void Player_AddFood(ILContext il)
 		{
-            //Debug.Log($"Player_AddFood_===Before");
-
 			ILCursor c = new ILCursor(il);
 
 			/*
@@ -70,6 +68,8 @@ namespace ExtensionLib
 				IL_0031: starg.s 'add'
 			*/
 
+			bool logged = false;
+
 			if (c.TryGotoNext(MoveType.After,
 				(i) => i.Match(OpCodes.Br),
 				(i) => i.MatchLdarg(1),
@@ -80,221 +80,262 @@ namespace ExtensionLib
 				c.Emit(OpCodes.Ldarg_0);
 				c.EmitDelegate<Func<int, Player, int>>((origMaxFood, self) =>
 				{
-					Log.LogInfo($"Player orig maxFoodInStomach {origMaxFood}");
+					if (!logged || Input.GetKey("c"))
+					{
+						logged = true;
+
+						Log.LogInfo($"Player orig maxFoodInStomach {origMaxFood}");
+					}
+
 					return origMaxFood - 2;
 				});
 			}
-
-            //Debug.Log("Player_AddFood_===After");
 		}
 
 		private static void Player_GrabUpdate(ILContext il)
 		{
 			ILCursor c = new ILCursor(il);
 
-			c.Emit(OpCodes.Ldarg_0);
-			c.EmitDelegate<Action<Player>>((player) =>
+            //Log.LogInfo($"=== Player_GrabUpdate IL Hook 被调用 ===");  // ← 方法入口日志
+            //Debug.Log($"=== Player_GrabUpdate IL Hook 被调用 ===");
+
+            /*Dictionary<int, bool> logs = new();
+			for (int i = 0; i < 15; i++)
 			{
-				if (Input.GetKey("c"))
-				{
-					foreach (var instruct in il.Instrs)
-					{
-						Log.LogInfo(instruct.ToString());
-					}
-				}
-				Log.LogInfo($"0");
-			});
-
-			Debug.Log("===Before");
-
-			// ============================================================
-			// 问题1: IL_0451 附近
-			// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
-			// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
-			// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
-			// ============================================================
+				logs.Add(i, false);
+			}*/
 
 			if (c.TryGotoNext(MoveType.Before,
 				i => i.MatchLdarg(0),
-				i => i.MatchLdfld<Player>("objectInStomach"),
-				i => i.MatchBrfalse(out _)
+				i => i.MatchLdfld<Player>("spearOnBack")
 				))
 			{
-				// 移除 ldarg.0 + ldfld
-				c.Remove();
-				c.Remove();
-				//c.Remove();
+                c.Emit(OpCodes.Ldarg, 0);
+				c.EmitDelegate<Action<Player>>(player =>
+				{
+					/*if (!logs[0] || Input.GetKey("c"))
+					{
+						logs[0] = true;
 
-				// 插入: 检查胃是否未满
-				// 如果胃未满 → brfalse 跳转（原逻辑是 objectInStomach == null 时跳转）
+						Log.LogInfo($"0");
+					}*/
+                    Log.LogInfo($"0");
+                });
+			}
+
+			/*if (c.TryGotoNext(MoveType.Before,
+				i => i.MatchLdarg(0),
+				i => i.MatchLdfld<Player>("objectInStomach"),
+				i => i.MatchBrfalse(out ILLabel label)))
+			{
+				c.Remove();
+				c.Remove();
+
 				c.Emit(OpCodes.Ldarg, 0);
-				//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachNotFull"));
 				c.EmitDelegate<Func<Player, bool>>(player =>
 				{
+					*//*if (!logs[1] || Input.GetKey("c"))
+					{
+						logs[1] = true;
+
+						Log.LogInfo($"1");
+					}*//*
+
 					Log.LogInfo($"1");
 
 					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
-					return stomachData.IsFull;
+					return pv.stomachData.IsFull;
 				});
-				//c.Emit(OpCodes.Brfalse, /* 跳转到 IL_046c 的标签 */);
-			}
+			}*/
+
+			//// ============================================================
+			//// 问题1: IL_0451 附近
+			//// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
+			//// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
+			//// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
+			//// ============================================================
+
+			//if (c.TryGotoNext(MoveType.Before,
+			//	i => i.MatchLdarg(0),
+			//	i => i.MatchLdfld<Player>("objectInStomach"),
+			//	i => i.MatchBrfalse(out _)
+			//	))
+			//{
+			//	// 移除 ldarg.0 + ldfld
+			//	c.Remove();
+			//	c.Remove();
+			//	//c.Remove();
+
+			//	// 插入: 检查胃是否未满
+			//	// 如果胃未满 → brfalse 跳转（原逻辑是 objectInStomach == null 时跳转）
+			//	c.Emit(OpCodes.Ldarg, 0);
+			//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachNotFull"));
+			//	c.EmitDelegate<Func<Player, bool>>(player =>
+			//	{
+			//		Log.LogInfo($"1");
+
+			//		player.GetPlayerVar(out var pv);
+			//		var stomachData = pv.stomachData;
+			//		return stomachData.IsFull;
+			//	});
+			//	//c.Emit(OpCodes.Brfalse, /* 跳转到 IL_046c 的标签 */);
+			//}
 
 
-			// ============================================================
-			// 问题2: IL_0639-IL_0646 附近
-			// 原版: if (num8 > -1 || objectInStomach != null || isGourmand)
-			// 改为: if (num8 > -1 || stomachList.Count > 0 || isGourmand)
-			// 用途: 判断是否可以进行吞咽/反刍操作
-			// ============================================================
+			//// ============================================================
+			//// 问题2: IL_0639-IL_0646 附近
+			//// 原版: if (num8 > -1 || objectInStomach != null || isGourmand)
+			//// 改为: if (num8 > -1 || stomachList.Count > 0 || isGourmand)
+			//// 用途: 判断是否可以进行吞咽/反刍操作
+			//// ============================================================
 
-			if (c.TryGotoNext(MoveType.Before,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld("Player", "objectInStomach"),
-				i => i.MatchBrtrue(out _)))
-			{
-				c.Remove();
-				c.Remove();
-				//c.Remove();
+			//if (c.TryGotoNext(MoveType.Before,
+			//	i => i.MatchLdarg(0),
+			//	i => i.MatchLdfld("Player", "objectInStomach"),
+			//	i => i.MatchBrtrue(out _)))
+			//{
+			//	c.Remove();
+			//	c.Remove();
+			//	//c.Remove();
 
-				// 插入: 检查胃是否有物品
-				c.Emit(OpCodes.Ldarg, 0);
-				//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
-				c.EmitDelegate<Func<Player, bool>>(player =>
-				{
-					Log.LogInfo($"2");
+			//	// 插入: 检查胃是否有物品
+			//	c.Emit(OpCodes.Ldarg, 0);
+			//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
+			//	c.EmitDelegate<Func<Player, bool>>(player =>
+			//	{
+			//		Log.LogInfo($"2");
 
-					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
-					return !stomachData.IsEmpty;
-				});
-				//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 */);
-			}
+			//		player.GetPlayerVar(out var pv);
+			//		var stomachData = pv.stomachData;
+			//		return !stomachData.IsEmpty;
+			//	});
+			//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 */);
+			//}
 
-			// ============================================================
-			// 问题3: IL_18cf-IL_18d5
-			// 原版: if (objectInStomach != null || isGourmand || (MSC && SlugCatClass == Spear))
-			// 改为: if (stomachList.Count > 0 || isGourmand || (MSC && SlugCatClass == Spear))
-			// 用途: 反刍条件判定 (swallowAndRegurgitateCounter > 110)
-			// ============================================================
+			//// ============================================================
+			//// 问题3: IL_18cf-IL_18d5
+			//// 原版: if (objectInStomach != null || isGourmand || (MSC && SlugCatClass == Spear))
+			//// 改为: if (stomachList.Count > 0 || isGourmand || (MSC && SlugCatClass == Spear))
+			//// 用途: 反刍条件判定 (swallowAndRegurgitateCounter > 110)
+			//// ============================================================
 
-			if (c.TryGotoNext(MoveType.Before,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld("Player", "objectInStomach"),
-				i => i.MatchBrtrue(out _)))
-			{
-				c.Remove();
-				c.Remove();
-				//c.Remove();
+			//if (c.TryGotoNext(MoveType.Before,
+			//	i => i.MatchLdarg(0),
+			//	i => i.MatchLdfld("Player", "objectInStomach"),
+			//	i => i.MatchBrtrue(out _)))
+			//{
+			//	c.Remove();
+			//	c.Remove();
+			//	//c.Remove();
 
-				c.Emit(OpCodes.Ldarg, 0);
-				//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
-				c.EmitDelegate<Func<Player, bool>>(player =>
-				{
-					Log.LogInfo($"3");
+			//	c.Emit(OpCodes.Ldarg, 0);
+			//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
+			//	c.EmitDelegate<Func<Player, bool>>(player =>
+			//	{
+			//		Log.LogInfo($"3");
 
-					return false;
+			//		return false;
 
-					/*player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
+			//		/*player.GetPlayerVar(out var pv);
+			//		var stomachData = pv.stomachData;
 
-					int canBeSwallow = BeSwallowed(player);
+			//		int canBeSwallow = BeSwallowed(player);
 
-					if (canBeSwallow != -1)
-					{
-						return false;
-					}
+			//		if (canBeSwallow != -1)
+			//		{
+			//			return false;
+			//		}
 
-					return !stomachData.IsEmpty;*/
-				});
-				//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_18fe) */);
-			}
+			//		return !stomachData.IsEmpty;*/
+			//	});
+			//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_18fe) */);
+			//}
 
-			// ============================================================
-			// 问题4: IL_1916-IL_191c
-			// 原版: if (isGourmand && objectInStomach == null)
-			// 改为: if (isGourmand && stomachList.Count == 0)
-			// 用途: Gourmand 特殊反刍逻辑
-			// ============================================================
+			//// ============================================================
+			//// 问题4: IL_1916-IL_191c
+			//// 原版: if (isGourmand && objectInStomach == null)
+			//// 改为: if (isGourmand && stomachList.Count == 0)
+			//// 用途: Gourmand 特殊反刍逻辑
+			//// ============================================================
 
-			if (c.TryGotoNext(MoveType.Before,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld("Player", "objectInStomach"),
-				i => i.MatchBrtrue(out _)))  // 注意这里 brtrue 表示 objectInStomach != null 时跳转
-			{
-				c.Remove();
-				c.Remove();
-				//c.Remove();
+			//if (c.TryGotoNext(MoveType.Before,
+			//	i => i.MatchLdarg(0),
+			//	i => i.MatchLdfld("Player", "objectInStomach"),
+			//	i => i.MatchBrtrue(out _)))  // 注意这里 brtrue 表示 objectInStomach != null 时跳转
+			//{
+			//	c.Remove();
+			//	c.Remove();
+			//	//c.Remove();
 
-				// 插入: 检查胃是否为空 (Count == 0)
-				c.Emit(OpCodes.Ldarg, 0);
-				//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
-				c.EmitDelegate<Func<Player, bool>>(player =>
-				{
-					Log.LogInfo($"4");
+			//	// 插入: 检查胃是否为空 (Count == 0)
+			//	c.Emit(OpCodes.Ldarg, 0);
+			//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
+			//	c.EmitDelegate<Func<Player, bool>>(player =>
+			//	{
+			//		Log.LogInfo($"4");
 
-					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
-					return !stomachData.IsEmpty;
-				});
-				//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1921) */);
-			}
+			//		player.GetPlayerVar(out var pv);
+			//		var stomachData = pv.stomachData;
+			//		return !stomachData.IsEmpty;
+			//	});
+			//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1921) */);
+			//}
 
-			// ============================================================
-			// 问题5: IL_19be-IL_19c4
-			// 原版: else if (objectInStomach == null && swallowAndRegurgitateCounter > 90)
-			// 改为: else if (stomachList.Count == 0 && swallowAndRegurgitateCounter > 90)
-			// 用途: 吞咽条件 (胃为空 + 计数器 > 90)
-			// ============================================================
+			//// ============================================================
+			//// 问题5: IL_19be-IL_19c4
+			//// 原版: else if (objectInStomach == null && swallowAndRegurgitateCounter > 90)
+			//// 改为: else if (stomachList.Count == 0 && swallowAndRegurgitateCounter > 90)
+			//// 用途: 吞咽条件 (胃为空 + 计数器 > 90)
+			//// ============================================================
 
-			if (c.TryGotoNext(MoveType.Before,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld("Player", "objectInStomach"),
-				i => i.MatchBrtrue(out _)))  // objectInStomach != null 时跳转到 IL_1af9 (跳过吞咽)
-			{
-				c.Remove();
-				c.Remove();
-				//c.Remove();
+			//if (c.TryGotoNext(MoveType.Before,
+			//	i => i.MatchLdarg(0),
+			//	i => i.MatchLdfld("Player", "objectInStomach"),
+			//	i => i.MatchBrtrue(out _)))  // objectInStomach != null 时跳转到 IL_1af9 (跳过吞咽)
+			//{
+			//	c.Remove();
+			//	c.Remove();
+			//	//c.Remove();
 
-				// 插入: 检查胃是否为空 (Count == 0)
-				c.Emit(OpCodes.Ldarg, 0);
-				//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
-				c.EmitDelegate<Func<Player, bool>>(player =>
-				{
-					Log.LogInfo($"5");
+			//	// 插入: 检查胃是否为空 (Count == 0)
+			//	c.Emit(OpCodes.Ldarg, 0);
+			//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
+			//	c.EmitDelegate<Func<Player, bool>>(player =>
+			//	{
+			//		Log.LogInfo($"5");
 
-					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
+			//		player.GetPlayerVar(out var pv);
+			//		var stomachData = pv.stomachData;
 
-					if (Input.GetKey("c"))//
-					{
-						foreach (var instruct in il.Instrs)
-						{
-							Debug.Log(instruct.ToString());
-						}
-					}
-
-
-					return stomachData.IsFull;
-				});
-				//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1af9，跳过吞咽) */);
-			}
+			//		if (Input.GetKey("c"))//
+			//		{
+			//			foreach (var instruct in il.Instrs)
+			//			{
+			//				Debug.Log(instruct.ToString());
+			//			}
+			//		}
 
 
-			Debug.Log("===After");
+			//		return stomachData.IsFull;
+			//	});
+			//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1af9，跳过吞咽) */);
+			//}
 
-			c.Emit(OpCodes.Ldarg_0);
-			c.EmitDelegate<Action<Player>>((player) =>
-			{
-				if (Input.GetKey("c"))
-				{
-					foreach (var instruct in il.Instrs)
-					{
-						Log.LogInfo(instruct.ToString());
-					}
-				}
-				Log.LogInfo($"10");
-			});
+
+			//Debug.Log("===After");
+
+			//c.Emit(OpCodes.Ldarg_0);
+			//c.EmitDelegate<Action<Player>>((player) =>
+			//{
+			//	if (Input.GetKey("c"))
+			//	{
+			//		foreach (var instruct in il.Instrs)
+			//		{
+			//			Log.LogInfo(instruct.ToString());
+			//		}
+			//	}
+			//	Log.LogInfo($"10");
+			//});
 
 			/*// 用于标记我们处理到了哪一处
 			int patchCount = 0;
@@ -356,9 +397,10 @@ namespace ExtensionLib
 
 
 			}*/
+
 		}
 
-		public static int BeSwallowed(Player player, bool needCanBeSwallowed = true)
+        public static int BeSwallowed(Player player, bool needCanBeSwallowed = true)
 		{
 			int grasp = -1;
 			for (int i = 0; i < player.grasps.Length; i++)
