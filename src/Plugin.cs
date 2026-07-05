@@ -13,7 +13,7 @@ namespace ExtensionLib
         public const string Name = "Extension Lib";
         public const string Version = "0.1.0";
 
-        public const string version = "0.1.12";
+        public const string version = "0.1.14";
 
         private static bool isEnabled;
 
