@@ -94,6 +94,10 @@ namespace ExtensionLib
 
 		private static void Player_GrabUpdate(ILContext il)
 		{
+			//throw new Exception("[Player_GrabUpdate] Patch entered");
+
+			Logs.Write("[Player_GrabUpdate] Patch entered");
+
 			ILCursor c = new ILCursor(il);
 
 			Dictionary<int, bool> logs = new();
@@ -101,28 +105,104 @@ namespace ExtensionLib
 			{
 				logs.Add(i, false);
 			}
+			int logIndex = 0;
 
-			if (c.TryGotoNext(MoveType.Before,
+			logIndex = 1;
+			// ============================================================
+			// 问题1: IL_0451 附近
+			// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
+			// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
+			// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
+			// ============================================================
+			/*if (c.TryGotoNext(MoveType.Before,
 				i => i.MatchLdarg(0),
-				i => i.MatchLdfld<Player>("spearOnBack")
+				i => i.MatchLdfld<Player>("objectInStomach"),
+				i => i.MatchBrfalse(out _),
+				i => i.MatchLdarg(0),
+				i => i.MatchCall<Player>("get_CanPutSpearToBack")
 				))
 			{
+				LogsWrite(c, logs, logIndex);
+
+				c.Remove();
+				c.Remove();
+				//c.Remove();
+
+				// 插入: 检查胃是否未满
+				//原逻辑 objectInStomach == null → brfalse 跳转(满足条件)
+
 				c.Emit(OpCodes.Ldarg, 0);
+				c.EmitDelegate<Func<Player, bool>>(player =>
+				{
+					Log.LogInfo($"[{logIndex}]");
+
+					player.GetPlayerVar(out var pv);
+					var stomachData = pv.stomachData;
+					return stomachData.IsFull;
+				});
+				//c.Emit(OpCodes.Brfalse,  跳转到 IL_046c 的标签 );
+			}
+			else
+			{
+				Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+			}*/
+
+
+			logIndex = 0;
+			if (c.TryGotoNext(MoveType.Before,
+				i => i.MatchLdarg(0),
+				i => i.MatchLdfld<Player>("objectInStomach"),//objectInStomach spearOnBack
+				i => i.MatchBrtrue(out _),
+				i => i.MatchLdarg(0),
+				i => i.MatchCall<Player>("get_isGourmand"),
+				i => i.MatchBrtrue(out _)
+				))
+			{
+				LogsWrite(c, logs, logIndex);
+
+				c.Emit(OpCodes.Ldarg, 0);
+
 				c.EmitDelegate<Action<Player>>(player =>
 				{
-					if (!logs[0] || Input.GetKey("c"))
+					if (!logs[logIndex] || Input.GetKey("c"))
 					{
-						logs[0] = true;
+						logs[logIndex] = true;
 
-						Log.LogInfo($"0");
+						Log.LogInfo($"[{logIndex}] {logIndex}");
+
+						Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
 					}
-
 				});
 			}
+			else
+			{
+				Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+			}
 
-        }
+			Logs.Write("[Player_GrabUpdate] Patch entered_");
 
-        public static int BeSwallowed(Player player, bool needCanBeSwallowed = true)
+		}
+
+		public static void LogsWrite(ILCursor c, Dictionary<int, bool> logs, int logIndex)
+		{
+			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] found");
+
+			/*c.Emit(OpCodes.Ldarg, 0);
+
+			c.EmitDelegate<Action<Player>>(player =>
+			{
+				if (!logs[logIndex] || Input.GetKey("c"))
+				{
+					logs[logIndex] = true;
+
+					Log.LogInfo($"[{logIndex}] {logIndex}");
+
+					Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
+				}
+			});*/
+		}
+
+		public static int BeSwallowed(Player player, bool needCanBeSwallowed = true)
 		{
 			int grasp = -1;
 			for (int i = 0; i < player.grasps.Length; i++)

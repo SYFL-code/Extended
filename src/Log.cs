@@ -1,4 +1,5 @@
 ﻿using BepInEx.Logging;
+using Kittehface.Build;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,26 +34,26 @@ namespace ExtensionLib
 		public static void LogMessage(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "") =>
 			Log_(LogLevel.Message, obj, caller, filePath);
 
-        public static object MessageLog(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
+		public static object MessageLog(object obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
 		{
-            if (obj is string s)
-            {
-                string className = Path.GetFileNameWithoutExtension(filePath);
-                obj = $"[{className}.{caller}] {s}";
-            }
+			if (obj is string s)
+			{
+				string className = Path.GetFileNameWithoutExtension(filePath);
+				obj = $"[{className}.{caller}] {s}";
+			}
 			return obj;
-        }
-        public static string MessageLog(this string obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
-        {
-            if (obj is string s)
-            {
-                string className = Path.GetFileNameWithoutExtension(filePath);
-                obj = $"[{className}.{caller}] {s}";
-            }
-            return obj;
-        }
+		}
+		public static string MessageLog(this string obj, [CallerMemberName] string caller = "", [CallerFilePath] string filePath = "")
+		{
+			if (obj is string s)
+			{
+				string className = Path.GetFileNameWithoutExtension(filePath);
+				obj = $"[{className}.{caller}] {s}";
+			}
+			return obj;
+		}
 
-        private static void Log_(LogLevel level, object obj, string caller = "", string filePath = "")
+		private static void Log_(LogLevel level, object obj, string caller = "", string filePath = "")
 		{
 			if (log == null) return;
 
@@ -158,4 +159,20 @@ namespace ExtensionLib
 		}*/
 		#endregion
 	}
+
+
+
+
+	public static class Logs
+	{
+		private static readonly string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
+
+		public static void Write(string msg)
+		{
+
+            File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{Plugin.version}] {msg}\n");
+        }
+	}
+
+
 }
