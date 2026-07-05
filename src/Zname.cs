@@ -330,6 +330,12 @@ namespace ExtensionLib
 	}
 }
 
+// IsEmpty
+// IsEmpty
+// IsEmpty
+// == null
+// IsFull
+
 #region zs
 /*if (c.TryGotoNext(MoveType.Before,
     i => i.MatchLdarg(0),
