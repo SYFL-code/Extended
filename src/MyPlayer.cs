@@ -124,9 +124,9 @@ namespace ExtensionLib
 					player.GetPlayerVar(out var pv);
 					var stomachData = pv.stomachData;
 
-                    Log.LogInfo($"[logIndex:brfalse edition] IsEmpty: {stomachData.IsEmpty}");
+					Log.LogInfo($"[logIndex:brfalse edition] IsEmpty: {stomachData.IsEmpty}");
 
-                    return !stomachData.IsEmpty;
+					return !stomachData.IsEmpty;
 
 					//return InHand(player);
 				});
@@ -148,8 +148,8 @@ namespace ExtensionLib
 			// 匹配 'isGourmand'，brtrue 版本
 			while (c.TryGotoNext(MoveType.After,
 				i => i.MatchLdarg(0),
-                i => i.MatchLdfld<Player>("objectInStomach"),
-                i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue) // 匹配 brtrue（真时跳转）
+				i => i.MatchLdfld<Player>("objectInStomach"),
+				i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue) // 匹配 brtrue（真时跳转）
 			))
 			{
 				// a lot easier here, since you can just insert another cond
@@ -157,18 +157,99 @@ namespace ExtensionLib
 				ILLabel? proceedCond = c.Prev.Operand as ILLabel;
 				//c.Prev 光标位置前的指令，或如果光标位于指令列表开头，则为null
 
+				int originalIndex = c.Index;
+				if (c.Next.MatchLdarg(0))
+				{
+					c.Index += 1;
+					if (c.Next.MatchLdfld<Player>("swallowAndRegurgitateCounter"))
+					{
+						c.Index += 1;
+						if (c.Next.MatchLdcI4(90))
+						{
+							c.Index += 1;
+							if (c.Next.MatchBle(out _))
+							{
+								Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull");
+
+								c.Index = originalIndex;
+
+								c.Emit(OpCodes.Ldarg_0);
+								// insert the condition
+								// 插入条件判断
+								c.EmitDelegate<Func<Player, bool>>(player =>
+								{
+									player.GetPlayerVar(out var pv);
+									var stomachData = pv.stomachData;
+
+									Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull: {stomachData.IsFull}");
+									return stomachData.IsFull;
+								});
+
+								//出去 if
+								c.Emit(OpCodes.Brtrue_S, proceedCond);
+
+								break;
+							}
+						}
+					}
+				}
+				c.Index = originalIndex;
+				if (c.Next.MatchLdarg(0))
+				{
+					c.Index += 1;
+					if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
+					{
+						c.Index += 1;
+						if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
+						{
+							Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+
+							c.Index = originalIndex;
+
+							c.Emit(OpCodes.Ldarg_0);
+							// insert the condition
+							// 插入条件判断
+							c.EmitDelegate<Func<Player, bool>>(player =>
+							{
+								player.GetPlayerVar(out var pv);
+								var stomachData = pv.stomachData;
+
+								Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
+                                Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
+
+                                int inHand = InHand(player, true);
+
+								Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
+								if (inHand != -1 && !stomachData.IsFull)
+								{
+									return false;
+								}
+
+								return !stomachData.IsEmpty;
+							});
+
+							// if it's true, proceed as usual
+							// 如果条件为真，照常执行（跳进 if 块）
+							c.Emit(OpCodes.Brtrue_S, proceedCond);
+
+							break;
+						}
+					}
+				}
+				c.Index = originalIndex;
+
 				c.Emit(OpCodes.Ldarg_0);
 				// insert the condition
 				// 插入条件判断
 				c.EmitDelegate<Func<Player, bool>>(player =>
 				{
-                    player.GetPlayerVar(out var pv);
-                    var stomachData = pv.stomachData;
+					player.GetPlayerVar(out var pv);
+					var stomachData = pv.stomachData;
 
-                    Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
-                    return !stomachData.IsEmpty;
+					Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
+					return !stomachData.IsEmpty;
 
-                    //return false;
+					//return false;
 					//return CanRegurgitate(player);
 				});
 
@@ -449,7 +530,7 @@ namespace ExtensionLib
 			});*/
 		}
 
-		public static int InHand(Player player, bool CanBeSwallowed = true)
+		public static int InHand(Player player, bool CanBeSwallowed)
 		{
 			int grasp = -1;
 			for (int i = 0; i < player.grasps.Length; i++)
@@ -459,6 +540,7 @@ namespace ExtensionLib
 					if (!CanBeSwallowed || player.CanBeSwallowed(player.grasps[i].grabbed))
 					{
 						grasp = i;
+						break;
 					}
 				}
 			}
