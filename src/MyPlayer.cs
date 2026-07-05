@@ -94,84 +94,145 @@ namespace ExtensionLib
 
 		private static void Player_GrabUpdate(ILContext il)
 		{
-			ILCursor c = new ILCursor(il);
-
-			// replace all mentions of 'isGourmand' with the equivalent of '(isGourmand || CanRegurgitate(player))'
-			// 将所有对 'isGourmand' 的引用替换为等价于 '(isGourmand || CanRegurgitate(player))' 的逻辑
-
-			// match 'isGourmand', brfalse edition
-			// 匹配 'isGourmand'，brfalse 版本
-			while (c.TryGotoNext(MoveType.After,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld<Player>("objectInStomach"),
-				i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转）
-			))
+			try
 			{
-				// this is the condition we should skip to if our check succeeds, replicating the behavior if the vanilla che
-				// 如果我们的检查通过，就跳转到这个标签，复制原版检查通过时的行为
-				ILLabel skip = c.MarkLabel();
-				//向前移动
-				c.GotoPrev(MoveType.Before,
+				ILCursor c = new ILCursor(il);
+
+				// replace all mentions of 'isGourmand' with the equivalent of '(isGourmand || CanRegurgitate(player))'
+				// 将所有对 'isGourmand' 的引用替换为等价于 '(isGourmand || CanRegurgitate(player))' 的逻辑
+
+				// match 'isGourmand', brfalse edition
+				// 匹配 'isGourmand'，brfalse 版本
+				while (c.TryGotoNext(MoveType.After,
 					i => i.MatchLdarg(0),
-					i => i.Match(OpCodes.Ldfld)
-				);
-
-				// insert the condition
-				// 插入条件判断
-				c.Emit(OpCodes.Ldarg_0);
-				c.EmitDelegate<Func<Player, bool>>(player =>
+					i => i.MatchLdfld<Player>("objectInStomach"),
+					i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转）
+				))
 				{
-					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
+					// this is the condition we should skip to if our check succeeds, replicating the behavior if the vanilla che
+					// 如果我们的检查通过，就跳转到这个标签，复制原版检查通过时的行为
+					ILLabel skip = c.MarkLabel();
+					//向前移动
+					c.GotoPrev(MoveType.Before,
+						i => i.MatchLdarg(0),
+						i => i.Match(OpCodes.Ldfld)
+					);
 
-					Log.LogInfo($"[logIndex:brfalse edition] IsEmpty: {stomachData.IsEmpty}");
+					// insert the condition
+					// 插入条件判断
+					c.Emit(OpCodes.Ldarg_0);
+					c.EmitDelegate<Func<Player, bool>>(player =>
+					{
+						player.GetPlayerVar(out var pv);
+						var stomachData = pv.stomachData;
 
-					return !stomachData.IsEmpty;
+						Log.LogInfo($"[logIndex:brfalse edition] IsEmpty: {stomachData.IsEmpty}");
 
-					//return InHand(player);
-				});
+						return !stomachData.IsEmpty;
 
-				// if it's true, skip ahead
-				// 如果条件为真，跳过原版检查（跳过 if 块）
-				c.Emit(OpCodes.Brtrue_S, skip);
+						//return InHand(player);
+					});
 
-				// move forwards to avoid an infloop
-				// 向后移动，避免无限循环
-				c.GotoNext(MoveType.After,
-					i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse)
-				);
-			}
+					// if it's true, skip ahead
+					// 如果条件为真，跳过原版检查（跳过 if 块）
+					c.Emit(OpCodes.Brtrue_S, skip);
 
-			c.Index = 0;
+					// move forwards to avoid an infloop
+					// 向后移动，避免无限循环
+					c.GotoNext(MoveType.After,
+						i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse)
+					);
+				}
 
-			// match isGourmand', brtrue edition
-			// 匹配 'isGourmand'，brtrue 版本
-			while (c.TryGotoNext(MoveType.After,
-				i => i.MatchLdarg(0),
-				i => i.MatchLdfld<Player>("objectInStomach"),
-				i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue) // 匹配 brtrue（真时跳转）
-			))
-			{
-				// a lot easier here, since you can just insert another cond
-				// 这里简单多了，因为你可以直接插入另一个条件
-				ILLabel? proceedCond = c.Prev.Operand as ILLabel;
-				//c.Prev 光标位置前的指令，或如果光标位于指令列表开头，则为null
 
-				int originalIndex = c.Index;
-				if (c.Next.MatchLdarg(0))
+
+				c.Index = 0;
+
+				// match isGourmand', brtrue edition
+				// 匹配 'isGourmand'，brtrue 版本
+				while (c.TryGotoNext(MoveType.After,
+					i => i.MatchLdarg(0),
+					i => i.MatchLdfld<Player>("objectInStomach"),
+					i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue) // 匹配 brtrue（真时跳转）
+				))
 				{
-					c.Index += 1;
-					if (c.Next.MatchLdfld<Player>("swallowAndRegurgitateCounter"))
+					// a lot easier here, since you can just insert another cond
+					// 这里简单多了，因为你可以直接插入另一个条件
+					ILLabel? proceedCond = c.Prev.Operand as ILLabel;//跳转指令.Operand  跳转处
+																	 //c.Prev 光标位置前的指令，或如果光标位于指令列表开头，则为null
+
+					//ILLabel? nextCond = c.Next.Operand as ILLabel;
+					var markCursor = new ILCursor(il);
+					markCursor.Index = c.Index + 1;  // 指向 c.Next
+					var labelAtNext = markCursor.MarkLabel();  // 在 c.Next 前面打标签
+
+
+					int originalIndex = c.Index;
+
+					//向前移动
+					c.GotoPrev(MoveType.Before,
+						i => i.MatchLdarg(0),
+						i => i.Match(OpCodes.Ldfld)
+					);
+					int originalIndexBefore = c.Index;
+
+					c.Index = originalIndex;
+					if (c.Next.MatchLdarg(0))
 					{
 						c.Index += 1;
-						if (c.Next.MatchLdcI4(90))
+						if (c.Next.MatchLdfld<Player>("swallowAndRegurgitateCounter"))
 						{
 							c.Index += 1;
-							if (c.Next.MatchBle(out _))
+							if (c.Next.MatchLdcI4(90))
 							{
-								Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull");
+								c.Index += 1;
+								if (c.Next.MatchBle(out _))
+								{
+									Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull");
 
-								c.Index = originalIndex;
+									c.Index = originalIndexBefore;
+
+									c.Emit(OpCodes.Ldarg_0);
+									// insert the condition
+									// 插入条件判断
+									c.EmitDelegate<Func<Player, bool>>(player =>
+									{
+										player.GetPlayerVar(out var pv);
+										var stomachData = pv.stomachData;
+
+										Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull: {stomachData.IsFull}");
+										return stomachData.IsFull;
+									});
+
+									//出去 if
+									c.Emit(OpCodes.Brtrue_S, proceedCond);
+
+									//c.Emit(OpCodes.Br_S, nextCond);
+									//c.Emit(OpCodes.Br_S, labelAtNext);
+
+									// move forwards to avoid an infloop
+									// 向后移动，避免无限循环
+									c.GotoNext(MoveType.After,
+										i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+									);
+
+									break;
+								}
+							}
+						}
+					}
+					c.Index = originalIndex;
+					if (c.Next.MatchLdarg(0))
+					{
+						c.Index += 1;
+						if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
+						{
+							c.Index += 1;
+							if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
+							{
+								Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+
+								c.Index = originalIndexBefore;
 
 								c.Emit(OpCodes.Ldarg_0);
 								// insert the condition
@@ -181,81 +242,71 @@ namespace ExtensionLib
 									player.GetPlayerVar(out var pv);
 									var stomachData = pv.stomachData;
 
-									Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull: {stomachData.IsFull}");
-									return stomachData.IsFull;
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
+
+									int inHand = InHand(player, true);
+
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
+									if (inHand != -1 && !stomachData.IsFull)
+									{
+										return false;
+									}
+
+									return !stomachData.IsEmpty;
 								});
 
-								//出去 if
+								// if it's true, proceed as usual
+								// 如果条件为真，照常执行（跳进 if 块）
 								c.Emit(OpCodes.Brtrue_S, proceedCond);
+
+								//c.Emit(OpCodes.Br_S, nextCond);
+								//c.Emit(OpCodes.Br_S, labelAtNext);
+
+								// move forwards to avoid an infloop
+								// 向后移动，避免无限循环
+								c.GotoNext(MoveType.After,
+									i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+								);
 
 								break;
 							}
 						}
 					}
-				}
-				c.Index = originalIndex;
-				if (c.Next.MatchLdarg(0))
-				{
-					c.Index += 1;
-					if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
+					c.Index = originalIndexBefore;
+
+					c.Emit(OpCodes.Ldarg_0);
+					// insert the condition
+					// 插入条件判断
+					c.EmitDelegate<Func<Player, bool>>(player =>
 					{
-						c.Index += 1;
-						if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
-						{
-							Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+						player.GetPlayerVar(out var pv);
+						var stomachData = pv.stomachData;
 
-							c.Index = originalIndex;
+						Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
+						return !stomachData.IsEmpty;
 
-							c.Emit(OpCodes.Ldarg_0);
-							// insert the condition
-							// 插入条件判断
-							c.EmitDelegate<Func<Player, bool>>(player =>
-							{
-								player.GetPlayerVar(out var pv);
-								var stomachData = pv.stomachData;
+						//return false;
+						//return CanRegurgitate(player);
+					});
 
-								Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
-                                Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
+					// if it's true, proceed as usual
+					// 如果条件为真，照常执行（跳进 if 块）
+					c.Emit(OpCodes.Brtrue_S, proceedCond);
 
-                                int inHand = InHand(player, true);
+					//c.Emit(OpCodes.Br_S, nextCond);
+					//c.Emit(OpCodes.Br_S, labelAtNext);
 
-								Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
-								if (inHand != -1 && !stomachData.IsFull)
-								{
-									return false;
-								}
-
-								return !stomachData.IsEmpty;
-							});
-
-							// if it's true, proceed as usual
-							// 如果条件为真，照常执行（跳进 if 块）
-							c.Emit(OpCodes.Brtrue_S, proceedCond);
-
-							break;
-						}
-					}
+					// move forwards to avoid an infloop
+					// 向后移动，避免无限循环
+					c.GotoNext(MoveType.After,
+						i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+					);
 				}
-				c.Index = originalIndex;
-
-				c.Emit(OpCodes.Ldarg_0);
-				// insert the condition
-				// 插入条件判断
-				c.EmitDelegate<Func<Player, bool>>(player =>
-				{
-					player.GetPlayerVar(out var pv);
-					var stomachData = pv.stomachData;
-
-					Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
-					return !stomachData.IsEmpty;
-
-					//return false;
-					//return CanRegurgitate(player);
-				});
-
-				// if it's true, proceed as usual
-				// 如果条件为真，照常执行（跳进 if 块）
-				c.Emit(OpCodes.Brtrue_S, proceedCond);
+			}
+			catch (Exception ex)
+			{
+				Logs.Write($"[Player_GrabUpdate] Exception: {ex}");
 			}
 		}
 
