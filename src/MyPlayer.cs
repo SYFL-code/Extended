@@ -148,19 +148,20 @@ namespace ExtensionLib
 			}*/
 
 
-			logIndex = 0;
+			logIndex = 3;
 			if (c.TryGotoNext(MoveType.Before,
 				i => i.MatchLdarg(0),
 				i => i.MatchLdfld<Player>("objectInStomach"),//objectInStomach spearOnBack
 				i => i.MatchBrtrue(out _),
 				i => i.MatchLdarg(0),
 				i => i.MatchCall<Player>("get_isGourmand"),
-				i => i.MatchBrtrue(out _)
-				))
+                i => i.MatchBrtrue(out _)
+                //i => i.Match(OpCodes.Brtrue) || i.Match(OpCodes.Brfalse)
+                ))
 			{
 				LogsWrite(c, logs, logIndex);
 
-				c.Emit(OpCodes.Ldarg, 0);
+				/*c.Emit(OpCodes.Ldarg, 0);
 
 				c.EmitDelegate<Action<Player>>(player =>
 				{
@@ -172,12 +173,37 @@ namespace ExtensionLib
 
 						Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
 					}
-				});
-			}
-			else
+				});*/
+
+				c.Remove();
+				c.Remove();
+
+                c.Emit(OpCodes.Ldarg, 0);
+
+                c.EmitDelegate<Func<Player, bool>>(player =>
+                {
+                    //Log.LogInfo($"[logIndex:{logIndex}]");
+
+                    player.GetPlayerVar(out var pv);
+                    var stomachData = pv.stomachData;
+
+                    int canBeSwallow = BeSwallowed(player);
+
+                    if (canBeSwallow != -1)// 可以被吞咽
+                    {
+                        Log.LogInfo($"可以被吞咽");
+                        return false;// 不要反刍
+                    }
+                    Log.LogInfo($"不可以被吞咽 !stomachData.IsEmpty[{!stomachData.IsEmpty}]");
+                    return !stomachData.IsEmpty;
+                });
+            }
+            else
 			{
 				Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
 			}
+
+
 
 			Logs.Write("[Player_GrabUpdate] Patch entered_");
 
