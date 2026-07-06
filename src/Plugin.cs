@@ -13,8 +13,9 @@ namespace ExtensionLib
 		public const string Name = "Extension Lib";
 		public const string Version = "0.1.0";
 
-		public const string version = "0.1.43";
-		private const bool startScreen = true;//true false
+		public const string version = "0.1.45";
+		private bool EnableStartScreen = true;//true false
+		public static bool EnableLog = true;
 
         private static bool isEnabled;
 
@@ -83,7 +84,10 @@ namespace ExtensionLib
 		private RainWorldGame.SetupValues RainWorldLoadSetupValues(On.RainWorld.orig_LoadSetupValues orig, bool distributionBuild)
 		{
 			RainWorldGame.SetupValues result = orig(distributionBuild);
-			result.startScreen = startScreen;
+			if (!EnableStartScreen)
+			{
+				result.startScreen = false;
+            }
 			return result;
 		}
 

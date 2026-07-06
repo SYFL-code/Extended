@@ -52,8 +52,10 @@ namespace ExtensionLib
 					Owner._playerRef.TryGetTarget(out Player? player);
 					if (player == null)
 					{
-						throw new NullReferenceException("_playerRef.player == null".MessageLog());
-					}
+                        Log.LogError("_playerRef.player: null");
+                        //throw new NullReferenceException("_playerRef.player: null".MessageLog());
+                        return null;
+                    }
 					return player.objectInStomach;
 				}
 				set
@@ -61,8 +63,10 @@ namespace ExtensionLib
 					Owner._playerRef.TryGetTarget(out Player? player);
 					if (player == null)
 					{
-						throw new NullReferenceException("_playerRef.player == null".MessageLog());
-					}
+						Log.LogError("_playerRef.player: null");
+                        //throw new NullReferenceException("_playerRef.player: null".MessageLog());
+                        return;
+                    }
 					player.objectInStomach = value;
 				}
 			}// 指向 player.objectInStomach

@@ -42,6 +42,8 @@ namespace ExtensionLib
 
 			//playerVars.Add(player, new PlayerVar(player));
 			player.GetPlayerVar();
+
+			MyPlayer.Player_ctor(orig, player, abstractCreature, world);
         }
 
 		public static PlayerVar GetPlayerVar(this Player player)

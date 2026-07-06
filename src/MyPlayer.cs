@@ -21,7 +21,7 @@ namespace ExtensionLib
 
 		public static void Hook()
 		{
-			On.Player.ctor += Player_ctor;
+			//On.Player.ctor += Player_ctor;
 			On.Player.Update += Player_Update;
 			On.Player.Destroy += Player_Destroy;
 
@@ -39,7 +39,7 @@ namespace ExtensionLib
 
 		public static void Hook_()
 		{
-			On.Player.ctor -= Player_ctor;
+			//On.Player.ctor -= Player_ctor;
 			On.Player.Update -= Player_Update;
 			On.Player.Destroy -= Player_Destroy;
 
@@ -996,21 +996,21 @@ namespace ExtensionLib
 		}
 
 
-		private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abs, World world)
+        public static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abs, World world)
 		{
 			orig(player, abs, world);
 
 
 			Log.LogDebug("Player ctor");
 
-            int N = player.playerState.playerNumber;
+            /*int N = player.playerState.playerNumber;
             if (world.game.session is ArenaGameSession)//竞技场模式
             {
                 if (GlobalVar.playerVars.TryGetValue(N, out _))
                 {
                     GlobalVar.playerVars.Remove(N);
                 }
-            }
+            }*/
 
             player.GetPlayerVar(out var pv);
 			var stomachData = pv.stomachData;

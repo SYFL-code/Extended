@@ -15,7 +15,7 @@ namespace ExtensionLib
 		//public static ManualLogSource? log { get; private set; }
 		private static ManualLogSource? log;
 
-		private static bool EnableLog { get; set; } = true;
+		private static bool EnableLog => Plugin.EnableLog;
 		private static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
 
 		public static void SetLog(ManualLogSource logger) => log = logger;
@@ -169,12 +169,16 @@ namespace ExtensionLib
 
 		public static void Write(string msg, bool other = true)
 		{
-			if (!other)
+            if (!Plugin.EnableLog)
+			{
+				return;
+			}
+
+            if (!other)
 			{
                 File.AppendAllText(path, $"{msg}\n");
 				return;
             }
-
 			File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{Plugin.version}] {msg}\n");
 		}
 	}
