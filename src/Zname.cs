@@ -330,11 +330,22 @@ namespace ExtensionLib
 	}
 }
 
-// IsEmpty
-// IsEmpty
-// IsEmpty
+// !IsFull
+// 跳进去
+
+// !IsEmpty
+// 跳进去
+
+// !IsEmpty
+// if (inHand != -1 && !stomachData.IsFull)return false;
+// 跳进去
+
 // == null
-// IsFull
+// 跳出去
+
+// !IsFull
+// 跳出去
+
 
 #region zs
 /*if (c.TryGotoNext(MoveType.Before,

@@ -167,11 +167,16 @@ namespace ExtensionLib
 	{
 		private static readonly string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
 
-		public static void Write(string msg)
+		public static void Write(string msg, bool other = true)
 		{
+			if (!other)
+			{
+                File.AppendAllText(path, $"{msg}\n");
+				return;
+            }
 
-            File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{Plugin.version}] {msg}\n");
-        }
+			File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{Plugin.version}] {msg}\n");
+		}
 	}
 
 
