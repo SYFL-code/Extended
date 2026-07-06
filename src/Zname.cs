@@ -340,7 +340,7 @@ namespace ExtensionLib
 // if (inHand != -1 && !stomachData.IsFull)return false;
 // 跳进去
 
-// == null
+// == null   IsEmpty
 // 跳出去
 
 // !IsFull

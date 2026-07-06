@@ -97,9 +97,9 @@ namespace ExtensionLib
 		{
 			try
 			{
-                //Logs.Write(il.ToString(), false);
+				//Logs.Write(il.ToString(), false);
 
-                ILCursor c = new ILCursor(il);
+				ILCursor c = new ILCursor(il);
 
 				// replace all mentions of 'isGourmand' with the equivalent of '(isGourmand || CanRegurgitate(player))'
 				// 将所有对 'isGourmand' 的引用替换为等价于 '(isGourmand || CanRegurgitate(player))' 的逻辑
@@ -112,30 +112,32 @@ namespace ExtensionLib
 					i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转）
 				))
 				{
+					// 1
+
 					Logs.Write($"[logIndex:brfalse edition]");
 
-                    // this is the condition we should skip to if our check succeeds, replicating the behavior if the vanilla che
-                    // 如果我们的检查通过，就跳转到这个标签，复制原版检查通过时的行为
-                    // 如果我们的检查成功，这是我们应该跳过的条件，复制普通che的行为
-                    ILLabel skip = c.MarkLabel();
+					// this is the condition we should skip to if our check succeeds, replicating the behavior if the vanilla che
+					// 如果我们的检查通过，就跳转到这个标签，复制原版检查通过时的行为
+					// 如果我们的检查成功，这是我们应该跳过的条件，复制普通che的行为
+					ILLabel skip = c.MarkLabel();
 
-                    ILLabel? proceedCond = c.Prev.Operand as ILLabel;//跳转指令.Operand  跳转处
+					ILLabel? proceedCond = c.Prev.Operand as ILLabel;//跳转指令.Operand  跳转处
 					//c.Prev 光标位置前的指令，或如果光标位于指令列表开头，则为null
 
-                    //向前移动
-                    c.GotoPrev(MoveType.Before,
+					//向前移动
+					c.GotoPrev(MoveType.Before,
 						i => i.MatchLdarg(0),
 						i => i.Match(OpCodes.Ldfld)
 					);
 
-                    c.Index += 1;
+					c.Index += 1;
 
-                    c.Remove();
-                    c.Remove();
+					c.Remove();
+					c.Remove();
 
-                    // insert the condition
-                    // 插入条件判断
-                    //c.Emit(OpCodes.Ldarg_0);
+					// insert the condition
+					// 插入条件判断
+					//c.Emit(OpCodes.Ldarg_0);
 					c.EmitDelegate<Func<Player, bool>>(player =>
 					{
 						player.GetPlayerVar(out var pv);
@@ -145,11 +147,11 @@ namespace ExtensionLib
 
 						return !stomachData.IsFull;
 
-                        //return InHand(player);
-                    });
+						//return InHand(player);
+					});
 
-                    // 如果条件为真，跳进去
-                    c.Emit(OpCodes.Brtrue, proceedCond);
+					// 如果条件为真，跳进去
+					c.Emit(OpCodes.Brtrue, proceedCond);
 
 					// move forwards to avoid an infloop
 					// 向后移动，避免无限循环
@@ -178,9 +180,9 @@ namespace ExtensionLib
 					//c.Prev 光标位置前的指令，或如果光标位于指令列表开头，则为null
 
 					//ILLabel? nextCond = c.Next.Operand as ILLabel;
-					var markCursor = new ILCursor(il);
-					markCursor.Index = c.Index + 1;  // 指向 c.Next
-					var labelAtNext = markCursor.MarkLabel();  // 在 c.Next 前面打标签
+					//var markCursor = new ILCursor(il);
+					//markCursor.Index = c.Index + 1;  // 指向 c.Next
+					//var labelAtNext = markCursor.MarkLabel();  // 在 c.Next 前面打标签
 
 
 					int originalIndex = c.Index;
@@ -192,30 +194,77 @@ namespace ExtensionLib
 					);
 					int originalIndexBefore = c.Index;
 
-                    bool logged = false;
-
-                    c.Index = originalIndex;
+					// 2
+					c.Index = originalIndex;
 					if (c.Next.MatchLdarg(0))
 					{
 						c.Index += 1;
 						if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
 						{
-							c.Index += 1;
-							if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
-							{
-								Logs.Write($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+                            // IL_064e: brfalse.s IL_066b
 
-								c.Index = originalIndexBefore;
+                            c.Index += 1;
+							if (c.Next.Match(OpCodes.Brfalse_S) || c.Next.Match(OpCodes.Brfalse))
+							{
+
+                                Logs.Write($"[logIndex:brtrue edition] 2 IsEmpty");
+
+                                c.Index = originalIndexBefore;
 
                                 c.Remove();
                                 c.Remove();
                                 c.Remove();
 
                                 c.Emit(OpCodes.Ldarg_0);
-								// insert the condition
-								// 插入条件判断
-								c.EmitDelegate<Func<Player, bool>>(player =>
-								{
+                                c.EmitDelegate<Func<Player, bool>>(player =>
+                                {
+                                    player.GetPlayerVar(out var pv);
+                                    var stomachData = pv.stomachData;
+
+                                    Log.LogInfo($"[logIndex:brtrue edition] 2 IsEmpty: {stomachData.IsEmpty}");
+                                    return !stomachData.IsEmpty;
+                                });
+
+                                c.Emit(OpCodes.Brtrue, proceedCond);
+
+                                // move forwards to avoid an infloop
+                                // 向后移动，避免无限循环
+                                c.GotoNext(MoveType.After,
+                                    i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+                                );
+
+                                continue;
+                            }
+
+						}
+					}
+
+
+					// 3
+					c.Index = originalIndex;
+					if (c.Next.MatchLdarg(0))
+					{
+						c.Index += 1;
+						if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
+						{
+							// IL_18dd: brtrue.s IL_18fe
+
+							c.Index += 1;
+							if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
+							{
+                                Logs.Write($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+
+                                c.Index = originalIndexBefore;
+
+                                c.Remove();
+                                c.Remove();
+                                c.Remove();
+
+                                c.Emit(OpCodes.Ldarg_0);
+                                // insert the condition
+                                // 插入条件判断
+                                c.EmitDelegate<Func<Player, bool>>(player =>
+                                {
                                     /*if (!logged)
                                     {
                                         foreach (var instruct in il.Instrs)
@@ -226,39 +275,42 @@ namespace ExtensionLib
                                     }*/
 
                                     player.GetPlayerVar(out var pv);
-									var stomachData = pv.stomachData;
+                                    var stomachData = pv.stomachData;
 
-									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
-									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
+                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
+                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
 
-									int inHand = InHand(player, true);
+                                    int inHand = InHand(player, true);
 
-									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
-									if (inHand != -1 && !stomachData.IsFull)
-									{
-										return false;
-									}
+                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
+                                    if (inHand != -1 && !stomachData.IsFull)
+                                    {
+                                        return false;
+                                    }
 
-									return !stomachData.IsEmpty;
-								});
+                                    return !stomachData.IsEmpty;
+                                });
 
-								// if it's true, proceed as usual
-								// 如果条件为真，照常执行（跳进 if 块）
-								c.Emit(OpCodes.Brtrue, proceedCond);
+                                // if it's true, proceed as usual
+                                // 如果条件为真，照常执行
+                                c.Emit(OpCodes.Brtrue, proceedCond);
 
-								//c.Emit(OpCodes.Br_S, nextCond);
-								//c.Emit(OpCodes.Br_S, labelAtNext);
+                                //c.Emit(OpCodes.Br_S, nextCond);
+                                //c.Emit(OpCodes.Br_S, labelAtNext);
 
-								// move forwards to avoid an infloop
-								// 向后移动，避免无限循环
-								c.GotoNext(MoveType.After,
-									i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
-								);
+                                // move forwards to avoid an infloop
+                                // 向后移动，避免无限循环
+                                c.GotoNext(MoveType.After,
+                                    i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+                                );
 
-								continue;
-							}
-						}
+                                continue;
+                            }
+
+                        }
 					}
+
+					// 5
 					c.Index = originalIndex;
 					if (c.Next.MatchLdarg(0))
 					{
@@ -279,13 +331,13 @@ namespace ExtensionLib
 									c.Index = originalIndexBefore;
 									c.Index += 1;
 
-                                    c.Remove();
-                                    c.Remove();
+									c.Remove();
+									c.Remove();
 
-                                    //c.Emit(OpCodes.Ldarg_0);
-                                    // insert the condition
-                                    // 插入条件判断
-                                    c.EmitDelegate<Func<Player, bool>>(player =>
+									//c.Emit(OpCodes.Ldarg_0);
+									// insert the condition
+									// 插入条件判断
+									c.EmitDelegate<Func<Player, bool>>(player =>
 									{
 										player.GetPlayerVar(out var pv);
 										var stomachData = pv.stomachData;
@@ -311,7 +363,14 @@ namespace ExtensionLib
 							}
 						}
 					}
-					c.Index = originalIndexBefore;
+
+                    Logs.Write($"[logIndex:brtrue edition] ???");
+
+                    c.Index = originalIndexBefore;
+
+					c.Remove();
+					c.Remove();
+					c.Remove();
 
 					c.Emit(OpCodes.Ldarg_0);
 					// insert the condition
@@ -329,7 +388,7 @@ namespace ExtensionLib
 					});
 
 					// if it's true, proceed as usual
-					// 如果条件为真，照常执行（跳进 if 块）
+					// 如果条件为真，照常执行
 					c.Emit(OpCodes.Brtrue, proceedCond);
 
 					//c.Emit(OpCodes.Br_S, nextCond);
@@ -342,8 +401,8 @@ namespace ExtensionLib
 					);
 				}
 
-                Logs.Write(il.ToString(), false);
-            }
+				Logs.Write(il.ToString(), false);
+			}
 			catch (Exception ex)
 			{
 				Logs.Write($"[Player_GrabUpdate] Exception: {ex}");
@@ -425,337 +484,337 @@ namespace ExtensionLib
 		}
 
 
-        /*#region DumpIL
-        private static void DumpIL(ILContext il, string title = "IL Dump")
-        {
-            try
-            {
-                Logs.Write($"========== {title} ==========", false);
+		/*#region DumpIL
+		private static void DumpIL(ILContext il, string title = "IL Dump")
+		{
+			try
+			{
+				Logs.Write($"========== {title} ==========", false);
 
-                if (il.Body == null)
-                {
-                    Logs.Write("警告: ILContext.Body 为 null", false);
-                    return;
-                }
+				if (il.Body == null)
+				{
+					Logs.Write("警告: ILContext.Body 为 null", false);
+					return;
+				}
 
-                int index = 0;
-                foreach (var instr in il.Instrs)
-                {
-                    try
-                    {
-                        string formatted = FormatInstruction(instr);
-                        Logs.Write(formatted, false);
-                        index++;
-                    }
-                    catch (Exception ex)
-                    {
-                        Logs.Write($"IL_{instr.Offset:X4}: [无法读取] - {ex.Message}", false);
-                        index++;
-                    }
-                }
-                Logs.Write($"=================================", false);
-            }
-            catch (Exception ex)
-            {
-                Logs.Write($"DumpIL 失败: {ex.Message}");
-            }
-        }
+				int index = 0;
+				foreach (var instr in il.Instrs)
+				{
+					try
+					{
+						string formatted = FormatInstruction(instr);
+						Logs.Write(formatted, false);
+						index++;
+					}
+					catch (Exception ex)
+					{
+						Logs.Write($"IL_{instr.Offset:X4}: [无法读取] - {ex.Message}", false);
+						index++;
+					}
+				}
+				Logs.Write($"=================================", false);
+			}
+			catch (Exception ex)
+			{
+				Logs.Write($"DumpIL 失败: {ex.Message}");
+			}
+		}
 
-        private static string FormatInstruction(Instruction instr)
-        {
-            if (instr == null) return "null";
+		private static string FormatInstruction(Instruction instr)
+		{
+			if (instr == null) return "null";
 
-            // 基本格式：偏移量 + 操作码
-            string result = $"IL_{instr.Offset:X4}: {instr.OpCode}";
+			// 基本格式：偏移量 + 操作码
+			string result = $"IL_{instr.Offset:X4}: {instr.OpCode}";
 
-            // 处理操作数
-            if (instr.Operand != null)
-            {
-                try
-                {
-                    // 根据操作数类型格式化
-                    if (instr.Operand is Instruction target)
-                    {
-                        // 跳转指令的目标
-                        result += $" IL_{target.Offset:X4}";
-                    }
-                    else if (instr.Operand is MethodReference method)
-                    {
-                        // 方法调用
-                        string declaringType = method.DeclaringType?.Name ?? "Unknown";
-                        result += $" {declaringType}::{method.Name}";
+			// 处理操作数
+			if (instr.Operand != null)
+			{
+				try
+				{
+					// 根据操作数类型格式化
+					if (instr.Operand is Instruction target)
+					{
+						// 跳转指令的目标
+						result += $" IL_{target.Offset:X4}";
+					}
+					else if (instr.Operand is MethodReference method)
+					{
+						// 方法调用
+						string declaringType = method.DeclaringType?.Name ?? "Unknown";
+						result += $" {declaringType}::{method.Name}";
 
-                        // 如果有泛型参数
-                        if (method.HasGenericParameters)
-                        {
-                            result += $"<{string.Join(",", method.GenericParameters.Select(p => p.Name))}>";
-                        }
-                    }
-                    else if (instr.Operand is MethodDefinition methodDef)
-                    {
-                        result += $" {methodDef.DeclaringType?.Name}::{methodDef.Name}";
-                    }
-                    else if (instr.Operand is FieldReference field)
-                    {
-                        // 字段引用
-                        string declaringType = field.DeclaringType?.Name ?? "Unknown";
-                        result += $" {declaringType}::{field.Name}";
-                    }
-                    else if (instr.Operand is FieldDefinition fieldDef)
-                    {
-                        result += $" {fieldDef.DeclaringType?.Name}::{fieldDef.Name}";
-                    }
-                    else if (instr.Operand is ParameterDefinition param)
-                    {
-                        // 参数
-                        result += $" {param.Name ?? $"param_{param.Index}"}";
-                    }
-                    else if (instr.Operand is VariableDefinition var)
-                    {
-                        // 局部变量
-                        result += $" {$"V_{var.Index}"}";//var.Name ?? 
-                    }
-                    else if (instr.Operand is string str)
-                    {
-                        // 字符串常量
-                        result += $" \"{str}\"";
-                    }
-                    else if (instr.Operand is int intVal)
-                    {
-                        // 整数常量
-                        result += $" {intVal}";
-                    }
-                    else if (instr.Operand is long longVal)
-                    {
-                        result += $" {longVal}";
-                    }
-                    else if (instr.Operand is float floatVal)
-                    {
-                        result += $" {floatVal}";
-                    }
-                    else if (instr.Operand is double doubleVal)
-                    {
-                        result += $" {doubleVal}";
-                    }
-                    else if (instr.Operand is IMetadataTokenProvider tokenProvider)
-                    {
-                        // 通用处理
-                        result += $" {instr.Operand}";
-                    }
-                    else
-                    {
-                        // 未知类型，显示类型名
-                        result += $" [{instr.Operand.GetType().Name}]";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    result += $" [操作数错误: {ex.Message}]";
-                }
-            }
+						// 如果有泛型参数
+						if (method.HasGenericParameters)
+						{
+							result += $"<{string.Join(",", method.GenericParameters.Select(p => p.Name))}>";
+						}
+					}
+					else if (instr.Operand is MethodDefinition methodDef)
+					{
+						result += $" {methodDef.DeclaringType?.Name}::{methodDef.Name}";
+					}
+					else if (instr.Operand is FieldReference field)
+					{
+						// 字段引用
+						string declaringType = field.DeclaringType?.Name ?? "Unknown";
+						result += $" {declaringType}::{field.Name}";
+					}
+					else if (instr.Operand is FieldDefinition fieldDef)
+					{
+						result += $" {fieldDef.DeclaringType?.Name}::{fieldDef.Name}";
+					}
+					else if (instr.Operand is ParameterDefinition param)
+					{
+						// 参数
+						result += $" {param.Name ?? $"param_{param.Index}"}";
+					}
+					else if (instr.Operand is VariableDefinition var)
+					{
+						// 局部变量
+						result += $" {$"V_{var.Index}"}";//var.Name ?? 
+					}
+					else if (instr.Operand is string str)
+					{
+						// 字符串常量
+						result += $" \"{str}\"";
+					}
+					else if (instr.Operand is int intVal)
+					{
+						// 整数常量
+						result += $" {intVal}";
+					}
+					else if (instr.Operand is long longVal)
+					{
+						result += $" {longVal}";
+					}
+					else if (instr.Operand is float floatVal)
+					{
+						result += $" {floatVal}";
+					}
+					else if (instr.Operand is double doubleVal)
+					{
+						result += $" {doubleVal}";
+					}
+					else if (instr.Operand is IMetadataTokenProvider tokenProvider)
+					{
+						// 通用处理
+						result += $" {instr.Operand}";
+					}
+					else
+					{
+						// 未知类型，显示类型名
+						result += $" [{instr.Operand.GetType().Name}]";
+					}
+				}
+				catch (Exception ex)
+				{
+					result += $" [操作数错误: {ex.Message}]";
+				}
+			}
 
-            return result;
-        }
-        #endregion*/
-
-
-        //private static void Player_GrabUpdate(ILContext il)
-        //{
-        //	Logs.Write("[Player_GrabUpdate] Patch entered");
-
-        //	ILCursor c = new ILCursor(il);
-
-        //	Dictionary<int, bool> logs = new();
-        //	for (int i = 0; i < 15; i++)
-        //	{
-        //		logs.Add(i, false);
-        //	}
-        //	int logIndex = 0;
-
-        //	logIndex = 1;
-        //	// ============================================================
-        //	// 问题1: IL_0451 附近
-        //	// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
-        //	// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
-        //	// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
-        //	// ============================================================
-        //	/*if (c.TryGotoNext(MoveType.Before,
-        //		i => i.MatchLdarg(0),
-        //		i => i.MatchLdfld<Player>("objectInStomach"),
-        //		i => i.MatchBrfalse(out _),
-        //		i => i.MatchLdarg(0),
-        //		i => i.MatchCall<Player>("get_CanPutSpearToBack")
-        //		))
-        //	{
-        //		LogsWrite(c, logs, logIndex);
-
-        //		c.Remove();
-        //		c.Remove();
-        //		//c.Remove();
-
-        //		// 插入: 检查胃是否未满
-        //		//原逻辑 objectInStomach == null → brfalse 跳转(满足条件)
-
-        //		c.Emit(OpCodes.Ldarg, 0);
-        //		c.EmitDelegate<Func<Player, bool>>(player =>
-        //		{
-        //			Log.LogInfo($"[{logIndex}]");
-
-        //			player.GetPlayerVar(out var pv);
-        //			var stomachData = pv.stomachData;
-        //			return stomachData.IsFull;
-        //		});
-        //		//c.Emit(OpCodes.Brfalse,  跳转到 IL_046c 的标签 );
-        //	}
-        //	else
-        //	{
-        //		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
-        //	}*/
-
-        //	// 找到跳转目标，创建标签
-        //	//ILLabel? targetLabel = null;
-
-        // //         logIndex = 3;
-        //	//if (c.TryGotoNext(MoveType.Before,
-        //	//	i => i.MatchLdarg(0),
-        //	//	i => i.MatchLdfld<Player>("objectInStomach"),//objectInStomach spearOnBack
-        //	//	i => i.MatchBrtrue(out _),
-        //	//	i => i.MatchLdarg(0),
-        //	//	i => i.MatchCall<Player>("get_isGourmand"),
-        //	//	i => i.MatchBrtrue(out _)
-        //	//	//i => i.Match(OpCodes.Brtrue) || i.Match(OpCodes.Brfalse)
-        //	//	))
-        //	//{
-        //	//	LogsWrite(c, logs, logIndex);
-
-        //	//	/*c.Emit(OpCodes.Ldarg, 0);
-
-        //	//	c.EmitDelegate<Action<Player>>(player =>
-        //	//	{
-        //	//		if (!logs[logIndex] || Input.GetKey("c"))
-        //	//		{
-        //	//			logs[logIndex] = true;
-
-        //	//			Log.LogInfo($"[{logIndex}] {logIndex}");
-
-        //	//			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
-        //	//		}
-        //	//	});*/
-
-        //	//	c.Remove();
-        //	//	c.Remove();
-
-        //	//	c.Emit(OpCodes.Ldarg, 0);
-
-        //	//	c.EmitDelegate<Func<Player, bool>>(player =>
-        //	//	{
-        //	//		//Log.LogInfo($"[logIndex:{logIndex}]");
-
-        //	//		player.GetPlayerVar(out var pv);
-        //	//		var stomachData = pv.stomachData;
-
-        //	//		int canBeSwallow = BeSwallowed(player);
-
-        //	//		if (canBeSwallow != -1)// 可以被吞咽
-        //	//		{
-        //	//			Log.LogInfo($"可以被吞咽");
-        //	//			return false;// 不要反刍
-        //	//		}
-        //	//		Log.LogInfo($"不可以被吞咽 !IsEmpty[{!stomachData.IsEmpty}]");
-        //	//		return !stomachData.IsEmpty;
-        //	//	});
-        //	//}
-        //	//else
-        //	//{
-        //	//	Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
-        //	//}
+			return result;
+		}
+		#endregion*/
 
 
+		//private static void Player_GrabUpdate(ILContext il)
+		//{
+		//	Logs.Write("[Player_GrabUpdate] Patch entered");
 
-        //	logIndex = 5;
-        //	if (c.TryGotoNext(MoveType.Before,
-        //		i => i.MatchLdarg(0),
-        //		i => i.MatchLdfld<Player>("objectInStomach"),
-        //		i => i.MatchBrtrue(out _),// 出去if
-        //		i => i.MatchLdarg(0),
-        //		i => i.MatchLdfld<Player>("swallowAndRegurgitateCounter"),
-        //		i => i.MatchLdcI4(90),
-        //		i => i.MatchBle(out _)
-        //		))
-        //	{
-        //		LogsWrite(c, logs, logIndex);
+		//	ILCursor c = new ILCursor(il);
 
-        //		// 手动获取 brtrue 指令（当前 cursor 在 ldarg.0，brtrue 是第3条，index+2）
-        //		/*var brtrueInst = c.Instrs[c.Index + 2];
+		//	Dictionary<int, bool> logs = new();
+		//	for (int i = 0; i < 15; i++)
+		//	{
+		//		logs.Add(i, false);
+		//	}
+		//	int logIndex = 0;
 
-        //		// 获取跳转目标
-        //		var targetInst = (Instruction)brtrueInst.Operand;
+		//	logIndex = 1;
+		//	// ============================================================
+		//	// 问题1: IL_0451 附近
+		//	// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
+		//	// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
+		//	// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
+		//	// ============================================================
+		//	/*if (c.TryGotoNext(MoveType.Before,
+		//		i => i.MatchLdarg(0),
+		//		i => i.MatchLdfld<Player>("objectInStomach"),
+		//		i => i.MatchBrfalse(out _),
+		//		i => i.MatchLdarg(0),
+		//		i => i.MatchCall<Player>("get_CanPutSpearToBack")
+		//		))
+		//	{
+		//		LogsWrite(c, logs, logIndex);
 
-        //		// 创建标签
-        //		targetLabel = il.DefineLabel();
+		//		c.Remove();
+		//		c.Remove();
+		//		//c.Remove();
 
-        //		// 在目标位置打标签（需要另一个 cursor）
-        //		var markCursor = new ILCursor(il);
-        //		markCursor.Goto(targetInst, MoveType.Before);
-        //		markCursor.MarkLabel(targetLabel);*/
+		//		// 插入: 检查胃是否未满
+		//		//原逻辑 objectInStomach == null → brfalse 跳转(满足条件)
 
-        //		c.Remove();
-        //		c.Remove();
-        //		//c.Remove();
+		//		c.Emit(OpCodes.Ldarg, 0);
+		//		c.EmitDelegate<Func<Player, bool>>(player =>
+		//		{
+		//			Log.LogInfo($"[{logIndex}]");
 
-        //		c.Emit(OpCodes.Ldarg, 0);
+		//			player.GetPlayerVar(out var pv);
+		//			var stomachData = pv.stomachData;
+		//			return stomachData.IsFull;
+		//		});
+		//		//c.Emit(OpCodes.Brfalse,  跳转到 IL_046c 的标签 );
+		//	}
+		//	else
+		//	{
+		//		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+		//	}*/
 
-        //		c.EmitDelegate<Func<Player, bool>>(player =>
-        //		{
-        //			//Log.LogInfo($"[logIndex:{logIndex}]");
+		//	// 找到跳转目标，创建标签
+		//	//ILLabel? targetLabel = null;
 
-        //			player.GetPlayerVar(out var pv);
-        //			var stomachData = pv.stomachData;
+		// //         logIndex = 3;
+		//	//if (c.TryGotoNext(MoveType.Before,
+		//	//	i => i.MatchLdarg(0),
+		//	//	i => i.MatchLdfld<Player>("objectInStomach"),//objectInStomach spearOnBack
+		//	//	i => i.MatchBrtrue(out _),
+		//	//	i => i.MatchLdarg(0),
+		//	//	i => i.MatchCall<Player>("get_isGourmand"),
+		//	//	i => i.MatchBrtrue(out _)
+		//	//	//i => i.Match(OpCodes.Brtrue) || i.Match(OpCodes.Brfalse)
+		//	//	))
+		//	//{
+		//	//	LogsWrite(c, logs, logIndex);
 
-        //			int canBeSwallow = BeSwallowed(player);
+		//	//	/*c.Emit(OpCodes.Ldarg, 0);
 
-        //			if (canBeSwallow == -1)// 不可以被吞咽
-        //			{
-        //				Log.LogInfo($"不可以被吞咽");
-        //				return true;// 不要吞咽
-        //			}
-        //			Log.LogInfo($"可以被吞咽 IsFull[{stomachData.IsFull}]");
-        //			return stomachData.IsFull;// 出去if
-        //		});
-        //		// 用标签
-        //		//c.Emit(OpCodes.Brtrue, targetLabel);
-        //	}
-        //	else
-        //	{
-        //		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
-        //	}
+		//	//	c.EmitDelegate<Action<Player>>(player =>
+		//	//	{
+		//	//		if (!logs[logIndex] || Input.GetKey("c"))
+		//	//		{
+		//	//			logs[logIndex] = true;
+
+		//	//			Log.LogInfo($"[{logIndex}] {logIndex}");
+
+		//	//			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
+		//	//		}
+		//	//	});*/
+
+		//	//	c.Remove();
+		//	//	c.Remove();
+
+		//	//	c.Emit(OpCodes.Ldarg, 0);
+
+		//	//	c.EmitDelegate<Func<Player, bool>>(player =>
+		//	//	{
+		//	//		//Log.LogInfo($"[logIndex:{logIndex}]");
+
+		//	//		player.GetPlayerVar(out var pv);
+		//	//		var stomachData = pv.stomachData;
+
+		//	//		int canBeSwallow = BeSwallowed(player);
+
+		//	//		if (canBeSwallow != -1)// 可以被吞咽
+		//	//		{
+		//	//			Log.LogInfo($"可以被吞咽");
+		//	//			return false;// 不要反刍
+		//	//		}
+		//	//		Log.LogInfo($"不可以被吞咽 !IsEmpty[{!stomachData.IsEmpty}]");
+		//	//		return !stomachData.IsEmpty;
+		//	//	});
+		//	//}
+		//	//else
+		//	//{
+		//	//	Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+		//	//}
 
 
 
-        //	Logs.Write("[Player_GrabUpdate] Patch entered_");
+		//	logIndex = 5;
+		//	if (c.TryGotoNext(MoveType.Before,
+		//		i => i.MatchLdarg(0),
+		//		i => i.MatchLdfld<Player>("objectInStomach"),
+		//		i => i.MatchBrtrue(out _),// 出去if
+		//		i => i.MatchLdarg(0),
+		//		i => i.MatchLdfld<Player>("swallowAndRegurgitateCounter"),
+		//		i => i.MatchLdcI4(90),
+		//		i => i.MatchBle(out _)
+		//		))
+		//	{
+		//		LogsWrite(c, logs, logIndex);
 
-        //}
+		//		// 手动获取 brtrue 指令（当前 cursor 在 ldarg.0，brtrue 是第3条，index+2）
+		//		/*var brtrueInst = c.Instrs[c.Index + 2];
 
-        //public static void LogsWrite(ILCursor c, Dictionary<int, bool> logs, int logIndex)
-        //{
-        //	Logs.Write($"[Player_GrabUpdate]-[{logIndex}] found");
+		//		// 获取跳转目标
+		//		var targetInst = (Instruction)brtrueInst.Operand;
 
-        //	/*c.Emit(OpCodes.Ldarg, 0);
+		//		// 创建标签
+		//		targetLabel = il.DefineLabel();
 
-        //	c.EmitDelegate<Action<Player>>(player =>
-        //	{
-        //		if (!logs[logIndex] || Input.GetKey("c"))
-        //		{
-        //			logs[logIndex] = true;
+		//		// 在目标位置打标签（需要另一个 cursor）
+		//		var markCursor = new ILCursor(il);
+		//		markCursor.Goto(targetInst, MoveType.Before);
+		//		markCursor.MarkLabel(targetLabel);*/
 
-        //			Log.LogInfo($"[{logIndex}] {logIndex}");
+		//		c.Remove();
+		//		c.Remove();
+		//		//c.Remove();
 
-        //			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
-        //		}
-        //	});*/
-        //}
+		//		c.Emit(OpCodes.Ldarg, 0);
 
-        public static int InHand(Player player, bool CanBeSwallowed)
+		//		c.EmitDelegate<Func<Player, bool>>(player =>
+		//		{
+		//			//Log.LogInfo($"[logIndex:{logIndex}]");
+
+		//			player.GetPlayerVar(out var pv);
+		//			var stomachData = pv.stomachData;
+
+		//			int canBeSwallow = BeSwallowed(player);
+
+		//			if (canBeSwallow == -1)// 不可以被吞咽
+		//			{
+		//				Log.LogInfo($"不可以被吞咽");
+		//				return true;// 不要吞咽
+		//			}
+		//			Log.LogInfo($"可以被吞咽 IsFull[{stomachData.IsFull}]");
+		//			return stomachData.IsFull;// 出去if
+		//		});
+		//		// 用标签
+		//		//c.Emit(OpCodes.Brtrue, targetLabel);
+		//	}
+		//	else
+		//	{
+		//		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+		//	}
+
+
+
+		//	Logs.Write("[Player_GrabUpdate] Patch entered_");
+
+		//}
+
+		//public static void LogsWrite(ILCursor c, Dictionary<int, bool> logs, int logIndex)
+		//{
+		//	Logs.Write($"[Player_GrabUpdate]-[{logIndex}] found");
+
+		//	/*c.Emit(OpCodes.Ldarg, 0);
+
+		//	c.EmitDelegate<Action<Player>>(player =>
+		//	{
+		//		if (!logs[logIndex] || Input.GetKey("c"))
+		//		{
+		//			logs[logIndex] = true;
+
+		//			Log.LogInfo($"[{logIndex}] {logIndex}");
+
+		//			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
+		//		}
+		//	});*/
+		//}
+
+		public static int InHand(Player player, bool CanBeSwallowed)
 		{
 			int grasp = -1;
 			for (int i = 0; i < player.grasps.Length; i++)
