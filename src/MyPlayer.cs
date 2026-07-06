@@ -30,7 +30,10 @@ namespace ExtensionLib
 
 			On.Player.StomachGlowLightColor += Player_StomachGlowLightColor;
 
-			IL.Player.AddFood += Player_AddFood;
+			On.PlayerGraphics.Update += PlayerGraphics_Update;
+			On.SlugcatHand.Update += SlugcatHand_Update;
+
+			//IL.Player.AddFood += Player_AddFood;
 			IL.Player.GrabUpdate += Player_GrabUpdate;
 		}
 
@@ -45,7 +48,10 @@ namespace ExtensionLib
 
 			On.Player.StomachGlowLightColor -= Player_StomachGlowLightColor;
 
-			IL.Player.AddFood -= Player_AddFood;
+			On.PlayerGraphics.Update -= PlayerGraphics_Update;
+			On.SlugcatHand.Update -= SlugcatHand_Update;
+
+			//IL.Player.AddFood -= Player_AddFood;
 			IL.Player.GrabUpdate -= Player_GrabUpdate;
 		}
 
@@ -163,7 +169,6 @@ namespace ExtensionLib
 
 
 				c.Index = 0;
-
 				// match isGourmand', brtrue edition
 				// 匹配 'isGourmand'，brtrue 版本
 				while (c.TryGotoNext(MoveType.After,
@@ -201,40 +206,40 @@ namespace ExtensionLib
 						c.Index += 1;
 						if (c.Next.MatchCallOrCallvirt<Player>("get_isGourmand"))
 						{
-                            // IL_064e: brfalse.s IL_066b
+							// IL_064e: brfalse.s IL_066b
 
-                            c.Index += 1;
+							c.Index += 1;
 							if (c.Next.Match(OpCodes.Brfalse_S) || c.Next.Match(OpCodes.Brfalse))
 							{
 
-                                Logs.Write($"[logIndex:brtrue edition] 2 IsEmpty");
+								Logs.Write($"[logIndex:brtrue edition] 2 IsEmpty");
 
-                                c.Index = originalIndexBefore;
+								c.Index = originalIndexBefore;
 
-                                c.Remove();
-                                c.Remove();
-                                c.Remove();
+								c.Remove();
+								c.Remove();
+								c.Remove();
 
-                                c.Emit(OpCodes.Ldarg_0);
-                                c.EmitDelegate<Func<Player, bool>>(player =>
-                                {
-                                    player.GetPlayerVar(out var pv);
-                                    var stomachData = pv.stomachData;
+								c.Emit(OpCodes.Ldarg_0);
+								c.EmitDelegate<Func<Player, bool>>(player =>
+								{
+									player.GetPlayerVar(out var pv);
+									var stomachData = pv.stomachData;
 
-                                    Log.LogInfo($"[logIndex:brtrue edition] 2 IsEmpty: {stomachData.IsEmpty}");
-                                    return !stomachData.IsEmpty;
-                                });
+									Log.LogInfo($"[logIndex:brtrue edition] 2 IsEmpty: {stomachData.IsEmpty}");
+									return !stomachData.IsEmpty;
+								});
 
-                                c.Emit(OpCodes.Brtrue, proceedCond);
+								c.Emit(OpCodes.Brtrue, proceedCond);
 
-                                // move forwards to avoid an infloop
-                                // 向后移动，避免无限循环
-                                c.GotoNext(MoveType.After,
-                                    i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
-                                );
+								// move forwards to avoid an infloop
+								// 向后移动，避免无限循环
+								c.GotoNext(MoveType.After,
+									i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+								);
 
-                                continue;
-                            }
+								continue;
+							}
 
 						}
 					}
@@ -252,62 +257,62 @@ namespace ExtensionLib
 							c.Index += 1;
 							if (c.Next.Match(OpCodes.Brtrue_S) || c.Next.Match(OpCodes.Brtrue))
 							{
-                                Logs.Write($"[logIndex:brtrue edition] Regurgitate IsEmpty");
+								Logs.Write($"[logIndex:brtrue edition] Regurgitate IsEmpty");
 
-                                c.Index = originalIndexBefore;
+								c.Index = originalIndexBefore;
 
-                                c.Remove();
-                                c.Remove();
-                                c.Remove();
+								c.Remove();
+								c.Remove();
+								c.Remove();
 
-                                c.Emit(OpCodes.Ldarg_0);
-                                // insert the condition
-                                // 插入条件判断
-                                c.EmitDelegate<Func<Player, bool>>(player =>
-                                {
-                                    /*if (!logged)
-                                    {
-                                        foreach (var instruct in il.Instrs)
-                                        {
-                                            Debug.Log(instruct.ToString());
-                                        }
-                                        logged = true;
-                                    }*/
+								c.Emit(OpCodes.Ldarg_0);
+								// insert the condition
+								// 插入条件判断
+								c.EmitDelegate<Func<Player, bool>>(player =>
+								{
+									/*if (!logged)
+									{
+										foreach (var instruct in il.Instrs)
+										{
+											Debug.Log(instruct.ToString());
+										}
+										logged = true;
+									}*/
 
-                                    player.GetPlayerVar(out var pv);
-                                    var stomachData = pv.stomachData;
+									player.GetPlayerVar(out var pv);
+									var stomachData = pv.stomachData;
 
-                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
-                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsEmpty: {stomachData.IsEmpty}");
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate IsFull: {stomachData.IsFull}");
 
-                                    int inHand = InHand(player, true);
+									int inHand = InHand(player, true);
 
-                                    Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
-                                    if (inHand != -1 && !stomachData.IsFull)
-                                    {
-                                        return false;
-                                    }
+									Log.LogInfo($"[logIndex:brtrue edition] Regurgitate inHand: {inHand}");
+									if (inHand != -1 && !stomachData.IsFull)
+									{
+										return false;
+									}
 
-                                    return !stomachData.IsEmpty;
-                                });
+									return !stomachData.IsEmpty;
+								});
 
-                                // if it's true, proceed as usual
-                                // 如果条件为真，照常执行
-                                c.Emit(OpCodes.Brtrue, proceedCond);
+								// if it's true, proceed as usual
+								// 如果条件为真，照常执行
+								c.Emit(OpCodes.Brtrue, proceedCond);
 
-                                //c.Emit(OpCodes.Br_S, nextCond);
-                                //c.Emit(OpCodes.Br_S, labelAtNext);
+								//c.Emit(OpCodes.Br_S, nextCond);
+								//c.Emit(OpCodes.Br_S, labelAtNext);
 
-                                // move forwards to avoid an infloop
-                                // 向后移动，避免无限循环
-                                c.GotoNext(MoveType.After,
-                                    i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
-                                );
+								// move forwards to avoid an infloop
+								// 向后移动，避免无限循环
+								c.GotoNext(MoveType.After,
+									i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
+								);
 
-                                continue;
-                            }
+								continue;
+							}
 
-                        }
+						}
 					}
 
 					// 5
@@ -364,9 +369,9 @@ namespace ExtensionLib
 						}
 					}
 
-                    Logs.Write($"[logIndex:brtrue edition] ???");
+					Logs.Write($"[logIndex:brtrue edition] ???");
 
-                    c.Index = originalIndexBefore;
+					c.Index = originalIndexBefore;
 
 					c.Remove();
 					c.Remove();
@@ -399,6 +404,37 @@ namespace ExtensionLib
 					c.GotoNext(MoveType.After,
 						i => i.Match(OpCodes.Brtrue_S) || i.Match(OpCodes.Brtrue)
 					);
+				}
+
+				c.Index = 0;
+				//IL_1869: ldloc.1
+				//IL_186a: brfalse IL_1af2
+				if (c.TryGotoNext(MoveType.After,
+					i => i.MatchLdloc(1),
+					i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转 跳出去）
+				))
+				{
+					Logs.Write($"[logIndex:flag3 edition]");
+
+					c.Index -= 1;
+
+					// Ldarg.0	将索引为 0 的参数加载到计算堆栈上。
+					// Ldloc.0	将索引 0 处的局部变量加载到计算堆栈上。
+
+					c.Emit(OpCodes.Ldarg_0);
+					c.EmitDelegate<Func<bool, Player, bool>>((flag3, player) =>
+					{
+						//Log.LogInfo($"flag3: {flag3}");
+
+						player.GetPlayerVar(out var pv);
+						var stomachData = pv.stomachData;
+
+						pv.stomachData.swallowAndRegurgitate = flag3;
+
+						return flag3;
+					});
+
+
 				}
 
 				Logs.Write(il.ToString(), false);
@@ -483,6 +519,103 @@ namespace ExtensionLib
 			}
 		}
 
+		private static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics playerGraphics)
+		{
+			// 保存原版 objectInStomach 状态
+			Player player = playerGraphics.player;
+			var originalObject = player.objectInStomach;
+
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
+
+			if (stomachData.swallowAndRegurgitate)
+			{
+				bool Regurgitate;
+
+				int inHand = InHand(player, true);
+				if (inHand != -1 && !stomachData.IsFull)
+				{
+					Regurgitate = false;
+				}
+                else
+                {
+                    Regurgitate = !stomachData.IsEmpty;
+                }
+
+                bool swallow = true;
+
+				if (Regurgitate)
+				{
+					swallow = false;
+				}
+				if (stomachData.IsFull)
+				{
+					swallow = false;
+				}
+
+				Log.LogInfo($"swallow: {swallow}");
+				if (swallow)
+				{
+					player.objectInStomach = null;
+
+				}
+			}
+
+			orig(playerGraphics);
+
+			player.objectInStomach = originalObject;
+		}
+
+		public static void SlugcatHand_Update(On.SlugcatHand.orig_Update orig, SlugcatHand  hand)
+		{
+			if (hand.owner is PlayerGraphics playerGraphics)
+			{
+                // 保存原版 objectInStomach 状态
+                Player player = playerGraphics.player;
+                var originalObject = player.objectInStomach;
+
+                player.GetPlayerVar(out var pv);
+                var stomachData = pv.stomachData;
+
+                if (stomachData.swallowAndRegurgitate)
+                {
+                    bool Regurgitate;
+
+                    int inHand = InHand(player, true);
+                    if (inHand != -1 && !stomachData.IsFull)
+                    {
+                        Regurgitate = false;
+                    }
+                    else
+                    {
+                        Regurgitate = !stomachData.IsEmpty;
+                    }
+
+                    bool swallow = true;
+
+                    if (Regurgitate)
+                    {
+                        swallow = false;
+                    }
+                    if (stomachData.IsFull)
+                    {
+                        swallow = false;
+                    }
+
+                    Log.LogInfo($"swallow: {swallow}");
+                    if (swallow)
+                    {
+                        player.objectInStomach = null;
+
+                    }
+                }
+
+                orig(hand);
+
+                player.objectInStomach = originalObject;
+            }
+
+		}
 
 		/*#region DumpIL
 		private static void DumpIL(ILContext il, string title = "IL Dump")
@@ -870,7 +1003,16 @@ namespace ExtensionLib
 
 			Log.LogDebug("Player ctor");
 
-			player.GetPlayerVar(out var pv);
+            int N = player.playerState.playerNumber;
+            if (world.game.session is ArenaGameSession)//竞技场模式
+            {
+                if (GlobalVar.playerVars.TryGetValue(N, out _))
+                {
+                    GlobalVar.playerVars.Remove(N);
+                }
+            }
+
+            player.GetPlayerVar(out var pv);
 			var stomachData = pv.stomachData;
 
 			pv.coord = player.coord;
@@ -914,7 +1056,7 @@ namespace ExtensionLib
 
 			if (stomachData.Current == null && stomachData.HistoryCount > 0)
 			{
-				stomachData.Current = stomachData.Pop();
+				stomachData.Current = stomachData.PopHistory();
 			}
 
 
@@ -930,9 +1072,9 @@ namespace ExtensionLib
 
 				if (lanternCount > 0)
 				{
-					lanternCount = Math.Min(lanternCount, 2);
+					lanternCount = Math.Min(lanternCount, 4);
 
-					float warmthMultiplier = 0.6f + (lanternCount - 1) * 0.3f;
+					float warmthMultiplier = 1f + (lanternCount - 1) * 0.8f;
 					player.Hypothermia -= Mathf.Lerp(RainWorldGame.DefaultHeatSourceWarmth * warmthMultiplier, 0f, player.HypothermiaExposure);
 
 					//player.Hypothermia -= Mathf.Lerp(RainWorldGame.DefaultHeatSourceWarmth, 0f, player.HypothermiaExposure);
@@ -1035,7 +1177,13 @@ namespace ExtensionLib
 			player.GetPlayerVar(out var pv);
 			var stomachData = pv.stomachData;
 
-			stomachData.Swallow(null);
+			bool CanSwallow = stomachData.Swallow(null);
+
+			if (!CanSwallow)
+			{
+                Log.LogInfo($"无法吞咽物品");
+                return;
+			}
 
 			orig(player, grasp);
 
@@ -1136,6 +1284,14 @@ namespace ExtensionLib
 				{
 					player.objectInStomach = obj;
 					Color? c = orig(player);
+
+					/*if (!c.HasValue)
+					{
+						if (ModManager.MSC && player.objectInStomach.type == MoreSlugcatsEnums.AbstractObjectType.GlowWeed)
+						{
+
+						}
+					}*/
 
 					if (c.HasValue)
 					{

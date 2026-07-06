@@ -120,7 +120,7 @@ namespace ExtensionLib
 		}
 
         #region Wipe
-        public static void WipeAll(int saveSlot)// saveSlot 是存档槽位编号，范围是 0-2
+        public static void WipeAll(int saveSlot)// saveSlot 是存档槽位编号，范围是 0-2  /  -1、-2、-3
 		{
 			Log.LogInfo($"saveSlot : {saveSlot}");
 

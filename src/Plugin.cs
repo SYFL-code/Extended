@@ -9,79 +9,88 @@ namespace ExtensionLib
 	[BepInPlugin(GUID, Name, Version)]
 	class Plugin : BaseUnityPlugin
 	{
-        public const string GUID = "extension-lib.Redlyn";
-        public const string Name = "Extension Lib";
-        public const string Version = "0.1.0";
+		public const string GUID = "extension-lib.Redlyn";
+		public const string Name = "Extension Lib";
+		public const string Version = "0.1.0";
 
-        public const string version = "0.1.38";
+		public const string version = "0.1.43";
+		private const bool startScreen = true;//true false
 
         private static bool isEnabled;
 
-        //public static ManualLogSource Log { get; private set; }
+		//public static ManualLogSource Log { get; private set; }
 
 
-        // Add hooks-添加钩子
-        public void OnEnable()
+		// Add hooks-添加钩子
+		public void OnEnable()
 		{
-            if (Plugin.isEnabled)
-            {
-                return;
-            }
-            Plugin.isEnabled = true;
+			if (Plugin.isEnabled)
+			{
+				return;
+			}
+			Plugin.isEnabled = true;
 
-            Log.SetLog(base.Logger);
+			Log.SetLog(base.Logger);
 
-            On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
+			On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 
-            // Put your custom hooks here!-在此放置你自己的钩子
+			// Put your custom hooks here!-在此放置你自己的钩子
+			On.RainWorld.LoadSetupValues += RainWorldLoadSetupValues;
 
-            GlobalVar.Hook();
+			GlobalVar.Hook();
 
 			// 保存加载
 			SaveFile.AddData(new LibData());
-            SaveFile.SaveHooks();
+			SaveFile.SaveHooks();
 
-            MyPlayer.Hook();
+			MyPlayer.Hook();
 
-            //PlayersStoreRetrieve.Hook();
+			//PlayersStoreRetrieve.Hook();
 
-            /*On.Player.Jump += Player_Jump;
+			/*On.Player.Jump += Player_Jump;
 			//在玩家触发跳跃时执行Player_Jump
 			On.Player.Die += Player_Die;
 			On.Lizard.ctor += Lizard_ctor;*/
-        }
+		}
 
 		public void OnDisable()
 		{
-            if (!Plugin.isEnabled)
-            {
-                return;
-            }
-            Plugin.isEnabled = false;
+			if (!Plugin.isEnabled)
+			{
+				return;
+			}
+			Plugin.isEnabled = false;
 
-            // Unhook your hooks here!-在此取消你的钩子
+			// Unhook your hooks here!-在此取消你的钩子
+			On.RainWorld.LoadSetupValues -= RainWorldLoadSetupValues;
 
-            GlobalVar.Hook_();
+			GlobalVar.Hook_();
 
-            // 保存加载
-            SaveFile.SaveHooks_();
+			// 保存加载
+			SaveFile.SaveHooks_();
 
 			MyPlayer.Hook_();
 
-            //PlayersStoreRetrieve.Hook_();
-        }
+			//PlayersStoreRetrieve.Hook_();
+		}
 
-        // Load any resources, such as sprites or sounds-加载任何资源 包括图像素材和音效
-        private void LoadResources(RainWorld rainWorld)
+		// Load any resources, such as sprites or sounds-加载任何资源 包括图像素材和音效
+		private void LoadResources(RainWorld rainWorld)
 		{
 		}
 
 
+		private RainWorldGame.SetupValues RainWorldLoadSetupValues(On.RainWorld.orig_LoadSetupValues orig, bool distributionBuild)
+		{
+			RainWorldGame.SetupValues result = orig(distributionBuild);
+			result.startScreen = startScreen;
+			return result;
+		}
 
 
-        #region 默认钩子示例
-        // Implement MeanLizards-实现激怒蜥蜴的效果
-        /*private void Lizard_ctor(On.Lizard.orig_ctor orig, Lizard self, AbstractCreature abstractCreature, World world)
+		#region 默认钩子示例
+		// Implement MeanLizards-实现激怒蜥蜴的效果
+		/*private void Lizard_ctor(On.Lizard.orig_ctor orig, Lizard self, AbstractCreature abstractCreature, World world)
 		{
 			orig(self, abstractCreature, world);
 
@@ -92,8 +101,8 @@ namespace ExtensionLib
 		}*/
 
 
-        // Implement SuperJump-实现超高跳跃的效果
-        /*private void Player_Jump(On.Player.orig_Jump orig, Player self)
+		// Implement SuperJump-实现超高跳跃的效果
+		/*private void Player_Jump(On.Player.orig_Jump orig, Player self)
 		{
 			orig(self);//总不能挂完钩子把原本该执行的东西给弄丢吧 这一句就是为了再把它塞进来让它正常运行
 
@@ -103,8 +112,8 @@ namespace ExtensionLib
 			}
 		}*/
 
-        // Implement ExlodeOnDeath-实现死亡自爆效果
-        /*private void Player_Die(On.Player.orig_Die orig, Player self)
+		// Implement ExlodeOnDeath-实现死亡自爆效果
+		/*private void Player_Die(On.Player.orig_Die orig, Player self)
 		{
 			bool wasDead = self.dead;
 			//布尔值wasDead判断玩家是否死亡
@@ -142,8 +151,8 @@ namespace ExtensionLib
 				//游戏内噪声效果
 			}
 		}*/
-        #endregion
+		#endregion
 
 
-    }
+	}
 }

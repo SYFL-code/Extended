@@ -25,22 +25,24 @@ namespace ExtensionLib
 
 		private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abstractCreature, World world)
 		{
-			orig.Invoke(player, abstractCreature, world);
+            orig.Invoke(player, abstractCreature, world);
 
-			//赋值给全局变量供其他函数使用
-			GlobalVar.game = player.room.world.game;
+            //赋值给全局变量供其他函数使用
+            GlobalVar.game = world.game;
 
-			int N = player.playerState.playerNumber;
+            int N = player.playerState.playerNumber;
+
+            if (world.game.session is ArenaGameSession)//竞技场模式
+            {
+                if (GlobalVar.playerVars.TryGetValue(N, out PlayerVar pv))
+                {
+                    GlobalVar.playerVars.Remove(N);
+                }
+            }
 
 			//playerVars.Add(player, new PlayerVar(player));
-			if (!playerVars.TryGetValue(N, out PlayerVar pv))
-			{
-				pv = new PlayerVar(player);
-				playerVars.Add(N, pv);
-			}
-
-			player.BindPlayerRef(pv);
-		}
+			player.GetPlayerVar();
+        }
 
 		public static PlayerVar GetPlayerVar(this Player player)
 		{
@@ -65,7 +67,7 @@ namespace ExtensionLib
 		public static bool BindPlayerRef(this Player player, PlayerVar pv)
 		{
 			// 检查现有引用是否有效
-			if (pv.PlayerRef.TryGetTarget(out Player? target) && target != null && !target.slatedForDeletetion)
+			if (pv.PlayerRef.TryGetTarget(out Player? target) && target != null && target == player && !target.slatedForDeletetion)
 			{
 				// 引用有效且对象未被标记删除，不替换
 				return false;

@@ -26,6 +26,10 @@ using static UnityEngine.Input;
 using Color = UnityEngine.Color;
 using ObjType = AbstractPhysicalObject.AbstractObjectType;
 using Random = UnityEngine.Random;
+using static MonoMod.InlineRT.MonoModRule;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
+using Mono.Cecil.Cil;
 #endregion
 
 namespace ExtensionLib
@@ -33,21 +37,30 @@ namespace ExtensionLib
 	[Obsolete("Scrap 废案")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal class Zname//Scrap 废案
-	{
-		#region Items
-		#endregion
-		#region Creatures
-		#endregion
+    {
+        #region Items
+        #endregion
+        #region Creatures
+        #endregion
 
 
 
-		//mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+        // mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
+        // \Rain World\BepInEx\config\BepInEx.cfg里面有个[Logging.Console] 的Enabled改成true
 
-		//<DefineConstants>MYDEBUG</DefineConstants>
+        // https://gist.github.com/EtiTheSpirit/655d8e81732ba516ca768dbd7410ddf4 这里有一个文档讲了一些关于rw shader的注意事项
 
-		//bool ? true : false
+        // <DefineConstants>MYDEBUG</DefineConstants>
 
-		public string strings
+        // 就是开发者工具里面可以按
+        // i->重播这一段的画面
+        // m->出现可以更改整体cg移动方向的线，可以用鼠标拖动来改变移动轨迹
+        // b->保存cg变换的更改
+        // n->拖动鼠标所在位置的贴图
+
+        //bool ? true : false
+
+        public string strings
 		{
 			get
 			{
@@ -63,21 +76,60 @@ namespace ExtensionLib
 
 		public static string Z()
 		{
-            // 1. 获取整个字典
-            var dict = ExtensionLib.GlobalVar.playerVars;
+			// 1. 获取整个字典
+			var dict = ExtensionLib.GlobalVar.playerVars;
+
+            //ExtensionLib.GlobalVar.playerVars = new Dictionary<int, ExtensionLib.PlayerVar>();
 
             // 2. 查看字典中有哪些玩家
+            for (int i = 0; i < dict.Count; i++)
+            {
+                Console.WriteLine($"玩家索引: {i}, 玩家数据: {dict[i]}");
+            }
             //dict.Keys.ToList().ForEach(Console.WriteLine);
 
             // 3. 获取玩家0的数据
             var pv0 = dict[0];
 
-			pv0.PlayerRef.TryGetTarget(out var player);
-
-			if (player != null) 
+			if (ExtensionLib.GlobalVar.game?.Players[0].realizedCreature is Player player)
 			{
-				player.AddFood(1);
+                pv0.SetPlayerRef(player);
+
+                var stomachData = pv0.stomachData;
+
+                var obj = ExtensionLib.Helper.ObjectFromString("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0", player.room.game.world, player.coord, player.coord);
+
+                if (obj != null)
+                {
+                    stomachData.historyInStomach.Add(obj);
+                }
+
+                Console.WriteLine($"胃部物品数量: {stomachData.TotalCount}");
+                for (int i = 0; i < stomachData.TotalCount; i++)
+                {
+                    Console.WriteLine(stomachData.GetAllContents()[i].ToString());
+                }
             }
+
+			//pv0.PlayerRef.TryGetTarget(out var player);
+
+			/*if (player != null)
+			{
+
+
+				//player.AddFood(1);
+			}*/
+
+
+
+
+            // 4. 检查 swallowedObjectsTemp
+            //Console.WriteLine($"swallowedObjectsTemp count: {pv0.swallowedObjectsTemp.Count}");
+
+            // 5. 检查 objectsInStomach
+            //Console.WriteLine($"objectsInStomach count: {pv0.objectsInStomach.Count}");
+
+
 
             //pv0.swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
@@ -93,7 +145,7 @@ namespace ExtensionLib
 
 
             return "";
-        }
+		}
 		//swallowedObjectsTemp.Add("ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.22.17.0");
 
 		//ID.-1.5964<oB>0<oA>Rock<oA>SU_S01.20.16.0		(AbstractPhysicalObject)
@@ -131,29 +183,29 @@ namespace ExtensionLib
 				//GlobalVar.glacier2_iceshield_lock = false;
 			}
 
-            Player player = self;
-            player.GetPlayerVar(out var pv);
-            var stomachData = pv.stomachData;
+			Player player = self;
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
 
 			if (stomachData.IsFull)
 			{
 
 			}
 
-            #region room
-            //room
-            //player.room.game.Players
-            //player.room.game.GetStorySession.Players
-            //player.room.game.warpDeferPlayerSpawnRoomName
-            //player.room.abstractRoom.name
-            #endregion
-            #region Debug
-            //Debug
-            //Debug.Log("普通消息");
-            //Debug.LogWarning("警告消息");
-            //Debug.LogError("错误消息");
-            #endregion
-        }
+			#region room
+			//room
+			//player.room.game.Players
+			//player.room.game.GetStorySession.Players
+			//player.room.game.warpDeferPlayerSpawnRoomName
+			//player.room.abstractRoom.name
+			#endregion
+			#region Debug
+			//Debug
+			//Debug.Log("普通消息");
+			//Debug.LogWarning("警告消息");
+			//Debug.LogError("错误消息");
+			#endregion
+		}
 		#endregion
 
 		#region Save
@@ -349,28 +401,28 @@ namespace ExtensionLib
 
 #region zs
 /*if (c.TryGotoNext(MoveType.Before,
-    i => i.MatchLdarg(0),
-    i => i.MatchLdfld<Player>("objectInStomach"),
-    i => i.MatchBrfalse(out ILLabel label)))
+	i => i.MatchLdarg(0),
+	i => i.MatchLdfld<Player>("objectInStomach"),
+	i => i.MatchBrfalse(out ILLabel label)))
 {
-    c.Remove();
-    c.Remove();
+	c.Remove();
+	c.Remove();
 
-    c.Emit(OpCodes.Ldarg, 0);
-    c.EmitDelegate<Func<Player, bool>>(player =>
-    {
-        *//*if (!logs[1] || Input.GetKey("c"))
-        {
-            logs[1] = true;
+	c.Emit(OpCodes.Ldarg, 0);
+	c.EmitDelegate<Func<Player, bool>>(player =>
+	{
+		*//*if (!logs[1] || Input.GetKey("c"))
+		{
+			logs[1] = true;
 
-            Log.LogInfo($"1");
-        }*//*
+			Log.LogInfo($"1");
+		}*//*
 
-        Log.LogInfo($"1");
+		Log.LogInfo($"1");
 
-        player.GetPlayerVar(out var pv);
-        return pv.stomachData.IsFull;
-    });
+		player.GetPlayerVar(out var pv);
+		return pv.stomachData.IsFull;
+	});
 }*/
 
 //// ============================================================
@@ -567,58 +619,58 @@ int patchCount = 0;
 
 while (patchCount < 5)
 {
-    patchCount++;
+	patchCount++;
 
-    // 遍历所有 "ldarg.0 + ldfld objectInStomach" 模式
+	// 遍历所有 "ldarg.0 + ldfld objectInStomach" 模式
 
-    if (c.TryGotoNext(MoveType.Before,
-        i => i.MatchLdarg(0),
-        i => i.MatchLdfld<Player>("objectInStomach"),
-        i => i.MatchBrfalse(out _)
-    ))
-    {
-        // 移除原来的 ldarg.0 和 ldfld
-        c.Remove();
-        c.Remove();
+	if (c.TryGotoNext(MoveType.Before,
+		i => i.MatchLdarg(0),
+		i => i.MatchLdfld<Player>("objectInStomach"),
+		i => i.MatchBrfalse(out _)
+	))
+	{
+		// 移除原来的 ldarg.0 和 ldfld
+		c.Remove();
+		c.Remove();
 
-        // 原代码: if (objectInStomach == null) -> 跳转
-        // 需要替换为: if (IsStomachEmpty(player)) -> 跳转
+		// 原代码: if (objectInStomach == null) -> 跳转
+		// 需要替换为: if (IsStomachEmpty(player)) -> 跳转
 
-        // 插入: if (IsStomachEmpty(player)) brfalse ...
-        c.Emit(OpCodes.Ldarg_0);
-        c.EmitDelegate<Func<Player, bool>>(player =>
-        {
-            player.GetPlayerVar(out var pv);
-            var stomachData = pv.stomachData;
-            return stomachData.IsFull;
-        });
-        // 注意：原 brfalse 指令还在后面，会使用栈上的 bool 值
-    }
+		// 插入: if (IsStomachEmpty(player)) brfalse ...
+		c.Emit(OpCodes.Ldarg_0);
+		c.EmitDelegate<Func<Player, bool>>(player =>
+		{
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
+			return stomachData.IsFull;
+		});
+		// 注意：原 brfalse 指令还在后面，会使用栈上的 bool 值
+	}
 
 
-    else if (c.TryGotoNext(MoveType.Before,
-        i => i.MatchLdarg(0),
-        i => i.MatchLdfld<Player>("objectInStomach"),
-        i => i.MatchBrtrue(out _)
-    ))
-    {
-        // 移除原来的 ldarg.0 和 ldfld
-        c.Remove();
-        c.Remove();
+	else if (c.TryGotoNext(MoveType.Before,
+		i => i.MatchLdarg(0),
+		i => i.MatchLdfld<Player>("objectInStomach"),
+		i => i.MatchBrtrue(out _)
+	))
+	{
+		// 移除原来的 ldarg.0 和 ldfld
+		c.Remove();
+		c.Remove();
 
-        // 原代码: if (objectInStomach != null) -> 跳转
-        // 需要替换为: if (!IsStomachEmpty(player)) -> 跳转
+		// 原代码: if (objectInStomach != null) -> 跳转
+		// 需要替换为: if (!IsStomachEmpty(player)) -> 跳转
 
-        // 插入: if (IsStomachEmpty(player)) brtrue ...
-        c.Emit(OpCodes.Ldarg_0);
-        c.EmitDelegate<Func<Player, bool>>(player =>
-        {
-            player.GetPlayerVar(out var pv);
-            var stomachData = pv.stomachData;
-            return stomachData.IsFull;
-        });
-        // 注意：原 brtrue 指令还在后面，会使用栈上的 bool 值
-    }
+		// 插入: if (IsStomachEmpty(player)) brtrue ...
+		c.Emit(OpCodes.Ldarg_0);
+		c.EmitDelegate<Func<Player, bool>>(player =>
+		{
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
+			return stomachData.IsFull;
+		});
+		// 注意：原 brtrue 指令还在后面，会使用栈上的 bool 值
+	}
 
 
 }*/
@@ -872,7 +924,12 @@ public void Load()
 
 */
 
-/*#region Creatures
+/*#region Cloudtail 云尾
+
+//UpdateRegurgitationGraphics
+//SlugcatHand_Update
+
+
 
 /// <summary>
 /// Cloudtail（云尾）自定义角色模块
@@ -1619,6 +1676,662 @@ public static class CloudtailModule
 		}
 	}
 }
+
+public static class MainMechanicsCloudtail
+{
+	/// <summary>
+	/// 判断玩家是否满足“美食家”挂钩条件。如果是 Cloudtail 则直接返回 true，否则调用原方法。
+	/// </summary>
+	public static bool IsGourmandHook(Func<Player, bool> orig, Player self)
+	{
+		return self.IsCloud() || orig(self);
+	}
+
+	/// <summary>
+	/// 判断玩家能否被其他生物吞下。Cloudtail 不能被吞下，其他情况按原逻辑处理。
+	/// </summary>
+	public static bool CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject obj)
+	{
+		return !self.IsCloud() && orig(self, obj);
+	}
+
+	/// <summary>
+	/// 每次更新进食状态时触发。Cloudtail 在满足特定输入和空闲存储槽位时，会将手中的物品吞入存储（而不是正常进食）。
+	/// </summary>
+	public static void EatMeatUpdate(On.Player.orig_EatMeatUpdate orig, Player self, int g)
+	{
+		if (self.TryGetCloud(out var data))
+		{
+			// 有空槽位，且玩家按下“下”方向，且该抓握手中有物品
+			if (data.FreeSlot() != -1 && self.input[0].x == 0 && self.input[0].y == -1 && self.grasps[g] != null)
+			{
+				self.eatMeat = 0;         // 阻止正常进食
+				data.Swallow(g);          // 触发吞咽存储
+			}
+		}
+
+		orig(self, g);
+	}
+
+	/// <summary>
+	/// 玩家构造函数。若为 Cloudtail，则额外初始化一条舌头（用于抓取/绳索机制）。
+	/// </summary>
+	public static void ctor(On.Player.orig_ctor orig, Player self, AbstractCreature creat, World world)
+	{
+		orig(self, creat, world);
+		if (self.IsCloud())
+		{
+			self.tongue = new Player.Tongue(self, 0);
+		}
+	}
+
+	/// <summary>
+	/// 避难所门关闭时调用。遍历所有玩家，若 Cloudtail 存活且拥有存储数据，则执行保存操作。
+	/// </summary>
+	public static void Shelter_Close(On.ShelterDoor.orig_DoorClosed orig, ShelterDoor self)
+	{
+		for (int i = 0; i < self.room.game.Players.Count; i++)
+		{
+			if (self.room.game.Players[i].state.alive && self.room.game.Players[i].realizedCreature != null)
+			{
+				Player player = self.room.game.Players[i].realizedCreature as Player;
+				if (player.TryGetCloud(out var data) && data.Storage != null)
+				{
+					data.Save();
+				}
+			}
+		}
+		orig(self);
+	}
+
+	/// <summary>
+	/// 舌头缩短绳索长度时调用。Cloudtail 的舌头缩短速度受疲劳状态影响：极度疲劳时无法缩短，否则速度降低至 66%。
+	/// </summary>
+	public static void Tongue_ShortenRope(On.Player.Tongue.orig_decreaseRopeLength orig, Player.Tongue tongue, float amount)
+	{
+		if (tongue.player.IsCloud())
+		{
+			if (tongue.player.gourmandExhausted)
+			{
+				amount *= 0f;       // 完全阻止缩短
+			}
+			else
+			{
+				amount *= 0.66f;    // 减慢缩短速度
+			}
+		}
+		orig(tongue, amount);
+	}
+
+	/// <summary>
+	/// 检查当前抓握的物品是否可以被制作。Cloudtail 在上方向输入时，根据制作结果决定：
+	/// 若结果可食用但胃已满则返回 false，否则允许制作非空结果。
+	/// </summary>
+	public static bool GraspsCanBeCrafted(On.Player.orig_GraspsCanBeCrafted orig, Player self)
+	{
+		if (self.IsCloud() && self.input[0].y == 1)
+		{
+			// 制作结果
+			if (self.CraftingResults() == AbstractPhysicalObject.AbstractObjectType.DangleFruit)
+			{
+				if (self.FoodInStomach >= self.MaxFoodInStomach)
+				{
+					return false;
+				}
+				else return true;
+			}
+			else return self.CraftingResults() != null;
+		}
+		else return orig(self);
+	}
+
+	/// <summary>
+	/// 被咬致死时的伤害倍率。Cloudtail 具有极高的抗咬能力（倍率 0.15）。
+	/// </summary>
+	public static float DeathByBiteMultiplier(On.Player.orig_DeathByBiteMultiplier orig, Player self)
+	{
+		if (self.IsCloud())
+		{
+			return 0.15f;
+		}
+		else return orig(self);
+	}
+
+	/// <summary>
+	/// 判断是否满足猛击（SlugSlam）条件。Cloudtail 有大量额外限制，如不能对蛞蝓猫 NPC 使用、特定动画状态禁止、速度阈值等。
+	/// </summary>
+	public static bool SlugSlamConditions(On.Player.orig_SlugSlamConditions orig, Player self, PhysicalObject slamming)
+	{
+		if (self.IsCloud())
+		{
+			// 禁止对 SlugNPC 使用猛击
+			if ((slamming as Creature).abstractCreature.creatureTemplate.type == MoreSlugcatsEnums.CreatureTemplateType.SlugNPC)
+			{
+				return false;
+			}
+			// 各种阻止状态
+			if (self.gourmandAttackNegateTime > 0) return false;
+			if (self.gravity == 0f) return false;
+			if (self.cantBeGrabbedCounter > 0) return false;
+			if (self.forceSleepCounter > 0) return false;
+			if (self.timeSinceInCorridorMode < 5) return false;
+			if (self.submerged) return false;
+			if (self.enteringShortCut != null || (self.animation != Player.AnimationIndex.BellySlide && self.canJump >= 5))
+				return false;
+			// 禁止在特定动画下猛击
+			if (self.animation == Player.AnimationIndex.CorridorTurn || self.animation == Player.AnimationIndex.CrawlTurn ||
+				self.animation == Player.AnimationIndex.ZeroGSwim || self.animation == Player.AnimationIndex.ZeroGPoleGrab ||
+				self.animation == Player.AnimationIndex.GetUpOnBeam || self.animation == Player.AnimationIndex.ClimbOnBeam ||
+				self.animation == Player.AnimationIndex.AntlerClimb || self.animation == Player.AnimationIndex.BeamTip)
+				return false;
+
+			Vector2 vel = self.bodyChunks[0].vel;
+			if (self.bodyChunks[1].vel.magnitude < vel.magnitude)
+				vel = self.bodyChunks[1].vel;
+			// 非腹滑状态下，垂直速度或总速度不足时不允许猛击
+			if (self.animation != Player.AnimationIndex.BellySlide && vel.y >= -10f && vel.magnitude <= 25f)
+				return false;
+
+			Creature creature = slamming as Creature;
+			foreach (Creature.Grasp grasp in self.grabbedBy)
+			{
+				if (grasp.pacifying || grasp.grabber == creature)
+					return false;
+			}
+			// 合作模式中默认不允许对玩家猛击，除非开启友军伤害
+			return !ModManager.CoopAvailable || !(slamming is Player) || Custom.rainWorld.options.friendlyFire;
+		}
+		else return orig(self, slamming);
+	}
+
+	/// <summary>
+	/// 每帧更新 Cloudtail 的特殊状态：快速制作、疲劳系统（有氧水平）、存储导致的浮力/重力变化、滚动计时、体温源等。
+	/// </summary>
+	public static void MSCUpdate(On.Player.orig_UpdateMSC orig, Player self)
+	{
+		orig(self);
+		if (self.TryGetCloud(out var data))
+		{
+			// 快速制作：若正在制作且反刍计数器小于 60，则直接设为 60 加快过程
+			if (self.craftingObject && self.swallowAndRegurgitateCounter < 60)
+			{
+				self.swallowAndRegurgitateCounter = 60;
+			}
+
+			double exhaustion = 0.95; float recovery = 0.4f;
+			if (data.Stuffed)
+			{
+				exhaustion = 0.75;    // 过饱时更容易疲劳
+				recovery = 0.3f;
+			}
+
+			// 有氧水平达到阈值则进入疲劳状态
+			if ((double)self.aerobicLevel >= exhaustion)
+				self.gourmandExhausted = true;
+			if (self.aerobicLevel < recovery)
+				self.gourmandExhausted = false;
+
+			if (self.gourmandExhausted)
+			{
+				self.slowMovementStun = Math.Max(self.slowMovementStun, (int)Custom.LerpMap(self.aerobicLevel, 0.7f, 0.4f, 6f, 0f));
+				self.lungsExhausted = true;
+			}
+			data.Update();
+
+			// 过饱增加浮力（下沉更慢）
+			if (data.Stuffed)
+				self.buoyancy = 0.8f;
+			// 漂浮状态自定义重力
+			if (data.Floaty)
+				self.customPlayerGravity = 0.45f;
+
+			// 滚动时延长滚动持续时间
+			if (self.animation == Player.AnimationIndex.Roll)
+			{
+				Plugin.RollLength.TryGet(self, out int roll);
+				data.Rolltimer += 1;
+				if (data.Rolltimer < roll)
+				{
+					if (self.input[0].y < 0)
+						self.rollCounter = 14;
+				}
+			}
+			else
+			{
+				data.Rolltimer = 0;
+			}
+
+			// 根据环境热源缓慢降低低温值
+			self.Hypothermia -= Mathf.Lerp(data.HeatSources(), 0f, self.HypothermiaExposure);
+		}
+	}
+
+	/// <summary>
+	/// 更新蛞蝓猫手部（SlugcatHand）的位置动画。当 Cloudtail 正在吞咽/反刍物品且手部对应空手槽时，调整手的视觉位置和抖动效果。
+	/// </summary>
+	public static void SlugcatHand_Update(On.SlugcatHand.orig_Update orig, SlugcatHand self)
+	{
+		orig(self);
+		if ((self.owner.owner as Player).TryGetCloud(out var data))
+		{
+			if (data.SwallowOrRegurgitateCoutner > 10)
+			{
+				int num3 = -1;
+				int num4 = 0;
+				// 寻找一个空闲且可存储的抓握槽位
+				while (num3 < 0 && num4 < 2)
+				{
+					if ((self.owner.owner as Player).grasps[num4] != null && data.CanStore())
+					{
+						num3 = num4;
+					}
+					num4++;
+				}
+				// 如果当前手部正是找到的槽位，则根据动画进度调整手部位置和抖动
+				if (num3 == self.limbNumber)
+				{
+					float num5 = Mathf.InverseLerp(10f, 90f, (float)data.SwallowOrRegurgitateCoutner);
+					if (num5 < 0.5f)
+					{
+						self.relativeHuntPos *= Mathf.Lerp(0.9f, 0.7f, num5 * 2f);
+						self.relativeHuntPos.y += Mathf.Lerp(2f, 4f, num5 * 2f);
+						self.relativeHuntPos.x *= Mathf.Lerp(1f, 1.2f, num5 * 2f);
+					}
+					else
+					{
+						(self.owner as PlayerGraphics).blink = 5;
+						self.relativeHuntPos = new Vector2(0f, -4f) + Custom.RNV() * 2f * Random.value * Mathf.InverseLerp(0.5f, 1f, num5);
+						(self.owner as PlayerGraphics).head.vel += Custom.RNV() * 2f * Random.value * Mathf.InverseLerp(0.5f, 1f, num5);
+						self.owner.owner.bodyChunks[0].vel += Custom.RNV() * 0.2f * Random.value * Mathf.InverseLerp(0.5f, 1f, num5);
+					}
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// 圣徒（或 Cloudtail）的职业机制：按下跳跃键且满足条件时射出舌头。Cloudtail 也会执行此逻辑。
+	/// </summary>
+	public static void ClassMechanicsSaint(On.Player.orig_ClassMechanicsSaint orig, Player player)
+	{
+		orig(player);
+		if (player.SlugCatClass.value != "Cloudtail" && player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Saint)
+		{
+			return;
+		}
+		if (!MMF.cfgOldTongue.Value && player.input[0].jmp && !player.input[1].jmp && !player.input[0].pckp &&
+			player.canJump <= 0 && player.bodyMode != Player.BodyModeIndex.Crawl &&
+			player.animation != Player.AnimationIndex.ClimbOnBeam && player.animation != Player.AnimationIndex.AntlerClimb &&
+			player.animation != Player.AnimationIndex.HangFromBeam && player.SaintTongueCheck())
+		{
+			Vector2 vector = new Vector2(player.flipDirection, 0.7f);
+			Vector2 normalized = vector.normalized;
+			if (player.input[0].y > 0)
+			{
+				normalized = new Vector2(0f, 1f);
+			}
+			normalized = (normalized + player.mainBodyChunk.vel.normalized * 0.2f).normalized;
+			player.tongue.Shoot(normalized);
+			player.AerobicIncrease(0.35f); // 增加有氧值（可能会移除？注释保留）
+		}
+	}
+
+	/// <summary>
+	/// 检查 Cloudtail 是否可以使用舌头。条件类似圣徒，但略有不同（如忽略走廊攀爬模式）。
+	/// </summary>
+	public static bool SaintTongueCheck(On.Player.orig_SaintTongueCheck orig, Player player)
+	{
+		if (player.IsCloud())
+		{
+			return player.Consious && player.tongue.mode == Player.Tongue.Mode.Retracted &&
+				   player.bodyMode != Player.BodyModeIndex.CorridorClimb && !player.corridorDrop &&
+				   player.bodyMode != Player.BodyModeIndex.ClimbIntoShortCut && player.bodyMode != Player.BodyModeIndex.WallClimb &&
+				   player.bodyMode != Player.BodyModeIndex.Swimming &&
+				   player.animation != Player.AnimationIndex.VineGrab && player.animation != Player.AnimationIndex.ZeroGPoleGrab;
+		}
+		else return orig(player);
+	}
+
+	/// <summary>
+	/// 投掷物品时触发。Cloudtail 在疲劳或手持矛/莉莉浮标（非探险模式）时会改为轻轻放下并增加疲劳；
+	/// 若过饱则直接让有氧水平达到最大；探险模式下允许投掷矛并重置疲劳。
+	/// </summary>
+	public static void ThrowObject(On.Player.orig_ThrowObject orig, Player self, int grasp, bool eu)
+	{
+		if (self.TryGetCloud(out var data))
+		{
+			string obj = self.grasps[grasp].grabbed.abstractPhysicalObject.type.value;
+			if (self.gourmandExhausted)
+			{
+				Debug.Log("Forager exhausted, couldn't throw " + obj);
+				self.TossObject(grasp, eu);
+				self.AerobicIncrease(0.35f);
+				self.ReleaseGrasp(grasp);
+				return;
+			}
+			else if ((self.grasps[grasp].grabbed is Spear && (!ModManager.Expedition || (ModManager.Expedition && !self.room.game.rainWorld.ExpeditionMode))) ||
+					 self.grasps[grasp].grabbed is LillyPuck)
+			{
+				Debug.Log("Forager in story mode, couldn't throw " + obj);
+				self.TossObject(grasp, eu);
+				self.AerobicIncrease(0.35f);
+				self.ReleaseGrasp(grasp);
+				return;
+			}
+			else if (self.grasps[grasp].grabbed is Spear && (ModManager.Expedition && self.room.game.rainWorld.ExpeditionMode))
+			{
+				Debug.Log("Forager threw Spear");
+				self.aerobicLevel = 1f;   // 探险模式允许投矛但消耗全部耐力
+			}
+			if (data.Stuffed)
+			{
+				Debug.Log("Forager exhausted by full storage");
+				self.aerobicLevel = 1f;
+			}
+		}
+		orig(self, grasp, eu);
+	}
+
+	/// <summary>
+	/// 投掷矛之后调整属性。Cloudtail 投出的矛拥有更高的伤害（1.8倍）和速度（1.25倍）。
+	/// </summary>
+	public static void ThrownSpear(On.Player.orig_ThrownSpear orig, Player self, Spear s)
+	{
+		orig(self, s);
+		if (self.IsCloud())
+		{
+			s.spearDamageBonus = 1.8f;
+			s.firstChunk.vel *= 1.25f;
+		}
+	}
+
+	/// <summary>
+	/// 初始化 PlayerGraphics 时，为 Cloudtail 设置特殊的尾巴段和舌头绳索段。
+	/// </summary>
+	public static void CosmeticsCtor(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
+	{
+		orig(self, ow);
+		if (self.player.IsCloud())
+		{
+			// 根据是否为幼崽设置不同尺寸的尾巴
+			if (self.RenderAsPup)
+			{
+				self.tail[0] = new TailSegment(self, 8f, 2f, null, 0.85f, 1f, 1f, true);
+				self.tail[1] = new TailSegment(self, 6f, 3.5f, self.tail[0], 0.85f, 1f, 0.5f, true);
+				self.tail[2] = new TailSegment(self, 4f, 3.5f, self.tail[1], 0.85f, 1f, 0.5f, true);
+				self.tail[3] = new TailSegment(self, 2f, 3.5f, self.tail[2], 0.85f, 1f, 0.5f, true);
+			}
+			else
+			{
+				self.tail[0] = new TailSegment(self, 12.5f, 4f, null, 0.85f, 1f, 1f, true);
+				self.tail[1] = new TailSegment(self, 9.3f, 7f, self.tail[0], 0.85f, 1f, 0.5f, true);
+				self.tail[2] = new TailSegment(self, 6.1f, 7f, self.tail[1], 0.85f, 1f, 0.5f, true);
+				self.tail[3] = new TailSegment(self, 3f, 7f, self.tail[2], 0.85f, 1f, 0.5f, true);
+			}
+
+			// 将默认的尾巴段替换为自定义的尾巴
+			var bp = self.bodyParts.ToList();
+			bp.RemoveAll(x => x is TailSegment);
+			bp.AddRange(self.tail);
+			self.bodyParts = bp.ToArray();
+
+			// 初始化绳索段（用于舌头可视化）和尾斑
+			self.ropeSegments = new PlayerGraphics.RopeSegment[20]; // 数量可调整
+			for (int k = 0; k < self.ropeSegments.Length; k++)
+			{
+				self.ropeSegments[k] = new PlayerGraphics.RopeSegment(k, self);
+			}
+			self.tailSpecks = new PlayerGraphics.TailSpeckles(self, 12);
+		}
+	}
+
+	/// <summary>
+	/// 存储每个 PlayerGraphics 的舌头精灵在精灵数组中的索引。
+	/// </summary>
+	public static Dictionary<PlayerGraphics, int> TongueSpriteIndex = new();
+
+	/// <summary>
+	/// 初始化精灵时，为 Cloudtail 添加舌头图形，并放到 Midground 容器中。
+	/// </summary>
+	public static void InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+	{
+		orig(self, sLeaser, rCam);
+		if (self.player.slugcatStats.name.value != "Cloudtail")// && self.player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Saint)
+		{
+			return;
+		}
+		Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + 1);
+
+		// 记录舌头精灵索引
+		if (TongueSpriteIndex.ContainsKey(self)) TongueSpriteIndex[self] = sLeaser.sprites.Length - 1;
+		else TongueSpriteIndex.Add(self, sLeaser.sprites.Length - 1);
+
+		// 创建舌头网格
+		sLeaser.sprites[TongueSpriteIndex[self]] = TriangleMesh.MakeLongMesh(self.ropeSegments.Length - 1, false, true);
+
+		// 将舌头精灵从默认容器移除，添加到 Midground
+		sLeaser.sprites[TongueSpriteIndex[self]].RemoveFromContainer();
+		rCam.ReturnFContainer("Midground").AddChild(sLeaser.sprites[TongueSpriteIndex[self]]);
+	}
+
+	/// <summary>
+	/// 绘制 Cloudtail 的精灵：根据饱腹/漂浮状态调整身体缩放，处理反刍动画，绘制舌头。
+	/// </summary>
+	public static void DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+	{
+		orig(self, sLeaser, rCam, timeStacker, camPos);
+		if (self.player.TryGetCloud(out var data))
+		{
+			Plugin.PupWide.TryGet(self.player, out var pup_stomach_wide);
+			Plugin.PupHigh.TryGet(self.player, out var pup_stomach_high);
+
+			// 反刍动画更新
+			if (data.SwallowOrRegurgitateCoutner > 0 && data.CanRetrieve())
+			{
+				data.UpdateRegurgitationGraphics(self, sLeaser);
+			}
+
+			float num = 0.5f + 0.5f * Mathf.Sin(Mathf.Lerp(self.lastBreath, self.breath, timeStacker) * Mathf.PI * 2f);
+			// 替换头部元素为 Cloudtail 专属贴图
+			if (!self.RenderAsPup)
+			{
+				sLeaser.sprites[3].element = Futile.atlasManager.GetElementWithName("Cloudtail" + sLeaser.sprites[3].element.name);
+			}
+			float Bodythickness = 1.5f;
+			float HipsThickness = 1.75f;
+			if (!self.RenderAsPup)
+			{
+				if (data.Stuffed)
+				{
+					Bodythickness = 1.65f;
+					HipsThickness = 1.95f;
+				}
+				// 身体和臀部的缩放，受饱腹、蜷缩、呼吸和营养不良影响
+				sLeaser.sprites[0].scaleX = Bodythickness + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+				sLeaser.sprites[1].scaleY = 1.25f + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+				sLeaser.sprites[1].scaleX = HipsThickness + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+			}
+			else
+			{
+				// 幼崽状态的缩放
+				sLeaser.sprites[0].scaleX = pup_stomach_wide + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+				sLeaser.sprites[0].scaleY = pup_stomach_high + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+				sLeaser.sprites[1].scaleX = pup_stomach_wide + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+				sLeaser.sprites[1].scaleY = pup_stomach_high + self.player.sleepCurlUp * 0.2f + 0.05f * num - 0.05f * self.malnourished;
+			}
+		}
+		if (self.player.slugcatStats.name.value != "Cloudtail")// && self.player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Saint)
+		{
+			return;
+		}
+		// 绘制舌头绳索（基于绳索段位置）
+		Vector2 vector = Vector2.Lerp(self.drawPositions[0, 1], self.drawPositions[0, 0], timeStacker);
+		Vector2 vector2 = Vector2.Lerp(self.drawPositions[1, 1], self.drawPositions[1, 0], timeStacker);
+		float b = Mathf.Lerp(self.lastStretch, self.stretch, timeStacker);
+		vector = Vector2.Lerp(self.ropeSegments[0].lastPos, self.ropeSegments[0].pos, timeStacker);
+		vector += Custom.DirVec(Vector2.Lerp(self.ropeSegments[1].lastPos, self.ropeSegments[1].pos, timeStacker), vector) * 1f;
+		float num7 = 0f;
+		for (int k = 1; k < self.ropeSegments.Length; k++)
+		{
+			float num8 = (float)k / (float)(self.ropeSegments.Length - 1);
+			if (k >= self.ropeSegments.Length - 2)
+			{
+				vector2 = new Vector2(sLeaser.sprites[9].x + camPos.x, sLeaser.sprites[9].y + camPos.y);
+			}
+			else
+			{
+				vector2 = Vector2.Lerp(self.ropeSegments[k].lastPos, self.ropeSegments[k].pos, timeStacker);
+			}
+			Vector2 a2 = Custom.PerpendicularVector((vector - vector2).normalized);
+			float d4 = 0.2f + 1.6f * Mathf.Lerp(1f, b, Mathf.Pow(Mathf.Sin(num8 * Mathf.PI), 0.7f));
+			Vector2 vector11 = vector - a2 * d4;
+			Vector2 vector12 = vector2 + a2 * d4;
+			float num9 = Mathf.Sqrt(Mathf.Pow(vector11.x - vector12.x, 2f) + Mathf.Pow(vector11.y - vector12.y, 2f));
+			if (!float.IsNaN(num9))
+			{
+				num7 += num9;
+			}
+			(sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).MoveVertice((k - 1) * 4, vector11 - camPos);
+			(sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).MoveVertice((k - 1) * 4 + 1, vector + a2 * d4 - camPos);
+			(sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).MoveVertice((k - 1) * 4 + 2, vector2 - a2 * d4 - camPos);
+			(sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).MoveVertice((k - 1) * 4 + 3, vector12 - camPos);
+			vector = vector2;
+		}
+		// 根据舌头状态显示/隐藏舌头精灵
+		if (self.player.tongue.Free || self.player.tongue.Attached)
+		{
+			sLeaser.sprites[TongueSpriteIndex[self]].isVisible = true;
+		}
+		else
+		{
+			sLeaser.sprites[TongueSpriteIndex[self]].isVisible = false;
+		}
+	}
+
+	/// <summary>
+	/// 更新 Cloudtail 尾巴物理：饱腹时尾巴下垂，漂浮时尾巴上浮。
+	/// </summary>
+	public static void UpdateGraphics(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
+	{
+		orig(self);
+
+		if (self.player.TryGetCloud(out var data))
+		{
+			if (data.Stuffed)
+			{
+				self.tail[self.tail.Length - 1].vel.y -= 0.9f;
+				self.tail[self.tail.Length - 1].vel.x *= 1.1f;
+			}
+			else if (data.Floaty)
+			{
+				self.tail[self.tail.Length - 1].vel.y += 0.9f;
+				self.tail[self.tail.Length - 1].vel.x *= 1.1f;
+			}
+		}
+	}
+
+	/// <summary>
+	/// 应用调色板时，为 Cloudtail 的舌头设置颜色（使用 SlugBase 自定义颜色索引 2）。
+	/// </summary>
+	public static void ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+	{
+		orig.Invoke(self, sLeaser, rCam, palette);
+		if (self.player.slugcatStats.name.value != "Cloudtail")// && self.player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Saint)
+		{
+			return;
+		}
+		// 注释掉了默认的基于雾色的舌头颜色，改为使用自定义颜色
+		*//*
+		float a = 0.95f;
+		float b = 1f;
+		float sl = 1f;
+		float a2 = 0.75f;
+		float b2 = 0.9f;
+		for (int j = 0; j < (sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).verticeColors.Length; j++)
+		{
+			float num2 = Mathf.Clamp(Mathf.Sin((float)j / (float)((sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).verticeColors.Length - 1) * 3.1415927f), 0f, 1f);
+			(sLeaser.sprites[TongueSpriteIndex[self]] as TriangleMesh).verticeColors[j] = Color.Lerp(palette.fogColor, Custom.HSL2RGB(Mathf.Lerp(a, b, num2), sl, Mathf.Lerp(a2, b2, Mathf.Pow(num2, 0.15f))), 0.7f);
+		}
+		*//*
+		sLeaser.sprites[TongueSpriteIndex[self]].color = SlugBase.DataTypes.PlayerColor.GetCustomColor(self, 2);
+	}
+
+	/// <summary>
+	/// 更新绳索段位置，用于 Cloudtail 的舌头可视化。复制自圣徒的绳索更新逻辑。
+	/// </summary>
+	public static void MSCUpdate(On.PlayerGraphics.orig_MSCUpdate orig, PlayerGraphics self)
+	{
+		orig.Invoke(self);
+		if (self.player.slugcatStats.name.value != "Cloudtail")// && self.player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Saint)
+		{
+			return;
+		}
+		// 绳索更新逻辑（与圣徒类似）
+		self.lastStretch = self.stretch;
+		self.stretch = self.RopeStretchFac;
+		List<Vector2> list = new List<Vector2>();
+		for (int j = self.player.tongue.rope.TotalPositions - 1; j > 0; j--)
+		{
+			list.Add(self.player.tongue.rope.GetPosition(j));
+		}
+		list.Add(self.player.mainBodyChunk.pos);
+		float num = 0f;
+		for (int k = 1; k < list.Count; k++)
+		{
+			num += Vector2.Distance(list[k - 1], list[k]);
+		}
+		float num2 = 0f;
+		for (int l = 0; l < list.Count; l++)
+		{
+			if (l > 0)
+			{
+				num2 += Vector2.Distance(list[l - 1], list[l]);
+			}
+			self.AlignRope(num2 / num, list[l]);
+		}
+		for (int m = 0; m < self.ropeSegments.Length; m++)
+		{
+			self.ropeSegments[m].Update();
+		}
+		for (int n = 1; n < self.ropeSegments.Length; n++)
+		{
+			self.ConnectRopeSegments(n, n - 1);
+		}
+		for (int num3 = 0; num3 < self.ropeSegments.Length; num3++)
+		{
+			self.ropeSegments[num3].claimedForBend = false;
+		}
+	}
+
+	/// <summary>
+	/// 根据胃中存储的物品返回胃部发光颜色。灯笼为橙红色，神经元为绿色，监视者神经元为白色。
+	/// </summary>
+	public static Color? StomachGlowLightColor(On.Player.orig_StomachGlowLightColor orig, Player self)
+	{
+		if (self.TryGetCloud(out var data))
+		{
+			if (data.Storage.Length > 0)
+			{
+				if (data.StorageContains(AbstractPhysicalObject.AbstractObjectType.Lantern, false, null))
+				{
+					return new Color?(new Color(1f, 0.4f, 0.3f, 0.85f)); // 灯笼暖光
+				}
+				if (data.StorageContains(AbstractPhysicalObject.AbstractObjectType.NSHSwarmer, false, null) ||
+					data.StorageContains(MoreSlugcatsEnums.AbstractObjectType.GlowWeed, false, null))
+				{
+					return new Color?(new Color(0.2f, 1f, 0.3f, 0.45f)); // 绿色发光（神经元/发光果）
+				}
+				if (data.StorageContains(AbstractPhysicalObject.AbstractObjectType.SSOracleSwarmer, false, null))
+				{
+					return new Color?(new Color(1f, 1f, 1f, 0.35f)); // 监视者神经元白光
+				}
+			}
+			return null; // 无发光物品
+		}
+		return orig(self);
+	}
+}
+
 #endregion*/
 
 #region 胖世界 BPOptions
@@ -4177,4 +4890,504 @@ namespace Menu.Remix.MixedUI
 	}
 }
 #endregion*/
+
+
+/*public static class CloudtailModule
+{
+	public static bool IsCloud(this Player pl)
+	{
+		return pl.SlugCatClass.value == "Cloudtail";
+	}
+
+	public static readonly int capacity = 5;
+
+	private static readonly ConditionalWeakTable<Player, CloudData> CloudCWT = new ConditionalWeakTable<Player, CloudData>();
+
+
+	public static CloudData GetCloudData(this Player player)
+	{
+		return CloudCWT.GetValue(player, (Player _) => new CloudData(player));
+	}
+
+	public static bool TryGetCloud(this Player player, out CloudData sailor)
+	{
+		bool result;
+		if (player.IsCloud())
+		{
+			sailor = player.GetCloudData();
+			result = true;
+		}
+		else
+		{
+			sailor = null;
+			result = false;
+		}
+		return result;
+	}
+	public class CloudData
+	{
+		public CloudData(Player player)
+		{
+			self = player;
+			Storage = new AbstractPhysicalObject[5];
+			SwallowOrRegurgitateCoutner = 0;
+			GraspToTakeFrom = -1;
+			Rolltimer = 0;
+		}
+
+		public Player self;
+		public AbstractPhysicalObject[] Storage;
+		public int GraspToTakeFrom;
+		public bool Stuffed
+		{
+			get
+			{
+				return Storage != null && FreeSlot() == -1;
+			}
+		}
+		public bool Floaty;
+		public int SwallowOrRegurgitateCoutner;
+		public int Rolltimer;
+
+		public bool StorageInput
+		{
+			get
+			{
+
+				int num = self.playerState.playerNumber;
+
+				if (num == 0)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode1.Value);
+				}
+				else if (num == 1)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode2.Value);
+				}
+				else if (num == 2)
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode3.Value);
+				}
+				else
+				{
+					return Input.GetKey(CloudtailOptions.Instance.KeyCode4.Value);
+				}
+			}
+		}
+
+		public void Save()
+		{
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] != null)
+				{
+					var stomach = Storage[i];
+					stomach.world = self.room.world;
+					if (stomach is AbstractCreature cr)
+					{
+						cr.abstractAI?.NewWorld(self.room.world);
+					}
+
+					self.room.abstractRoom.AddEntity(stomach);
+					stomach.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
+					stomach.RealizeInRoom();
+					Storage[i] = null;
+				}
+			}
+		}
+		public bool CanStore()
+		{
+
+
+			bool Storeinputs = self.input[0].x == 0 && self.input[0].y == 0 && StorageInput; //Incorrect inputs, returning false!
+
+			if (self.room == null) return false;
+			if (!Storeinputs) return false;
+			if (self.firstChunk.submersion > 0.5f) return false;
+			if (Stuffed) return false;
+
+			if (self.grasps[0] == null && self.grasps[1] == null) return false;
+
+			int handnum = -1;
+
+			for (int i = 0; i < self.grasps.Length; i++)
+			{
+				if (self.grasps[i] != null && self.grasps[i].grabbed is IPlayerEdible food && food.Edible) return false;
+				if (self.grasps[i] != null)
+				{
+					handnum = i;
+					break;
+				}
+			}
+
+			if (handnum == -1) return false;
+
+			GraspToTakeFrom = handnum;//remember the index of the hand we're stealing from
+
+			return true;
+		}
+
+
+		public bool CanRetrieve()
+		{
+			return self.input[0].thrw && self.eatMeat <= 20 && !self.input[0].pckp && !self.input[0].jmp && self.firstChunk.submersion < 0.5f && self.room != null && self.FreeHand() != -1;
+		}
+
+		public void Update()
+		{
+			//update the world of the stored objects
+			if (self.room == null) return;
+
+
+			bool s = CanStore();
+			bool r = CanRetrieve();
+
+			if (r || s)//||
+			{
+				SwallowOrRegurgitateCoutner++;
+				if (SwallowOrRegurgitateCoutner > 90)
+				{
+					if (s)
+					{
+						Swallow(GraspToTakeFrom);
+						if (self.graphicsModule != null) (self.graphicsModule as PlayerGraphics).swallowing = 20;
+					}
+					else
+					{
+						Regurgitate();
+					}
+					SwallowOrRegurgitateCoutner = 0;
+
+				}
+			}
+			else
+			{
+				SwallowOrRegurgitateCoutner = 0;
+			}
+
+			if (!self.craftingObject) self.swallowAndRegurgitateCounter = 0;
+
+			Floaty = StorageContains(MoreSlugcatsEnums.AbstractObjectType.EnergyCell, false, null);
+		}
+
+		public void UpdateRegurgitationGraphics(PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser)
+		{
+			if (SwallowOrRegurgitateCoutner > 15)
+			{
+				self.blink = 5;
+			}
+			float num10 = Mathf.InverseLerp(0f, 110f, (float)SwallowOrRegurgitateCoutner);
+			float num11 = (float)SwallowOrRegurgitateCoutner / Mathf.Lerp(30f, 15f, num10);
+			if (self.player.standing)
+			{
+				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+				sLeaser.sprites[1].y += -Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 3f;
+
+				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+
+				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
+			}
+			else
+			{
+				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[0].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+				sLeaser.sprites[1].y += Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 2f;
+				sLeaser.sprites[1].x += -Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 3f;
+
+
+				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[3].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+
+				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
+				sLeaser.sprites[9].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
+			}
+		}
+
+		public void Swallow(int grasp)
+		{
+			PhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed;
+			int storeindex = FreeSlot();
+			if (storeindex == -1) return;
+
+			if (abstractPhysicalObject is Spear)
+			{
+				(abstractPhysicalObject as Spear).abstractSpear.stuckInWallCycles = 0;
+			}
+			if (abstractPhysicalObject is ElectricSpear && (abstractPhysicalObject as ElectricSpear).abstractSpear.electricCharge > 0)
+			{
+				self.room.AddObject(new ZapCoil.ZapFlash(self.firstChunk.pos, 10f));
+				self.room.PlaySound(SoundID.Zapper_Zap, self.firstChunk.pos, 1f, 1.5f + Random.value * 1.5f);
+				if (self.Submersion > 0.5f)
+				{
+					self.room.AddObject(new UnderwaterShock(self.room, null, self.firstChunk.pos, 10, 800f, 2f, self, new Color(0.8f, 0.8f, 1f)));
+				}
+				self.Stun(200);
+				self.room.AddObject(new CreatureSpasmer(self, false, 200));
+				return;
+			}
+			if (abstractPhysicalObject is JellyFish)
+			{
+				self.room.PlaySound(SoundID.Centipede_Shock, self.firstChunk.pos);
+				self.room.AddObject(new UnderwaterShock(self.room, self, self.firstChunk.pos, 10, 100f, 0f, null, new Color(0.8f, 0.8f, 1f)));
+				self.room.AddObject(new CreatureSpasmer(self, false, 60));
+				self.Stun(80);
+				return;
+			}
+
+			var ToSwallow = abstractPhysicalObject.abstractPhysicalObject;
+			Storage[storeindex] = ToSwallow;
+			self.ReleaseGrasp(grasp);
+			abstractPhysicalObject.abstractPhysicalObject.realizedObject.RemoveFromRoom();
+			abstractPhysicalObject.abstractPhysicalObject.Abstractize(self.abstractCreature.pos);
+			abstractPhysicalObject.abstractPhysicalObject.Room.RemoveEntity(abstractPhysicalObject.abstractPhysicalObject.ID);
+
+			BodyChunk mainBodyChunk = self.mainBodyChunk;
+			mainBodyChunk.vel.y += 2f;
+			self.room.PlaySound(SoundID.Slugcat_Swallow_Item, self.mainBodyChunk);
+		}
+
+		public void Regurgitate()
+		{
+			int index = ItemInQueue();
+			AbstractPhysicalObject stomach;
+			bool PluckedFromNowhere = false;
+
+			if (index == -1)
+			{
+				if (self.FoodInStomach >= 1)
+				{
+					stomach = RandItem(self);
+					PluckedFromNowhere = true;
+				}
+				else
+				{
+					self.Stun(80);
+					self.AerobicIncrease(12f);
+					return;
+				}
+			}
+			else
+			{
+				stomach = Storage[index];
+			}
+
+			stomach.world = self.abstractCreature.world;
+
+			if (stomach is AbstractCreature c)
+			{
+				c.abstractAI?.NewWorld(self.room.world);
+			}
+
+			self.room.abstractRoom.AddEntity(stomach);
+
+			stomach.pos = self.abstractCreature.pos;
+			stomach.RealizeInRoom();
+
+			if (PluckedFromNowhere)
+			{
+				self.SubtractFood(1);
+			}
+
+			Vector2 vector = self.bodyChunks[0].pos;
+			Vector2 a = Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos);
+			bool flag = false;
+			if (Mathf.Abs(self.bodyChunks[0].pos.y - self.bodyChunks[1].pos.y) > Mathf.Abs(self.bodyChunks[0].pos.x - self.bodyChunks[1].pos.x) && self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
+			{
+				vector += Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos) * 5f;
+				a *= -1f;
+				a.x += 0.4f * (float)self.flipDirection;
+				a.Normalize();
+				flag = true;
+			}
+			stomach.realizedObject.firstChunk.HardSetPosition(vector);
+			stomach.realizedObject.firstChunk.vel = Vector2.ClampMagnitude((a * 2f + Custom.RNV() * Random.value) / stomach.realizedObject.firstChunk.mass, 6f);
+			self.bodyChunks[0].pos -= a * 2f;
+			self.bodyChunks[0].vel -= a * 2f;
+
+			if (self.graphicsModule != null)
+			{
+				(self.graphicsModule as PlayerGraphics).head.vel += Custom.RNV() * Random.value * 3f;
+			}
+			for (int i = 0; i < 3; i++)
+			{
+				self.room.AddObject(new WaterDrip(vector + Custom.RNV() * Random.value * 1.5f, Custom.RNV() * 3f * Random.value + a * Mathf.Lerp(2f, 6f, Random.value), false));
+			}
+			self.room.PlaySound(SoundID.Slugcat_Regurgitate_Item, self.mainBodyChunk);
+
+			if (flag && self.FreeHand() > -1)
+			{
+				self.SlugcatGrab(stomach.realizedObject, self.FreeHand());
+			}
+			if (!PluckedFromNowhere)
+			{
+				Storage[index] = null;
+			}
+		}
+
+		public float HeatSources()
+		{
+			float heat = RainWorldGame.DefaultHeatSourceWarmth;
+			float num = 1;
+
+			if (Storage == null) return heat;
+
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] != null && Storage[i].type == ObjType.Lantern) num++;
+			}
+
+			heat *= num;
+
+			return heat;
+		}
+
+		public int FreeSlot()
+		{
+			if (Storage == null) return -1;
+
+			for (int i = 0; i < capacity; i++)
+			{
+				if (Storage[i] == null) return i;
+			}
+
+			return -1;
+		}
+
+		public int ItemInQueue()
+		{
+			if (Storage == null) return -1;
+
+			for (int i = capacity - 1; i >= 0; i--)
+			{
+				if (Storage[i] != null) return i;
+			}
+
+			return -1;
+		}
+
+		public bool StorageContains(ObjType objType, bool CheckForCreatures, CreatureTemplate.Type creatType)
+		{
+			if (!CheckForCreatures)
+			{
+				for (int i = 0; i < Storage.Length; i++)
+				{
+					if (Storage[i]?.type == objType)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+			else
+			{
+				for (int i = 0; i < Storage.Length; i++)
+				{
+					if (Storage[i] != null && (Storage[i] as AbstractCreature)?.creatureTemplate.type == creatType)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		public static AbstractPhysicalObject RandItem(Player caller)
+		{
+			AbstractPhysicalObject abstractPhysicalObject;
+			float value = Random.value;
+
+			//abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.SlugNPC), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			//return abstractPhysicalObject;
+
+			if (value <= 0.32894737f)
+			{
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FirecrackerPlant, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.4276316f)
+			{
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FlareBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.5065789f)
+			{
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.ScavengerBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.6118421f)
+			{
+				abstractPhysicalObject = new WaterNut.AbstractWaterNut(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false);
+			}
+			else if (value <= 0.6644737f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.7302632f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.LanternMouse), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.79605263f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.TubeWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.82894737f)
+			{
+				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.PuffBall, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
+			}
+			else if (value <= 0.8486842f)
+			{
+				abstractPhysicalObject = new DataPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Rivulet_stomach);
+			}
+			else if (value <= 0.9144737f)
+			{
+				abstractPhysicalObject = new BubbleGrass.AbstractBubbleGrass(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), 1f, -1, -1, null);
+			}
+			else if (value <= 0.93421054f)
+			{
+				abstractPhysicalObject = new SporePlant.AbstractSporePlant(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false, (double)Random.value < 0.5);
+			}
+			else if (value <= 0.46710527f)
+			{
+				Color color = new Color(1f, 0.8f, 0.3f);
+				int ownerIterator = 1;
+				if (Random.value <= 0.35f)
+				{
+					color = new Color(0.44705883f, 0.9019608f, 0.76862746f);
+					ownerIterator = 0;
+				}
+				else if (Random.value <= 0.05f)
+				{
+					color = new Color(0f, 1f, 0f);
+					ownerIterator = 2;
+				}
+				abstractPhysicalObject = new OverseerCarcass.AbstractOverseerCarcass(caller.room.world, null, caller.abstractPhysicalObject.pos, caller.room.game.GetNewID(), color, ownerIterator);
+			}
+			else if (value <= 0.4736842f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallNeedleWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.9934211f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallCentipede), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.79605263f)
+			{
+				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
+			}
+			else if (value <= 0.8f)
+			{
+				abstractPhysicalObject = new VultureMask.AbstractVultureMask(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), caller.abstractPhysicalObject.ID.RandomSeed, (double)Random.value <= 0.05);
+			}
+			else
+			{
+				abstractPhysicalObject = new SpearMasterPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Spearmasterpearl);
+			}
+			if (AbstractConsumable.IsTypeConsumable(abstractPhysicalObject.type))
+			{
+				(abstractPhysicalObject as AbstractConsumable).isFresh = false;
+				(abstractPhysicalObject as AbstractConsumable).isConsumed = true;
+			}
+			return abstractPhysicalObject;
+		}
+	}
+}*/
+
+
 
