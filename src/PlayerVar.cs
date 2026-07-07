@@ -165,7 +165,7 @@ namespace ExtensionLib
 		{
 			_playerRef.TryGetTarget(out Player? player);
 
-			stomachData._serializedHistory.Clear();
+			//stomachData._serializedHistory.Clear();
 
 			foreach (var obj in stomachData.historyInStomach)
 			{
