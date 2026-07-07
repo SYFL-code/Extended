@@ -14,13 +14,18 @@ namespace ExtensionLib
 		public const string Name = "Extension Lib";
 		public const string Version = "0.1.0";
 
-		public const string version = "0.1.46";
-		private bool EnableStartScreen = true;//true false
-		public static bool EnableLog = true;
+		public const string version = "0.1.47";
+        public static bool EnableLog = true;// false
+        private static bool EnableStartScreen = true;// true
+		public static bool DebugMode = false;//  false
+
 
         private static bool isEnabled;
+        public static bool MeadowEnabled()
+        {
+            return ModManager.ActiveMods.Any(m => m.id == "henpemaz.rainmeadow");
+        }
 
-		//public static ManualLogSource Log { get; private set; }
 
 
 		// Add hooks-添加钩子
@@ -36,13 +41,8 @@ namespace ExtensionLib
 
 			On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 
-            if (ModManager.ActiveMods.Any(mod => mod.id == "henpemaz_rainmeadow"))
-            {
-                MeadowCompat.MeadowEnabled = true;
-            }
-
-            // Put your custom hooks here!-在此放置你自己的钩子
-            On.RainWorld.LoadSetupValues += RainWorldLoadSetupValues;
+			// Put your custom hooks here!-在此放置你自己的钩子
+			On.RainWorld.LoadSetupValues += RainWorldLoadSetupValues;
 
 			GlobalVar.Hook();
 
@@ -93,7 +93,7 @@ namespace ExtensionLib
 			if (!EnableStartScreen)
 			{
 				result.startScreen = false;
-            }
+			}
 			return result;
 		}
 

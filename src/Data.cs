@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,7 +15,21 @@ namespace ExtensionLib
 	{
 		public virtual string id { get; set; } = "Default";
 
-		public virtual string Save()
+        public virtual string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
+        {
+            string fileName = $"{id}{saveSlot}{slugcat.value}.json";
+            return fileName;
+        }
+        public virtual bool IsMatch(string fileName, int saveSlot)
+        {
+            // 预编译
+            Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            return pattern.IsMatch(fileName);
+        }
+
+
+        public virtual string Save()
 		{
 			return "";
 		}
@@ -49,7 +64,32 @@ namespace ExtensionLib
             ContractResolver = new JsonPropertyOnlyContractResolver()
         };
 
-		public override string Save()
+        public override string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
+        {
+            /*Log.LogInfo($"MeadowInLobby : {MeadowCompat.MeadowInLobby}");
+            if (MeadowCompat.MeadowInLobby)
+			{
+                string fileName = $"RainMeadow{saveSlot}{slugcat.value}.json";
+                return fileName;
+            }*/
+            string fileName = $"Vanilla{saveSlot}{slugcat.value}.json";
+            return fileName;
+        }
+        public override bool IsMatch(string fileName, int saveSlot)
+        {
+            /*Log.LogInfo($"MeadowInLobby : {MeadowCompat.MeadowInLobby}");
+            if (MeadowCompat.MeadowInLobby)
+            {
+                Regex pattern_ = new Regex($"^RainMeadow{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                return pattern_.IsMatch(fileName);
+            }*/
+            // 预编译
+            Regex pattern = new Regex($"^Vanilla{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            return pattern.IsMatch(fileName);
+        }
+
+        public override string Save()
 		{
 			// 自动序列化所有公开属性和字段
 			return JsonConvert.SerializeObject(GlobalVar.playerVars, _settings);

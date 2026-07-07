@@ -43,7 +43,7 @@ namespace ExtensionLib
 			//playerVars.Add(player, new PlayerVar(player));
 			player.GetPlayerVar(out PlayerVar pv);
 
-            if (Log.EnableLog)
+            if (Plugin.DebugMode)
             {
                 pv.myDebug = new MyDebug(player);
             }

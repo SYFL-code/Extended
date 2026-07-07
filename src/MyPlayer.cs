@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using RainMeadow;
 using static ExtensionLib.Helper;
 using static ExtensionLib.PlayerVar;
 
@@ -409,11 +410,11 @@ namespace ExtensionLib
 			}
 		}
 
-        private static void Player_AddFood(ILContext il)
-        {
-            ILCursor c = new ILCursor(il);
+		private static void Player_AddFood(ILContext il)
+		{
+			ILCursor c = new ILCursor(il);
 
-            /*
+			/*
 				// add = Math.Min(add, MaxFoodInStomach - this.playerState.foodInStomach);
 				IL_0014: br IL_0150
 
@@ -428,30 +429,30 @@ namespace ExtensionLib
 				IL_0031: starg.s 'add'
 			*/
 
-            bool logged = false;
+			bool logged = false;
 
-            if (c.TryGotoNext(MoveType.After,
-                (i) => i.Match(OpCodes.Br),
-                (i) => i.MatchLdarg(1),
-                (i) => i.MatchLdarg(0),
-                (i) => i.MatchCall<Player>("get_MaxFoodInStomach")
-            ))
-            {
-                c.Emit(OpCodes.Ldarg_0);
-                c.EmitDelegate<Func<int, Player, int>>((origMaxFood, self) =>
-                {
-                    if (!logged || Input.GetKey("c"))
-                    {
-                        logged = true;
+			if (c.TryGotoNext(MoveType.After,
+				(i) => i.Match(OpCodes.Br),
+				(i) => i.MatchLdarg(1),
+				(i) => i.MatchLdarg(0),
+				(i) => i.MatchCall<Player>("get_MaxFoodInStomach")
+			))
+			{
+				c.Emit(OpCodes.Ldarg_0);
+				c.EmitDelegate<Func<int, Player, int>>((origMaxFood, self) =>
+				{
+					if (!logged || Input.GetKey("c"))
+					{
+						logged = true;
 
-                        Log.LogInfo($"Player orig maxFoodInStomach {origMaxFood}");
-                    }
+						Log.LogInfo($"Player orig maxFoodInStomach {origMaxFood}");
+					}
 
-                    return origMaxFood - 2;
-                });
-            }
-        }
-        private static void Player_GrabUpdate_(ILContext il)
+					return origMaxFood - 2;
+				});
+			}
+		}
+		private static void Player_GrabUpdate_(ILContext il)
 		{
 			ILCursor c = new ILCursor(il);
 
@@ -799,7 +800,7 @@ namespace ExtensionLib
 
 			pv.coord = player.coord;
 
-			if (Input.GetKey("c"))
+			if (Plugin.DebugMode && Input.GetKey("c"))
 			{
 				if (pv.myDebug == null)
 				{
@@ -826,7 +827,7 @@ namespace ExtensionLib
 				pv.swallowedObjectsTemp.Clear();
 			}*/
 
-			if (Input.GetKeyDown("n"))
+			if (Plugin.DebugMode && Input.GetKeyDown("n"))
 			{
 				int grasp = InHand(player, false);
 
@@ -842,7 +843,7 @@ namespace ExtensionLib
 				}*/
 			}
 
-			if (Input.GetKeyDown("m"))
+			if (Plugin.DebugMode && Input.GetKeyDown("m"))
 			{
 				player.Regurgitate();
 

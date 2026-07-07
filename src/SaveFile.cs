@@ -49,9 +49,9 @@ namespace ExtensionLib
 			}
 			else if (survived && newMalnourished)
 			{
-                Log.LogInfo($"newMalnourished");
-                SaveFile.MalnourishedSave(saveSlot, slugcat);
-            }
+				Log.LogInfo($"newMalnourished");
+				SaveFile.MalnourishedSave(saveSlot, slugcat);
+			}
 			else
 			{
 				if (!newMalnourished) // 未挨饿
@@ -90,80 +90,91 @@ namespace ExtensionLib
 			WipeAll(progression.rainWorld.options.saveSlot);
 		}
 
-        
+		
 		private static Dictionary<string, Data> Datum = new();
 
-        public static void AddData(Data data)
-        {
-            AddData(data.id, data);
-        }
-        public static void AddData(string id, Data data)
+		public static void AddData(Data data)
 		{
-            if (Datum.ContainsKey(id))
+			AddData(data.id, data);
+		}
+		public static void AddData(string id, Data data)
+		{
+			if (Datum.ContainsKey(id))
 			{
 				Log.LogError($"Datum with id '{id}' already exists. Overwriting.");
-                Datum[id] = data;
+				Datum[id] = data;
 				return;
-            }
-            Datum.Add(id, data);
-        }
-
-        // 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
-        // 这里组合成 "[persistentDataPath]/ExtensionData/[id]" 目录
-        private static string path(string id) => Path.Combine(pathMain, id);
-        private static string pathMain => Path.Combine(Application.persistentDataPath, "ExtensionData");//"ExtendedData""ExtensionData"
-
-        private static string GetSavePath(string id, int saveSlot, SlugcatStats.Name slugcat)
-		{
-			string fileName = $"{id}{saveSlot}{slugcat.value}.json";
-			return Path.Combine(path(id), fileName);
+			}
+			Datum.Add(id, data);
 		}
 
-        #region Wipe
-        public static void WipeAll(int saveSlot)// saveSlot 是存档槽位编号，范围是 0-2  /  -1、-2、-3
+		// 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
+		// 这里组合成 "[persistentDataPath]/ExtensionData/[id]" 目录
+		private static string path(string id) => Path.Combine(pathMain, id);
+		private static string pathMain => Path.Combine(Application.persistentDataPath, "ExtensionData");//"ExtendedData""ExtensionData"
+
+		private static string GetSavePath(string id, int saveSlot, SlugcatStats.Name slugcat)
+		{
+			if (Datum.ContainsKey(id))
+			{
+				Data data_ = Datum[id];
+
+				string fileName = data_.GetFileName(saveSlot, slugcat);
+				return Path.Combine(path(id), fileName);
+			}
+			Log.LogError($"Datum with id '{id}' does not exist.");
+			return "";
+		}
+
+		#region Wipe
+		public static void WipeAll(int saveSlot)// saveSlot 是存档槽位编号，范围是 0-2  /  -1、-2、-3
 		{
 			Log.LogInfo($"saveSlot : {saveSlot}");
 
 			try
 			{
-                foreach (var item in Datum)
+				foreach (var item in Datum)
 				{
-                    Data data_ = item.Value;
-                    string id = item.Key;
+					Data data_ = item.Value;
+					string id = item.Key;
 
-                    // 确保目录存在
-                    if (Directory.Exists(path(id)))
-                    {
-                        // 获取目录下所有文件的完整路径
-                        string[] files = Directory.GetFiles(path(id));
+					// 确保目录存在
+					if (Directory.Exists(path(id)))
+					{
+						// 获取目录下所有文件的完整路径
+						string[] files = Directory.GetFiles(path(id));
 
-                        // 预编译
-                        Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+						// 预编译
+						//Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                        // 遍历每个文件
-                        for (int i = 0; i < files.Length; i++)
-                        {
-                            // 检查文件名是否以 "[id]{存档槽位编号}" 开头
-                            // 注意：StartsWith 的参数构成为 path + 目录分隔符 + [id] + saveSlot.ToString()
-                            // 例如 path 为 "/.../[id]"，那么前缀就是 "/.../[id]/[id]1"（假设 saveSlot=1）
+						// 遍历每个文件
+						for (int i = 0; i < files.Length; i++)
+						{
+							// 检查文件名是否以 "[id]{存档槽位编号}" 开头
+							// 注意：StartsWith 的参数构成为 path + 目录分隔符 + [id] + saveSlot.ToString()
+							// 例如 path 为 "/.../[id]"，那么前缀就是 "/.../[id]/[id]1"（假设 saveSlot=1）
 
-                            string fileName = Path.GetFileName(files[i]);
-                            if (pattern.IsMatch(fileName))
-                            //if (files[i].StartsWith(path + Path.DirectorySeparatorChar.ToString() + [id] + saveSlot.ToString()))
-                            {
-                                try
-                                {
-                                    // 删除文件
-                                    File.Delete(files[i]);
-                                }
-                                catch (Exception e)
-                                {
-                                    Log.LogInfo($"Failed to delete {fileName}: {e.Message}");
-                                }
-                            }
-                        }
-                    }
-                }
+							string fileName = Path.GetFileName(files[i]);
+
+							if (data_.IsMatch(fileName, saveSlot))
+							//if (files[i].StartsWith(path + Path.DirectorySeparatorChar.ToString() + [id] + saveSlot.ToString()))
+							{
+								try
+								{
+									// 删除文件
+									File.Delete(files[i]);
+								}
+								catch (Exception e)
+								{
+									Log.LogInfo($"Failed to delete {fileName}: {e.Message}");
+								}
+							}
+						}
+
+
+
+					}
+				}
 			}
 			catch (Exception ex)
 			{
@@ -177,26 +188,26 @@ namespace ExtensionLib
 
 			try
 			{
-                foreach (var item in Datum)
+				foreach (var item in Datum)
 				{
-                    Data data_ = item.Value;
-                    string id = item.Key;
+					Data data_ = item.Value;
+					string id = item.Key;
 
-                    // 确保目录存在
-                    if (Directory.Exists(path(id)))
-                    {
-                        // [id][存档槽编号][角色名称].json
-                        // 例如[id]2White.json
-                        string save = GetSavePath(id, saveSlot, slugcat);
+					// 确保目录存在
+					if (Directory.Exists(path(id)))
+					{
+						// [id][存档槽编号][角色名称].json
+						// 例如[id]2White.json
+						string save = GetSavePath(id, saveSlot, slugcat);
 
-                        // 确保文件存在
-                        if (File.Exists(save))
-                        {
-                            // 删除文件
-                            File.Delete(save);
-                        }
-                    }
-                }
+						// 确保文件存在
+						if (File.Exists(save))
+						{
+							// 删除文件
+							File.Delete(save);
+						}
+					}
+				}
 
 			}
 			catch (Exception ex)
@@ -204,37 +215,37 @@ namespace ExtensionLib
 				Log.LogError($"Failed : {ex.Message}");
 			}
 		}
-        #endregion
+		#endregion
 
-        #region Save Load
-        public static void Save(int saveSlot, global::SlugcatStats.Name slugcat)
+		#region Save Load
+		public static void Save(int saveSlot, global::SlugcatStats.Name slugcat)
 		{
 			Log.LogInfo($"saveSlot : {saveSlot} , slugcat : {slugcat}");
 
 			try
 			{
-                foreach (var item in Datum)
-                {
+				foreach (var item in Datum)
+				{
 					Data data_ = item.Value;
-                    string id = item.Key;
+					string id = item.Key;
 
-                    // 确保目录存在
-                    if (!Directory.Exists(path(id)))
-                    {
-                        Directory.CreateDirectory(path(id));
-                    }
+					// 确保目录存在
+					if (!Directory.Exists(path(id)))
+					{
+						Directory.CreateDirectory(path(id));
+					}
 
-                    string save = GetSavePath(id, saveSlot, slugcat);
+					string save = GetSavePath(id, saveSlot, slugcat);
 
-                    // 序列化
-                    string data = data_.Save();//***
+					// 序列化
+					string data = data_.Save();//***
 
-                    // 写入文件（覆盖已有内容）
-                    File.WriteAllText(save, data);
+					// 写入文件（覆盖已有内容）
+					File.WriteAllText(save, data);
 
-                    Log.LogInfo($"id={id}");
-                    Log.LogInfo($"data={data}");
-                }
+					Log.LogInfo($"id={id}");
+					Log.LogInfo($"data={data}");
+				}
 
 				Log.LogInfo("Saving Extended");
 			}
@@ -248,67 +259,67 @@ namespace ExtensionLib
 		{
 			Log.LogInfo($"saveSlot : {saveSlot} , slugcat : {slugcat}");
 
-            foreach (var item in Datum)
+			foreach (var item in Datum)
 			{
-                Data data_ = item.Value;
-                string id = item.Key;
+				Data data_ = item.Value;
+				string id = item.Key;
 
-                // 确保目录存在
-                if (!Directory.Exists(path(id)))
-                {
-                    Directory.CreateDirectory(path(id));
-                }
+				// 确保目录存在
+				if (!Directory.Exists(path(id)))
+				{
+					Directory.CreateDirectory(path(id));
+				}
 
-                string save = GetSavePath(id, saveSlot, slugcat);
+				string save = GetSavePath(id, saveSlot, slugcat);
 
-                // 如果文件存在
-                if (File.Exists(save))
-                {
-                    try
-                    {
-                        // 读取文件
-                        string data = File.ReadAllText(save);
+				// 如果文件存在
+				if (File.Exists(save))
+				{
+					try
+					{
+						// 读取文件
+						string data = File.ReadAllText(save);
 
-                        Log.LogInfo($"id={id}");
-                        Log.LogInfo($"data={data}");
+						Log.LogInfo($"id={id}");
+						Log.LogInfo($"data={data}");
 
-                        // 反序列化
-                        data_.Load(data);//***
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.LogError($"Failed to load id:{id} data: {ex.Message}");
+						// 反序列化
+						data_.Load(data);//***
+					}
+					catch (Exception ex)
+					{
+						Log.LogError($"Failed to load id:{id} data: {ex.Message}");
 
-                        data_.ClearAll();//***
-                    }
+						data_.ClearAll();//***
+					}
 
 
-                }
-                // 若文件不存在
-                else
-                {
-                    //Log.Log($"data={data}");
-                    Log.LogInfo($"Loading id:{id} data - Non-Existent");
+				}
+				// 若文件不存在
+				else
+				{
+					//Log.Log($"data={data}");
+					Log.LogInfo($"Loading id:{id} data - Non-Existent");
 
-                    // 清空数据
-                    data_.ClearAll();//***
-                }
-            }
+					// 清空数据
+					data_.ClearAll();//***
+				}
+			}
 
-            Log.LogInfo("Loading - Exists");
-        }
+			Log.LogInfo("Loading - Exists");
+		}
 
-        public static void MalnourishedSave(int saveSlot, global::SlugcatStats.Name slugcat)
+		public static void MalnourishedSave(int saveSlot, global::SlugcatStats.Name slugcat)
 		{
-            foreach (var item in Datum)
+			foreach (var item in Datum)
 			{
-                Data data_ = item.Value;
-                string id = item.Key;
+				Data data_ = item.Value;
+				string id = item.Key;
 
-                data_.MalnourishedSave();
-            }
-        }
-        #endregion
+				data_.MalnourishedSave();
+			}
+		}
+		#endregion
 
-    }
+	}
 }
