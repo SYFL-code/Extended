@@ -398,539 +398,18 @@ namespace ExtensionLib
 // !IsFull
 // 跳出去
 
-
-#region zs
-/*if (c.TryGotoNext(MoveType.Before,
-	i => i.MatchLdarg(0),
-	i => i.MatchLdfld<Player>("objectInStomach"),
-	i => i.MatchBrfalse(out ILLabel label)))
-{
-	c.Remove();
-	c.Remove();
-
-	c.Emit(OpCodes.Ldarg, 0);
-	c.EmitDelegate<Func<Player, bool>>(player =>
-	{
-		*//*if (!logs[1] || Input.GetKey("c"))
-		{
-			logs[1] = true;
-
-			Log.LogInfo($"1");
-		}*//*
-
-		Log.LogInfo($"1");
-
-		player.GetPlayerVar(out var pv);
-		return pv.stomachData.IsFull;
-	});
-}*/
-
-//// ============================================================
-//// 问题1: IL_0451 附近
-//// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
-//// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
-//// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
-//// ============================================================
-
-//if (c.TryGotoNext(MoveType.Before,
-//	i => i.MatchLdarg(0),
-//	i => i.MatchLdfld<Player>("objectInStomach"),
-//	i => i.MatchBrfalse(out _)
-//	))
-//{
-//	// 移除 ldarg.0 + ldfld
-//	c.Remove();
-//	c.Remove();
-//	//c.Remove();
-
-//	// 插入: 检查胃是否未满
-//	// 如果胃未满 → brfalse 跳转（原逻辑是 objectInStomach == null 时跳转）
-//	c.Emit(OpCodes.Ldarg, 0);
-//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachNotFull"));
-//	c.EmitDelegate<Func<Player, bool>>(player =>
-//	{
-//		Log.LogInfo($"1");
-
-//		player.GetPlayerVar(out var pv);
-//		var stomachData = pv.stomachData;
-//		return stomachData.IsFull;
-//	});
-//	//c.Emit(OpCodes.Brfalse, /* 跳转到 IL_046c 的标签 */);
-//}
-
-
-//// ============================================================
-//// 问题2: IL_0639-IL_0646 附近
-//// 原版: if (num8 > -1 || objectInStomach != null || isGourmand)
-//// 改为: if (num8 > -1 || stomachList.Count > 0 || isGourmand)
-//// 用途: 判断是否可以进行吞咽/反刍操作
-//// ============================================================
-
-//if (c.TryGotoNext(MoveType.Before,
-//	i => i.MatchLdarg(0),
-//	i => i.MatchLdfld("Player", "objectInStomach"),
-//	i => i.MatchBrtrue(out _)))
-//{
-//	c.Remove();
-//	c.Remove();
-//	//c.Remove();
-
-//	// 插入: 检查胃是否有物品
-//	c.Emit(OpCodes.Ldarg, 0);
-//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
-//	c.EmitDelegate<Func<Player, bool>>(player =>
-//	{
-//		Log.LogInfo($"2");
-
-//		player.GetPlayerVar(out var pv);
-//		var stomachData = pv.stomachData;
-//		return !stomachData.IsEmpty;
-//	});
-//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 */);
-//}
-
-//// ============================================================
-//// 问题3: IL_18cf-IL_18d5
-//// 原版: if (objectInStomach != null || isGourmand || (MSC && SlugCatClass == Spear))
-//// 改为: if (stomachList.Count > 0 || isGourmand || (MSC && SlugCatClass == Spear))
-//// 用途: 反刍条件判定 (swallowAndRegurgitateCounter > 110)
-//// ============================================================
-
-//if (c.TryGotoNext(MoveType.Before,
-//	i => i.MatchLdarg(0),
-//	i => i.MatchLdfld("Player", "objectInStomach"),
-//	i => i.MatchBrtrue(out _)))
-//{
-//	c.Remove();
-//	c.Remove();
-//	//c.Remove();
-
-//	c.Emit(OpCodes.Ldarg, 0);
-//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
-//	c.EmitDelegate<Func<Player, bool>>(player =>
-//	{
-//		Log.LogInfo($"3");
-
-//		return false;
-
-//		/*player.GetPlayerVar(out var pv);
-//		var stomachData = pv.stomachData;
-
-//		int canBeSwallow = BeSwallowed(player);
-
-//		if (canBeSwallow != -1)
-//		{
-//			return false;
-//		}
-
-//		return !stomachData.IsEmpty;*/
-//	});
-//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_18fe) */);
-//}
-
-//// ============================================================
-//// 问题4: IL_1916-IL_191c
-//// 原版: if (isGourmand && objectInStomach == null)
-//// 改为: if (isGourmand && stomachList.Count == 0)
-//// 用途: Gourmand 特殊反刍逻辑
-//// ============================================================
-
-//if (c.TryGotoNext(MoveType.Before,
-//	i => i.MatchLdarg(0),
-//	i => i.MatchLdfld("Player", "objectInStomach"),
-//	i => i.MatchBrtrue(out _)))  // 注意这里 brtrue 表示 objectInStomach != null 时跳转
-//{
-//	c.Remove();
-//	c.Remove();
-//	//c.Remove();
-
-//	// 插入: 检查胃是否为空 (Count == 0)
-//	c.Emit(OpCodes.Ldarg, 0);
-//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
-//	c.EmitDelegate<Func<Player, bool>>(player =>
-//	{
-//		Log.LogInfo($"4");
-
-//		player.GetPlayerVar(out var pv);
-//		var stomachData = pv.stomachData;
-//		return !stomachData.IsEmpty;
-//	});
-//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1921) */);
-//}
-
-//// ============================================================
-//// 问题5: IL_19be-IL_19c4
-//// 原版: else if (objectInStomach == null && swallowAndRegurgitateCounter > 90)
-//// 改为: else if (stomachList.Count == 0 && swallowAndRegurgitateCounter > 90)
-//// 用途: 吞咽条件 (胃为空 + 计数器 > 90)
-//// ============================================================
-
-//if (c.TryGotoNext(MoveType.Before,
-//	i => i.MatchLdarg(0),
-//	i => i.MatchLdfld("Player", "objectInStomach"),
-//	i => i.MatchBrtrue(out _)))  // objectInStomach != null 时跳转到 IL_1af9 (跳过吞咽)
-//{
-//	c.Remove();
-//	c.Remove();
-//	//c.Remove();
-
-//	// 插入: 检查胃是否为空 (Count == 0)
-//	c.Emit(OpCodes.Ldarg, 0);
-//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
-//	c.EmitDelegate<Func<Player, bool>>(player =>
-//	{
-//		Log.LogInfo($"5");
-
-//		player.GetPlayerVar(out var pv);
-//		var stomachData = pv.stomachData;
-
-//		if (Input.GetKey("c"))//
-//		{
-//			foreach (var instruct in il.Instrs)
-//			{
-//				Debug.Log(instruct.ToString());
-//			}
-//		}
-
-
-//		return stomachData.IsFull;
-//	});
-//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1af9，跳过吞咽) */);
-//}
-
-
-//Debug.Log("===After");
-
-//c.Emit(OpCodes.Ldarg_0);
-//c.EmitDelegate<Action<Player>>((player) =>
-//{
-//	if (Input.GetKey("c"))
-//	{
-//		foreach (var instruct in il.Instrs)
-//		{
-//			Log.LogInfo(instruct.ToString());
-//		}
-//	}
-//	Log.LogInfo($"10");
-//});
-
-/*// 用于标记我们处理到了哪一处
-int patchCount = 0;
-
-while (patchCount < 5)
-{
-	patchCount++;
-
-	// 遍历所有 "ldarg.0 + ldfld objectInStomach" 模式
-
-	if (c.TryGotoNext(MoveType.Before,
-		i => i.MatchLdarg(0),
-		i => i.MatchLdfld<Player>("objectInStomach"),
-		i => i.MatchBrfalse(out _)
-	))
-	{
-		// 移除原来的 ldarg.0 和 ldfld
-		c.Remove();
-		c.Remove();
-
-		// 原代码: if (objectInStomach == null) -> 跳转
-		// 需要替换为: if (IsStomachEmpty(player)) -> 跳转
-
-		// 插入: if (IsStomachEmpty(player)) brfalse ...
-		c.Emit(OpCodes.Ldarg_0);
-		c.EmitDelegate<Func<Player, bool>>(player =>
-		{
-			player.GetPlayerVar(out var pv);
-			var stomachData = pv.stomachData;
-			return stomachData.IsFull;
-		});
-		// 注意：原 brfalse 指令还在后面，会使用栈上的 bool 值
-	}
-
-
-	else if (c.TryGotoNext(MoveType.Before,
-		i => i.MatchLdarg(0),
-		i => i.MatchLdfld<Player>("objectInStomach"),
-		i => i.MatchBrtrue(out _)
-	))
-	{
-		// 移除原来的 ldarg.0 和 ldfld
-		c.Remove();
-		c.Remove();
-
-		// 原代码: if (objectInStomach != null) -> 跳转
-		// 需要替换为: if (!IsStomachEmpty(player)) -> 跳转
-
-		// 插入: if (IsStomachEmpty(player)) brtrue ...
-		c.Emit(OpCodes.Ldarg_0);
-		c.EmitDelegate<Func<Player, bool>>(player =>
-		{
-			player.GetPlayerVar(out var pv);
-			var stomachData = pv.stomachData;
-			return stomachData.IsFull;
-		});
-		// 注意：原 brtrue 指令还在后面，会使用栈上的 bool 值
-	}
-
-
-}*/
+#region Items
+#endregion
+#region Creatures
 #endregion
 
-
-/*
- using Kittehface.Framework20;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ExtensionLib
-{
-	public class PlayerVar
-	{
-		#region PlayerRef
-		[JsonIgnore]
-		private WeakReference<Player?> _playerRef;
-
-		[JsonIgnore]
-		public WeakReference<Player?> PlayerRef => _playerRef;
-
-
-		// 供外部重新绑定 Player 引用
-		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
-		#endregion
-
-		public StomachData stomachData;
-
-		[JsonIgnore]
-		public WorldCoordinate coord;
-
-		public class StomachData
-		{
-			[JsonIgnore]
-			public PlayerVar Owner;
-
-			[JsonIgnore]
-			public List<AbstractPhysicalObject> historyInStomach = new();  // 历史栈（不含当前）
-
-			[JsonProperty("capacity")]
-			public int capacity = 5;                               // 容量限制
-
-			[JsonProperty("historyInStomach")]
-			public List<string> _serializedHistory = new();
-
-
-			public StomachData(PlayerVar owner)
-			{
-				Owner = owner;
-			}
-			public AbstractPhysicalObject? Current      // 指向 player.objectInStomach
-			{
-				get
-				{
-					Owner._playerRef.TryGetTarget(out Player? player);
-					if (player == null)
-					{
-						throw new NullReferenceException("player == null".MessageLog());
-					}
-					return player.objectInStomach;
-				}
-				set
-				{
-					Owner._playerRef.TryGetTarget(out Player? player);
-					if (player == null)
-					{
-						throw new NullReferenceException("player == null".MessageLog());
-					}
-					player.objectInStomach = value;
-				}
-			}
-			public int HistoryCount => historyInStomach.Count;
-			public int TotalCount => (Current != null ? 1 : 0) + HistoryCount;
-			public bool IsEmpty => Current == null && HistoryCount == 0;
-			public bool IsFull => TotalCount >= capacity;
-			public int RemainingSpace => capacity - TotalCount;
-			public int Capacity { get => capacity; set => capacity = Math.Max(0, value); }
-
-			// 历史栈操作
-			public void Push(AbstractPhysicalObject obj) => historyInStomach.Add(obj);
-			public AbstractPhysicalObject? Pop()
-			{
-				if (HistoryCount == 0) return null;
-				var top = historyInStomach[HistoryCount - 1];
-				historyInStomach.RemoveAt(HistoryCount - 1);
-				return top;
-			}
-			public void ClearHistory() => historyInStomach.Clear();
-
-			// 吞入
-			public bool Swallow(AbstractPhysicalObject obj)
-			{
-				if (IsFull) return false;
-
-				// 当前变历史
-				if (Current != null)
-					Push(Current);
-
-				// 设置新当前
-				Current = obj;
-				return true;
-			}
-			// 吐出/消化（移除当前，从历史补位）
-			public AbstractPhysicalObject? PopCurrent()
-			{
-				var removed = Current;
-
-				// 从历史取出补位
-				if (HistoryCount > 0)
-				{
-					Current = Pop();
-				}
-				else
-				{
-					Current = null;
-				}
-
-				return removed;
-			}
-
-			// 清空全部
-			public void ClearAll()
-			{
-				ClearHistory();
-				Current = null;
-			}
-
-			// 获取完整内容（用于遍历/显示）
-			public List<AbstractPhysicalObject> GetAllContents()
-			{
-				var result = historyInStomach;  // 历史（从底到顶）
-				if (Current != null)
-					result.Add(Current);    // 当前（栈顶）
-				return result;
-			}
-		}
-
-
-
-		// 反序列化的无参构造函数
-		public PlayerVar()
-		{
-			_playerRef = new WeakReference<Player?>(null);
-
-			stomachData = new StomachData(this);
-			coord = new WorldCoordinate();
-		}
-		public PlayerVar(Player player)
-		{
-			_playerRef = new WeakReference<Player?>(player);
-
-			stomachData = new StomachData(this);
-			coord = player.coord;
-		}
-
-
-
-		#region swallowedObjects
-		//public int StorageCapacity = 1;
-		//[JsonIgnore]
-		//public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
-		//public List<string> swallowedObjects = new();
-		//[JsonIgnore]
-		//public WorldCoordinate coord;
-
-		//// 获取胃部容量
-		//public int GetStomachCapacity(Player player)
-		//{
-		//	int Capacity = StorageCapacity;
-
-		//	/*if (MyOptions.Instance?.StomachCapacity != null)
-		//          {
-		//              Capacity = MyOptions.Instance.StomachCapacity.Value;
-		//          }
-//	/*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
-//          {
-//              Capacity += 2;
-//          }
-
-//	return Capacity;
-//}
-
-//// 检查是否有空间
-//public bool HasSpace(Player player)
-//{
-//	return objectsInStomach.Count < GetStomachCapacity(player);
-//}
-#endregion
-
-#region Save/Load
-
-[OnSerializing]// 保存时自动调用
-internal void OnSerializing(StreamingContext context)
-{
-	Save();
-}
-public void Save()
-{
-	_playerRef.TryGetTarget(out Player? player);
-
-	stomachData._serializedHistory.Clear();
-
-	foreach (var obj in stomachData.historyInStomach)
-	{
-		string objString = Helper.ObjectToString(obj, player != null ? player.coord : coord, true);
-		stomachData._serializedHistory.Add(objString);
-	}
-	Log.LogDebug($"Save: 保存了 {stomachData.historyInStomach.Count} 个对象");
-}
-public void Malnourished_Save()
-{
-	Save();
-
-	stomachData.historyInStomach.Clear();
-}
-
-[OnDeserialized]// 加载时自动调用
-internal void OnDeserialized(StreamingContext context)
-{
-	Load();
-}
-public void Load()
-{
-	/*_playerRef.TryGetTarget(out Player? player);
-	objectsInStomach.Clear();
-
-	foreach (string objString in _savedSwallowedObjects)
-	{
-		AbstractPhysicalObject obj = Helper.StringToObject(objString, player != null ? player.coord : coord);
-		if (obj != null)
-		{
-			objectsInStomach.Add(obj);
-		}
-	}
-}
-		#endregion
-
-
-
-
-
-
-	}
-}
-
-*/
-
-/*#region Cloudtail 云尾
+#region Cloudtail 云尾
 
 //UpdateRegurgitationGraphics
 //SlugcatHand_Update
 
 
-
+/*
 /// <summary>
 /// Cloudtail（云尾）自定义角色模块
 /// 实现基于内存数组的临时物品/生物吞咽-吐出仓储系统
@@ -2331,8 +1810,8 @@ public static class MainMechanicsCloudtail
 		return orig(self);
 	}
 }
-
-#endregion*/
+*/
+#endregion
 
 #region 胖世界 BPOptions
 /*public class BPOptions : OptionInterface
@@ -3218,8 +2697,8 @@ public static class MainMechanicsCloudtail
 }*/
 #endregion
 
-/*#region Creatures
-
+#region Menu.Remix.MixedUI
+/*
 namespace Menu.Remix.MixedUI
 {
 	// Token: 0x0200060A RID: 1546
@@ -4888,506 +4367,895 @@ namespace Menu.Remix.MixedUI
 			public OnValueChangeHandler onValueChanged;
 		}
 	}
-}
-#endregion*/
+}*/
+#endregion
 
 
-/*public static class CloudtailModule
+#region IL
+
+//private static void Player_GrabUpdate(ILContext il)
+//{
+//	Logs.Write("[Player_GrabUpdate] Patch entered");
+
+//	ILCursor c = new ILCursor(il);
+
+//	Dictionary<int, bool> logs = new();
+//	for (int i = 0; i < 15; i++)
+//	{
+//		logs.Add(i, false);
+//	}
+//	int logIndex = 0;
+
+//	logIndex = 1;
+//	// ============================================================
+//	// 问题1: IL_0451 附近
+//	// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
+//	// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
+//	// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
+//	// ============================================================
+//	/*if (c.TryGotoNext(MoveType.Before,
+//		i => i.MatchLdarg(0),
+//		i => i.MatchLdfld<Player>("objectInStomach"),
+//		i => i.MatchBrfalse(out _),
+//		i => i.MatchLdarg(0),
+//		i => i.MatchCall<Player>("get_CanPutSpearToBack")
+//		))
+//	{
+//		LogsWrite(c, logs, logIndex);
+
+//		c.Remove();
+//		c.Remove();
+//		//c.Remove();
+
+//		// 插入: 检查胃是否未满
+//		//原逻辑 objectInStomach == null → brfalse 跳转(满足条件)
+
+//		c.Emit(OpCodes.Ldarg, 0);
+//		c.EmitDelegate<Func<Player, bool>>(player =>
+//		{
+//			Log.LogInfo($"[{logIndex}]");
+
+//			player.GetPlayerVar(out var pv);
+//			var stomachData = pv.stomachData;
+//			return stomachData.IsFull;
+//		});
+//		//c.Emit(OpCodes.Brfalse,  跳转到 IL_046c 的标签 );
+//	}
+//	else
+//	{
+//		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+//	}*/
+
+//	// 找到跳转目标，创建标签
+//	//ILLabel? targetLabel = null;
+
+// //         logIndex = 3;
+//	//if (c.TryGotoNext(MoveType.Before,
+//	//	i => i.MatchLdarg(0),
+//	//	i => i.MatchLdfld<Player>("objectInStomach"),//objectInStomach spearOnBack
+//	//	i => i.MatchBrtrue(out _),
+//	//	i => i.MatchLdarg(0),
+//	//	i => i.MatchCall<Player>("get_isGourmand"),
+//	//	i => i.MatchBrtrue(out _)
+//	//	//i => i.Match(OpCodes.Brtrue) || i.Match(OpCodes.Brfalse)
+//	//	))
+//	//{
+//	//	LogsWrite(c, logs, logIndex);
+
+//	//	/*c.Emit(OpCodes.Ldarg, 0);
+
+//	//	c.EmitDelegate<Action<Player>>(player =>
+//	//	{
+//	//		if (!logs[logIndex] || Input.GetKey("c"))
+//	//		{
+//	//			logs[logIndex] = true;
+
+//	//			Log.LogInfo($"[{logIndex}] {logIndex}");
+
+//	//			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
+//	//		}
+//	//	});*/
+
+//	//	c.Remove();
+//	//	c.Remove();
+
+//	//	c.Emit(OpCodes.Ldarg, 0);
+
+//	//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	//	{
+//	//		//Log.LogInfo($"[logIndex:{logIndex}]");
+
+//	//		player.GetPlayerVar(out var pv);
+//	//		var stomachData = pv.stomachData;
+
+//	//		int canBeSwallow = BeSwallowed(player);
+
+//	//		if (canBeSwallow != -1)// 可以被吞咽
+//	//		{
+//	//			Log.LogInfo($"可以被吞咽");
+//	//			return false;// 不要反刍
+//	//		}
+//	//		Log.LogInfo($"不可以被吞咽 !IsEmpty[{!stomachData.IsEmpty}]");
+//	//		return !stomachData.IsEmpty;
+//	//	});
+//	//}
+//	//else
+//	//{
+//	//	Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+//	//}
+
+
+
+//	logIndex = 5;
+//	if (c.TryGotoNext(MoveType.Before,
+//		i => i.MatchLdarg(0),
+//		i => i.MatchLdfld<Player>("objectInStomach"),
+//		i => i.MatchBrtrue(out _),// 出去if
+//		i => i.MatchLdarg(0),
+//		i => i.MatchLdfld<Player>("swallowAndRegurgitateCounter"),
+//		i => i.MatchLdcI4(90),
+//		i => i.MatchBle(out _)
+//		))
+//	{
+//		LogsWrite(c, logs, logIndex);
+
+//		// 手动获取 brtrue 指令（当前 cursor 在 ldarg.0，brtrue 是第3条，index+2）
+//		/*var brtrueInst = c.Instrs[c.Index + 2];
+
+//		// 获取跳转目标
+//		var targetInst = (Instruction)brtrueInst.Operand;
+
+//		// 创建标签
+//		targetLabel = il.DefineLabel();
+
+//		// 在目标位置打标签（需要另一个 cursor）
+//		var markCursor = new ILCursor(il);
+//		markCursor.Goto(targetInst, MoveType.Before);
+//		markCursor.MarkLabel(targetLabel);*/
+
+//		c.Remove();
+//		c.Remove();
+//		//c.Remove();
+
+//		c.Emit(OpCodes.Ldarg, 0);
+
+//		c.EmitDelegate<Func<Player, bool>>(player =>
+//		{
+//			//Log.LogInfo($"[logIndex:{logIndex}]");
+
+//			player.GetPlayerVar(out var pv);
+//			var stomachData = pv.stomachData;
+
+//			int canBeSwallow = BeSwallowed(player);
+
+//			if (canBeSwallow == -1)// 不可以被吞咽
+//			{
+//				Log.LogInfo($"不可以被吞咽");
+//				return true;// 不要吞咽
+//			}
+//			Log.LogInfo($"可以被吞咽 IsFull[{stomachData.IsFull}]");
+//			return stomachData.IsFull;// 出去if
+//		});
+//		// 用标签
+//		//c.Emit(OpCodes.Brtrue, targetLabel);
+//	}
+//	else
+//	{
+//		Logs.Write($"[Player_GrabUpdate] [logIndex:{logIndex}] not found");
+//	}
+
+
+
+//	Logs.Write("[Player_GrabUpdate] Patch entered_");
+
+//}
+
+//public static void LogsWrite(ILCursor c, Dictionary<int, bool> logs, int logIndex)
+//{
+//	Logs.Write($"[Player_GrabUpdate]-[{logIndex}] found");
+
+//	/*c.Emit(OpCodes.Ldarg, 0);
+
+//	c.EmitDelegate<Action<Player>>(player =>
+//	{
+//		if (!logs[logIndex] || Input.GetKey("c"))
+//		{
+//			logs[logIndex] = true;
+
+//			Log.LogInfo($"[{logIndex}] {logIndex}");
+
+//			Logs.Write($"[Player_GrabUpdate]-[{logIndex}] {logIndex}");
+//		}
+//	});*/
+//}
+
+#endregion
+#region IL2
+/*if (c.TryGotoNext(MoveType.Before,
+	i => i.MatchLdarg(0),
+	i => i.MatchLdfld<Player>("objectInStomach"),
+	i => i.MatchBrfalse(out ILLabel label)))
 {
-	public static bool IsCloud(this Player pl)
+	c.Remove();
+	c.Remove();
+
+	c.Emit(OpCodes.Ldarg, 0);
+	c.EmitDelegate<Func<Player, bool>>(player =>
 	{
-		return pl.SlugCatClass.value == "Cloudtail";
-	}
-
-	public static readonly int capacity = 5;
-
-	private static readonly ConditionalWeakTable<Player, CloudData> CloudCWT = new ConditionalWeakTable<Player, CloudData>();
-
-
-	public static CloudData GetCloudData(this Player player)
-	{
-		return CloudCWT.GetValue(player, (Player _) => new CloudData(player));
-	}
-
-	public static bool TryGetCloud(this Player player, out CloudData sailor)
-	{
-		bool result;
-		if (player.IsCloud())
+		*//*if (!logs[1] || Input.GetKey("c"))
 		{
-			sailor = player.GetCloudData();
-			result = true;
-		}
-		else
-		{
-			sailor = null;
-			result = false;
-		}
-		return result;
-	}
-	public class CloudData
-	{
-		public CloudData(Player player)
-		{
-			self = player;
-			Storage = new AbstractPhysicalObject[5];
-			SwallowOrRegurgitateCoutner = 0;
-			GraspToTakeFrom = -1;
-			Rolltimer = 0;
-		}
+			logs[1] = true;
 
-		public Player self;
-		public AbstractPhysicalObject[] Storage;
-		public int GraspToTakeFrom;
-		public bool Stuffed
-		{
-			get
-			{
-				return Storage != null && FreeSlot() == -1;
-			}
-		}
-		public bool Floaty;
-		public int SwallowOrRegurgitateCoutner;
-		public int Rolltimer;
+			Log.LogInfo($"1");
+		}*//*
 
-		public bool StorageInput
-		{
-			get
-			{
+		Log.LogInfo($"1");
 
-				int num = self.playerState.playerNumber;
-
-				if (num == 0)
-				{
-					return Input.GetKey(CloudtailOptions.Instance.KeyCode1.Value);
-				}
-				else if (num == 1)
-				{
-					return Input.GetKey(CloudtailOptions.Instance.KeyCode2.Value);
-				}
-				else if (num == 2)
-				{
-					return Input.GetKey(CloudtailOptions.Instance.KeyCode3.Value);
-				}
-				else
-				{
-					return Input.GetKey(CloudtailOptions.Instance.KeyCode4.Value);
-				}
-			}
-		}
-
-		public void Save()
-		{
-			for (int i = 0; i < capacity; i++)
-			{
-				if (Storage[i] != null)
-				{
-					var stomach = Storage[i];
-					stomach.world = self.room.world;
-					if (stomach is AbstractCreature cr)
-					{
-						cr.abstractAI?.NewWorld(self.room.world);
-					}
-
-					self.room.abstractRoom.AddEntity(stomach);
-					stomach.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
-					stomach.RealizeInRoom();
-					Storage[i] = null;
-				}
-			}
-		}
-		public bool CanStore()
-		{
-
-
-			bool Storeinputs = self.input[0].x == 0 && self.input[0].y == 0 && StorageInput; //Incorrect inputs, returning false!
-
-			if (self.room == null) return false;
-			if (!Storeinputs) return false;
-			if (self.firstChunk.submersion > 0.5f) return false;
-			if (Stuffed) return false;
-
-			if (self.grasps[0] == null && self.grasps[1] == null) return false;
-
-			int handnum = -1;
-
-			for (int i = 0; i < self.grasps.Length; i++)
-			{
-				if (self.grasps[i] != null && self.grasps[i].grabbed is IPlayerEdible food && food.Edible) return false;
-				if (self.grasps[i] != null)
-				{
-					handnum = i;
-					break;
-				}
-			}
-
-			if (handnum == -1) return false;
-
-			GraspToTakeFrom = handnum;//remember the index of the hand we're stealing from
-
-			return true;
-		}
-
-
-		public bool CanRetrieve()
-		{
-			return self.input[0].thrw && self.eatMeat <= 20 && !self.input[0].pckp && !self.input[0].jmp && self.firstChunk.submersion < 0.5f && self.room != null && self.FreeHand() != -1;
-		}
-
-		public void Update()
-		{
-			//update the world of the stored objects
-			if (self.room == null) return;
-
-
-			bool s = CanStore();
-			bool r = CanRetrieve();
-
-			if (r || s)//||
-			{
-				SwallowOrRegurgitateCoutner++;
-				if (SwallowOrRegurgitateCoutner > 90)
-				{
-					if (s)
-					{
-						Swallow(GraspToTakeFrom);
-						if (self.graphicsModule != null) (self.graphicsModule as PlayerGraphics).swallowing = 20;
-					}
-					else
-					{
-						Regurgitate();
-					}
-					SwallowOrRegurgitateCoutner = 0;
-
-				}
-			}
-			else
-			{
-				SwallowOrRegurgitateCoutner = 0;
-			}
-
-			if (!self.craftingObject) self.swallowAndRegurgitateCounter = 0;
-
-			Floaty = StorageContains(MoreSlugcatsEnums.AbstractObjectType.EnergyCell, false, null);
-		}
-
-		public void UpdateRegurgitationGraphics(PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser)
-		{
-			if (SwallowOrRegurgitateCoutner > 15)
-			{
-				self.blink = 5;
-			}
-			float num10 = Mathf.InverseLerp(0f, 110f, (float)SwallowOrRegurgitateCoutner);
-			float num11 = (float)SwallowOrRegurgitateCoutner / Mathf.Lerp(30f, 15f, num10);
-			if (self.player.standing)
-			{
-				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-				sLeaser.sprites[1].y += -Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 3f;
-
-				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-
-				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 2f;
-			}
-			else
-			{
-				sLeaser.sprites[0].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-				sLeaser.sprites[0].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-				sLeaser.sprites[1].y += Mathf.Sin((num11 + 0.2f) * 3.1415927f * 2f) * num10 * 2f;
-				sLeaser.sprites[1].x += -Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 3f;
-
-
-				sLeaser.sprites[3].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-				sLeaser.sprites[3].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-
-				sLeaser.sprites[9].y += Mathf.Sin(num11 * 3.1415927f * 2f) * num10 * 3f;
-				sLeaser.sprites[9].x += Mathf.Cos(num11 * 3.1415927f * 2f) * num10 * 1f;
-			}
-		}
-
-		public void Swallow(int grasp)
-		{
-			PhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed;
-			int storeindex = FreeSlot();
-			if (storeindex == -1) return;
-
-			if (abstractPhysicalObject is Spear)
-			{
-				(abstractPhysicalObject as Spear).abstractSpear.stuckInWallCycles = 0;
-			}
-			if (abstractPhysicalObject is ElectricSpear && (abstractPhysicalObject as ElectricSpear).abstractSpear.electricCharge > 0)
-			{
-				self.room.AddObject(new ZapCoil.ZapFlash(self.firstChunk.pos, 10f));
-				self.room.PlaySound(SoundID.Zapper_Zap, self.firstChunk.pos, 1f, 1.5f + Random.value * 1.5f);
-				if (self.Submersion > 0.5f)
-				{
-					self.room.AddObject(new UnderwaterShock(self.room, null, self.firstChunk.pos, 10, 800f, 2f, self, new Color(0.8f, 0.8f, 1f)));
-				}
-				self.Stun(200);
-				self.room.AddObject(new CreatureSpasmer(self, false, 200));
-				return;
-			}
-			if (abstractPhysicalObject is JellyFish)
-			{
-				self.room.PlaySound(SoundID.Centipede_Shock, self.firstChunk.pos);
-				self.room.AddObject(new UnderwaterShock(self.room, self, self.firstChunk.pos, 10, 100f, 0f, null, new Color(0.8f, 0.8f, 1f)));
-				self.room.AddObject(new CreatureSpasmer(self, false, 60));
-				self.Stun(80);
-				return;
-			}
-
-			var ToSwallow = abstractPhysicalObject.abstractPhysicalObject;
-			Storage[storeindex] = ToSwallow;
-			self.ReleaseGrasp(grasp);
-			abstractPhysicalObject.abstractPhysicalObject.realizedObject.RemoveFromRoom();
-			abstractPhysicalObject.abstractPhysicalObject.Abstractize(self.abstractCreature.pos);
-			abstractPhysicalObject.abstractPhysicalObject.Room.RemoveEntity(abstractPhysicalObject.abstractPhysicalObject.ID);
-
-			BodyChunk mainBodyChunk = self.mainBodyChunk;
-			mainBodyChunk.vel.y += 2f;
-			self.room.PlaySound(SoundID.Slugcat_Swallow_Item, self.mainBodyChunk);
-		}
-
-		public void Regurgitate()
-		{
-			int index = ItemInQueue();
-			AbstractPhysicalObject stomach;
-			bool PluckedFromNowhere = false;
-
-			if (index == -1)
-			{
-				if (self.FoodInStomach >= 1)
-				{
-					stomach = RandItem(self);
-					PluckedFromNowhere = true;
-				}
-				else
-				{
-					self.Stun(80);
-					self.AerobicIncrease(12f);
-					return;
-				}
-			}
-			else
-			{
-				stomach = Storage[index];
-			}
-
-			stomach.world = self.abstractCreature.world;
-
-			if (stomach is AbstractCreature c)
-			{
-				c.abstractAI?.NewWorld(self.room.world);
-			}
-
-			self.room.abstractRoom.AddEntity(stomach);
-
-			stomach.pos = self.abstractCreature.pos;
-			stomach.RealizeInRoom();
-
-			if (PluckedFromNowhere)
-			{
-				self.SubtractFood(1);
-			}
-
-			Vector2 vector = self.bodyChunks[0].pos;
-			Vector2 a = Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos);
-			bool flag = false;
-			if (Mathf.Abs(self.bodyChunks[0].pos.y - self.bodyChunks[1].pos.y) > Mathf.Abs(self.bodyChunks[0].pos.x - self.bodyChunks[1].pos.x) && self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
-			{
-				vector += Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos) * 5f;
-				a *= -1f;
-				a.x += 0.4f * (float)self.flipDirection;
-				a.Normalize();
-				flag = true;
-			}
-			stomach.realizedObject.firstChunk.HardSetPosition(vector);
-			stomach.realizedObject.firstChunk.vel = Vector2.ClampMagnitude((a * 2f + Custom.RNV() * Random.value) / stomach.realizedObject.firstChunk.mass, 6f);
-			self.bodyChunks[0].pos -= a * 2f;
-			self.bodyChunks[0].vel -= a * 2f;
-
-			if (self.graphicsModule != null)
-			{
-				(self.graphicsModule as PlayerGraphics).head.vel += Custom.RNV() * Random.value * 3f;
-			}
-			for (int i = 0; i < 3; i++)
-			{
-				self.room.AddObject(new WaterDrip(vector + Custom.RNV() * Random.value * 1.5f, Custom.RNV() * 3f * Random.value + a * Mathf.Lerp(2f, 6f, Random.value), false));
-			}
-			self.room.PlaySound(SoundID.Slugcat_Regurgitate_Item, self.mainBodyChunk);
-
-			if (flag && self.FreeHand() > -1)
-			{
-				self.SlugcatGrab(stomach.realizedObject, self.FreeHand());
-			}
-			if (!PluckedFromNowhere)
-			{
-				Storage[index] = null;
-			}
-		}
-
-		public float HeatSources()
-		{
-			float heat = RainWorldGame.DefaultHeatSourceWarmth;
-			float num = 1;
-
-			if (Storage == null) return heat;
-
-			for (int i = 0; i < capacity; i++)
-			{
-				if (Storage[i] != null && Storage[i].type == ObjType.Lantern) num++;
-			}
-
-			heat *= num;
-
-			return heat;
-		}
-
-		public int FreeSlot()
-		{
-			if (Storage == null) return -1;
-
-			for (int i = 0; i < capacity; i++)
-			{
-				if (Storage[i] == null) return i;
-			}
-
-			return -1;
-		}
-
-		public int ItemInQueue()
-		{
-			if (Storage == null) return -1;
-
-			for (int i = capacity - 1; i >= 0; i--)
-			{
-				if (Storage[i] != null) return i;
-			}
-
-			return -1;
-		}
-
-		public bool StorageContains(ObjType objType, bool CheckForCreatures, CreatureTemplate.Type creatType)
-		{
-			if (!CheckForCreatures)
-			{
-				for (int i = 0; i < Storage.Length; i++)
-				{
-					if (Storage[i]?.type == objType)
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-			else
-			{
-				for (int i = 0; i < Storage.Length; i++)
-				{
-					if (Storage[i] != null && (Storage[i] as AbstractCreature)?.creatureTemplate.type == creatType)
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-
-		public static AbstractPhysicalObject RandItem(Player caller)
-		{
-			AbstractPhysicalObject abstractPhysicalObject;
-			float value = Random.value;
-
-			//abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.SlugNPC), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			//return abstractPhysicalObject;
-
-			if (value <= 0.32894737f)
-			{
-				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FirecrackerPlant, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-			}
-			else if (value <= 0.4276316f)
-			{
-				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.FlareBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-			}
-			else if (value <= 0.5065789f)
-			{
-				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.ScavengerBomb, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-			}
-			else if (value <= 0.6118421f)
-			{
-				abstractPhysicalObject = new WaterNut.AbstractWaterNut(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false);
-			}
-			else if (value <= 0.6644737f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.7302632f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.LanternMouse), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.79605263f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.TubeWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.82894737f)
-			{
-				abstractPhysicalObject = new AbstractConsumable(caller.room.world, ObjType.PuffBall, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null);
-			}
-			else if (value <= 0.8486842f)
-			{
-				abstractPhysicalObject = new DataPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Rivulet_stomach);
-			}
-			else if (value <= 0.9144737f)
-			{
-				abstractPhysicalObject = new BubbleGrass.AbstractBubbleGrass(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), 1f, -1, -1, null);
-			}
-			else if (value <= 0.93421054f)
-			{
-				abstractPhysicalObject = new SporePlant.AbstractSporePlant(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, false, (double)Random.value < 0.5);
-			}
-			else if (value <= 0.46710527f)
-			{
-				Color color = new Color(1f, 0.8f, 0.3f);
-				int ownerIterator = 1;
-				if (Random.value <= 0.35f)
-				{
-					color = new Color(0.44705883f, 0.9019608f, 0.76862746f);
-					ownerIterator = 0;
-				}
-				else if (Random.value <= 0.05f)
-				{
-					color = new Color(0f, 1f, 0f);
-					ownerIterator = 2;
-				}
-				abstractPhysicalObject = new OverseerCarcass.AbstractOverseerCarcass(caller.room.world, null, caller.abstractPhysicalObject.pos, caller.room.game.GetNewID(), color, ownerIterator);
-			}
-			else if (value <= 0.4736842f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallNeedleWorm), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.9934211f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.SmallCentipede), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.79605263f)
-			{
-				abstractPhysicalObject = new AbstractCreature(caller.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.Yeek), null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID());
-			}
-			else if (value <= 0.8f)
-			{
-				abstractPhysicalObject = new VultureMask.AbstractVultureMask(caller.room.world, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), caller.abstractPhysicalObject.ID.RandomSeed, (double)Random.value <= 0.05);
-			}
-			else
-			{
-				abstractPhysicalObject = new SpearMasterPearl.AbstractDataPearl(caller.room.world, ObjType.DataPearl, null, caller.room.GetWorldCoordinate(caller.firstChunk.pos), caller.room.game.GetNewID(), -1, -1, null, MoreSlugcatsEnums.DataPearlType.Spearmasterpearl);
-			}
-			if (AbstractConsumable.IsTypeConsumable(abstractPhysicalObject.type))
-			{
-				(abstractPhysicalObject as AbstractConsumable).isFresh = false;
-				(abstractPhysicalObject as AbstractConsumable).isConsumed = true;
-			}
-			return abstractPhysicalObject;
-		}
-	}
+		player.GetPlayerVar(out var pv);
+		return pv.stomachData.IsFull;
+	});
 }*/
 
+//// ============================================================
+//// 问题1: IL_0451 附近
+//// 原版: if (objectInStomach == null || CanPutSpearToBack || CanPutSlugToBack)
+//// 改为: if (stomachList.Count < maxCapacity || CanPutSpearToBack || CanPutSlugToBack)
+//// 用途: 判断是否能拿取新物品（胃有空位 或 能放背上）
+//// ============================================================
+
+//if (c.TryGotoNext(MoveType.Before,
+//	i => i.MatchLdarg(0),
+//	i => i.MatchLdfld<Player>("objectInStomach"),
+//	i => i.MatchBrfalse(out _)
+//	))
+//{
+//	// 移除 ldarg.0 + ldfld
+//	c.Remove();
+//	c.Remove();
+//	//c.Remove();
+
+//	// 插入: 检查胃是否未满
+//	// 如果胃未满 → brfalse 跳转（原逻辑是 objectInStomach == null 时跳转）
+//	c.Emit(OpCodes.Ldarg, 0);
+//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachNotFull"));
+//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	{
+//		Log.LogInfo($"1");
+
+//		player.GetPlayerVar(out var pv);
+//		var stomachData = pv.stomachData;
+//		return stomachData.IsFull;
+//	});
+//	//c.Emit(OpCodes.Brfalse, /* 跳转到 IL_046c 的标签 */);
+//}
 
 
+//// ============================================================
+//// 问题2: IL_0639-IL_0646 附近
+//// 原版: if (num8 > -1 || objectInStomach != null || isGourmand)
+//// 改为: if (num8 > -1 || stomachList.Count > 0 || isGourmand)
+//// 用途: 判断是否可以进行吞咽/反刍操作
+//// ============================================================
+
+//if (c.TryGotoNext(MoveType.Before,
+//	i => i.MatchLdarg(0),
+//	i => i.MatchLdfld("Player", "objectInStomach"),
+//	i => i.MatchBrtrue(out _)))
+//{
+//	c.Remove();
+//	c.Remove();
+//	//c.Remove();
+
+//	// 插入: 检查胃是否有物品
+//	c.Emit(OpCodes.Ldarg, 0);
+//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
+//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	{
+//		Log.LogInfo($"2");
+
+//		player.GetPlayerVar(out var pv);
+//		var stomachData = pv.stomachData;
+//		return !stomachData.IsEmpty;
+//	});
+//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 */);
+//}
+
+//// ============================================================
+//// 问题3: IL_18cf-IL_18d5
+//// 原版: if (objectInStomach != null || isGourmand || (MSC && SlugCatClass == Spear))
+//// 改为: if (stomachList.Count > 0 || isGourmand || (MSC && SlugCatClass == Spear))
+//// 用途: 反刍条件判定 (swallowAndRegurgitateCounter > 110)
+//// ============================================================
+
+//if (c.TryGotoNext(MoveType.Before,
+//	i => i.MatchLdarg(0),
+//	i => i.MatchLdfld("Player", "objectInStomach"),
+//	i => i.MatchBrtrue(out _)))
+//{
+//	c.Remove();
+//	c.Remove();
+//	//c.Remove();
+
+//	c.Emit(OpCodes.Ldarg, 0);
+//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("HasItemsInStomach"));
+//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	{
+//		Log.LogInfo($"3");
+
+//		return false;
+
+//		/*player.GetPlayerVar(out var pv);
+//		var stomachData = pv.stomachData;
+
+//		int canBeSwallow = BeSwallowed(player);
+
+//		if (canBeSwallow != -1)
+//		{
+//			return false;
+//		}
+
+//		return !stomachData.IsEmpty;*/
+//	});
+//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_18fe) */);
+//}
+
+//// ============================================================
+//// 问题4: IL_1916-IL_191c
+//// 原版: if (isGourmand && objectInStomach == null)
+//// 改为: if (isGourmand && stomachList.Count == 0)
+//// 用途: Gourmand 特殊反刍逻辑
+//// ============================================================
+
+//if (c.TryGotoNext(MoveType.Before,
+//	i => i.MatchLdarg(0),
+//	i => i.MatchLdfld("Player", "objectInStomach"),
+//	i => i.MatchBrtrue(out _)))  // 注意这里 brtrue 表示 objectInStomach != null 时跳转
+//{
+//	c.Remove();
+//	c.Remove();
+//	//c.Remove();
+
+//	// 插入: 检查胃是否为空 (Count == 0)
+//	c.Emit(OpCodes.Ldarg, 0);
+//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
+//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	{
+//		Log.LogInfo($"4");
+
+//		player.GetPlayerVar(out var pv);
+//		var stomachData = pv.stomachData;
+//		return !stomachData.IsEmpty;
+//	});
+//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1921) */);
+//}
+
+//// ============================================================
+//// 问题5: IL_19be-IL_19c4
+//// 原版: else if (objectInStomach == null && swallowAndRegurgitateCounter > 90)
+//// 改为: else if (stomachList.Count == 0 && swallowAndRegurgitateCounter > 90)
+//// 用途: 吞咽条件 (胃为空 + 计数器 > 90)
+//// ============================================================
+
+//if (c.TryGotoNext(MoveType.Before,
+//	i => i.MatchLdarg(0),
+//	i => i.MatchLdfld("Player", "objectInStomach"),
+//	i => i.MatchBrtrue(out _)))  // objectInStomach != null 时跳转到 IL_1af9 (跳过吞咽)
+//{
+//	c.Remove();
+//	c.Remove();
+//	//c.Remove();
+
+//	// 插入: 检查胃是否为空 (Count == 0)
+//	c.Emit(OpCodes.Ldarg, 0);
+//	//c.Emit(OpCodes.Call, typeof(StomachUtils).GetMethod("IsStomachEmpty"));
+//	c.EmitDelegate<Func<Player, bool>>(player =>
+//	{
+//		Log.LogInfo($"5");
+
+//		player.GetPlayerVar(out var pv);
+//		var stomachData = pv.stomachData;
+
+//		if (Input.GetKey("c"))//
+//		{
+//			foreach (var instruct in il.Instrs)
+//			{
+//				Debug.Log(instruct.ToString());
+//			}
+//		}
+
+
+//		return stomachData.IsFull;
+//	});
+//	//c.Emit(OpCodes.Brtrue, /* 跳转到原 brtrue 的目标标签 (IL_1af9，跳过吞咽) */);
+//}
+
+
+//Debug.Log("===After");
+
+//c.Emit(OpCodes.Ldarg_0);
+//c.EmitDelegate<Action<Player>>((player) =>
+//{
+//	if (Input.GetKey("c"))
+//	{
+//		foreach (var instruct in il.Instrs)
+//		{
+//			Log.LogInfo(instruct.ToString());
+//		}
+//	}
+//	Log.LogInfo($"10");
+//});
+
+/*// 用于标记我们处理到了哪一处
+int patchCount = 0;
+
+while (patchCount < 5)
+{
+	patchCount++;
+
+	// 遍历所有 "ldarg.0 + ldfld objectInStomach" 模式
+
+	if (c.TryGotoNext(MoveType.Before,
+		i => i.MatchLdarg(0),
+		i => i.MatchLdfld<Player>("objectInStomach"),
+		i => i.MatchBrfalse(out _)
+	))
+	{
+		// 移除原来的 ldarg.0 和 ldfld
+		c.Remove();
+		c.Remove();
+
+		// 原代码: if (objectInStomach == null) -> 跳转
+		// 需要替换为: if (IsStomachEmpty(player)) -> 跳转
+
+		// 插入: if (IsStomachEmpty(player)) brfalse ...
+		c.Emit(OpCodes.Ldarg_0);
+		c.EmitDelegate<Func<Player, bool>>(player =>
+		{
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
+			return stomachData.IsFull;
+		});
+		// 注意：原 brfalse 指令还在后面，会使用栈上的 bool 值
+	}
+
+
+	else if (c.TryGotoNext(MoveType.Before,
+		i => i.MatchLdarg(0),
+		i => i.MatchLdfld<Player>("objectInStomach"),
+		i => i.MatchBrtrue(out _)
+	))
+	{
+		// 移除原来的 ldarg.0 和 ldfld
+		c.Remove();
+		c.Remove();
+
+		// 原代码: if (objectInStomach != null) -> 跳转
+		// 需要替换为: if (!IsStomachEmpty(player)) -> 跳转
+
+		// 插入: if (IsStomachEmpty(player)) brtrue ...
+		c.Emit(OpCodes.Ldarg_0);
+		c.EmitDelegate<Func<Player, bool>>(player =>
+		{
+			player.GetPlayerVar(out var pv);
+			var stomachData = pv.stomachData;
+			return stomachData.IsFull;
+		});
+		// 注意：原 brtrue 指令还在后面，会使用栈上的 bool 值
+	}
+
+
+}*/
+#endregion
+#region PlayerVar
+
+/*
+ using Kittehface.Framework20;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ExtensionLib
+{
+	public class PlayerVar
+	{
+		#region PlayerRef
+		[JsonIgnore]
+		private WeakReference<Player?> _playerRef;
+
+		[JsonIgnore]
+		public WeakReference<Player?> PlayerRef => _playerRef;
+
+
+		// 供外部重新绑定 Player 引用
+		public void SetPlayerRef(Player player) { _playerRef = new WeakReference<Player?>(player); }
+		#endregion
+
+		public StomachData stomachData;
+
+		[JsonIgnore]
+		public WorldCoordinate coord;
+
+		public class StomachData
+		{
+			[JsonIgnore]
+			public PlayerVar Owner;
+
+			[JsonIgnore]
+			public List<AbstractPhysicalObject> historyInStomach = new();  // 历史栈（不含当前）
+
+			[JsonProperty("capacity")]
+			public int capacity = 5;                               // 容量限制
+
+			[JsonProperty("historyInStomach")]
+			public List<string> _serializedHistory = new();
+
+
+			public StomachData(PlayerVar owner)
+			{
+				Owner = owner;
+			}
+			public AbstractPhysicalObject? Current      // 指向 player.objectInStomach
+			{
+				get
+				{
+					Owner._playerRef.TryGetTarget(out Player? player);
+					if (player == null)
+					{
+						throw new NullReferenceException("player == null".MessageLog());
+					}
+					return player.objectInStomach;
+				}
+				set
+				{
+					Owner._playerRef.TryGetTarget(out Player? player);
+					if (player == null)
+					{
+						throw new NullReferenceException("player == null".MessageLog());
+					}
+					player.objectInStomach = value;
+				}
+			}
+			public int HistoryCount => historyInStomach.Count;
+			public int TotalCount => (Current != null ? 1 : 0) + HistoryCount;
+			public bool IsEmpty => Current == null && HistoryCount == 0;
+			public bool IsFull => TotalCount >= capacity;
+			public int RemainingSpace => capacity - TotalCount;
+			public int Capacity { get => capacity; set => capacity = Math.Max(0, value); }
+
+			// 历史栈操作
+			public void Push(AbstractPhysicalObject obj) => historyInStomach.Add(obj);
+			public AbstractPhysicalObject? Pop()
+			{
+				if (HistoryCount == 0) return null;
+				var top = historyInStomach[HistoryCount - 1];
+				historyInStomach.RemoveAt(HistoryCount - 1);
+				return top;
+			}
+			public void ClearHistory() => historyInStomach.Clear();
+
+			// 吞入
+			public bool Swallow(AbstractPhysicalObject obj)
+			{
+				if (IsFull) return false;
+
+				// 当前变历史
+				if (Current != null)
+					Push(Current);
+
+				// 设置新当前
+				Current = obj;
+				return true;
+			}
+			// 吐出/消化（移除当前，从历史补位）
+			public AbstractPhysicalObject? PopCurrent()
+			{
+				var removed = Current;
+
+				// 从历史取出补位
+				if (HistoryCount > 0)
+				{
+					Current = Pop();
+				}
+				else
+				{
+					Current = null;
+				}
+
+				return removed;
+			}
+
+			// 清空全部
+			public void ClearAll()
+			{
+				ClearHistory();
+				Current = null;
+			}
+
+			// 获取完整内容（用于遍历/显示）
+			public List<AbstractPhysicalObject> GetAllContents()
+			{
+				var result = historyInStomach;  // 历史（从底到顶）
+				if (Current != null)
+					result.Add(Current);    // 当前（栈顶）
+				return result;
+			}
+		}
+
+
+
+		// 反序列化的无参构造函数
+		public PlayerVar()
+		{
+			_playerRef = new WeakReference<Player?>(null);
+
+			stomachData = new StomachData(this);
+			coord = new WorldCoordinate();
+		}
+		public PlayerVar(Player player)
+		{
+			_playerRef = new WeakReference<Player?>(player);
+
+			stomachData = new StomachData(this);
+			coord = player.coord;
+		}
+
+
+
+		#region swallowedObjects
+		//public int StorageCapacity = 1;
+		//[JsonIgnore]
+		//public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
+		//public List<string> swallowedObjects = new();
+		//[JsonIgnore]
+		//public WorldCoordinate coord;
+
+		//// 获取胃部容量
+		//public int GetStomachCapacity(Player player)
+		//{
+		//	int Capacity = StorageCapacity;
+
+		//	/*if (MyOptions.Instance?.StomachCapacity != null)
+		//          {
+		//              Capacity = MyOptions.Instance.StomachCapacity.Value;
+		//          }
+//	/*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
+//          {
+//              Capacity += 2;
+//          }
+
+//	return Capacity;
+//}
+
+//// 检查是否有空间
+//public bool HasSpace(Player player)
+//{
+//	return objectsInStomach.Count < GetStomachCapacity(player);
+//}
+#endregion
+
+#region Save/Load
+
+[OnSerializing]// 保存时自动调用
+internal void OnSerializing(StreamingContext context)
+{
+	Save();
+}
+public void Save()
+{
+	_playerRef.TryGetTarget(out Player? player);
+
+	stomachData._serializedHistory.Clear();
+
+	foreach (var obj in stomachData.historyInStomach)
+	{
+		string objString = Helper.ObjectToString(obj, player != null ? player.coord : coord, true);
+		stomachData._serializedHistory.Add(objString);
+	}
+	Log.LogDebug($"Save: 保存了 {stomachData.historyInStomach.Count} 个对象");
+}
+public void Malnourished_Save()
+{
+	Save();
+
+	stomachData.historyInStomach.Clear();
+}
+
+[OnDeserialized]// 加载时自动调用
+internal void OnDeserialized(StreamingContext context)
+{
+	Load();
+}
+public void Load()
+{
+	/*_playerRef.TryGetTarget(out Player? player);
+	objectsInStomach.Clear();
+
+	foreach (string objString in _savedSwallowedObjects)
+	{
+		AbstractPhysicalObject obj = Helper.StringToObject(objString, player != null ? player.coord : coord);
+		if (obj != null)
+		{
+			objectsInStomach.Add(obj);
+		}
+	}
+}
+		#endregion
+
+
+
+
+
+
+	}
+}
+
+*/
+
+#endregion
+#region swallowedObjects
+//public int StorageCapacity = 1;
+//[JsonIgnore]
+//public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
+//public List<string> swallowedObjects = new();
+//[JsonIgnore]
+//public WorldCoordinate coord;
+
+//// 获取胃部容量
+//public int GetStomachCapacity(Player player)
+//{
+//	int Capacity = StorageCapacity;
+
+//	/*if (MyOptions.Instance?.StomachCapacity != null)
+//          {
+//              Capacity = MyOptions.Instance.StomachCapacity.Value;
+//          }*/
+//	/*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
+//          {
+//              Capacity += 2;
+//          }*/
+
+//	return Capacity;
+//}
+
+//// 检查是否有空间
+//public bool HasSpace(Player player)
+//{
+//	return objectsInStomach.Count < GetStomachCapacity(player);
+//}
+#endregion
+#region DumpIL
+/*private static void DumpIL(ILContext il, string title = "IL Dump")
+{
+    try
+    {
+        Logs.Write($"========== {title} ==========", false);
+
+        if (il.Body == null)
+        {
+            Logs.Write("警告: ILContext.Body 为 null", false);
+            return;
+        }
+
+        int index = 0;
+        foreach (var instr in il.Instrs)
+        {
+            try
+            {
+                string formatted = FormatInstruction(instr);
+                Logs.Write(formatted, false);
+                index++;
+            }
+            catch (Exception ex)
+            {
+                Logs.Write($"IL_{instr.Offset:X4}: [无法读取] - {ex.Message}", false);
+                index++;
+            }
+        }
+        Logs.Write($"=================================", false);
+    }
+    catch (Exception ex)
+    {
+        Logs.Write($"DumpIL 失败: {ex.Message}");
+    }
+}
+
+private static string FormatInstruction(Instruction instr)
+{
+    if (instr == null) return "null";
+
+    // 基本格式：偏移量 + 操作码
+    string result = $"IL_{instr.Offset:X4}: {instr.OpCode}";
+
+    // 处理操作数
+    if (instr.Operand != null)
+    {
+        try
+        {
+            // 根据操作数类型格式化
+            if (instr.Operand is Instruction target)
+            {
+                // 跳转指令的目标
+                result += $" IL_{target.Offset:X4}";
+            }
+            else if (instr.Operand is MethodReference method)
+            {
+                // 方法调用
+                string declaringType = method.DeclaringType?.Name ?? "Unknown";
+                result += $" {declaringType}::{method.Name}";
+
+                // 如果有泛型参数
+                if (method.HasGenericParameters)
+                {
+                    result += $"<{string.Join(",", method.GenericParameters.Select(p => p.Name))}>";
+                }
+            }
+            else if (instr.Operand is MethodDefinition methodDef)
+            {
+                result += $" {methodDef.DeclaringType?.Name}::{methodDef.Name}";
+            }
+            else if (instr.Operand is FieldReference field)
+            {
+                // 字段引用
+                string declaringType = field.DeclaringType?.Name ?? "Unknown";
+                result += $" {declaringType}::{field.Name}";
+            }
+            else if (instr.Operand is FieldDefinition fieldDef)
+            {
+                result += $" {fieldDef.DeclaringType?.Name}::{fieldDef.Name}";
+            }
+            else if (instr.Operand is ParameterDefinition param)
+            {
+                // 参数
+                result += $" {param.Name ?? $"param_{param.Index}"}";
+            }
+            else if (instr.Operand is VariableDefinition var)
+            {
+                // 局部变量
+                result += $" {$"V_{var.Index}"}";//var.Name ?? 
+            }
+            else if (instr.Operand is string str)
+            {
+                // 字符串常量
+                result += $" \"{str}\"";
+            }
+            else if (instr.Operand is int intVal)
+            {
+                // 整数常量
+                result += $" {intVal}";
+            }
+            else if (instr.Operand is long longVal)
+            {
+                result += $" {longVal}";
+            }
+            else if (instr.Operand is float floatVal)
+            {
+                result += $" {floatVal}";
+            }
+            else if (instr.Operand is double doubleVal)
+            {
+                result += $" {doubleVal}";
+            }
+            else if (instr.Operand is IMetadataTokenProvider tokenProvider)
+            {
+                // 通用处理
+                result += $" {instr.Operand}";
+            }
+            else
+            {
+                // 未知类型，显示类型名
+                result += $" [{instr.Operand.GetType().Name}]";
+            }
+        }
+        catch (Exception ex)
+        {
+            result += $" [操作数错误: {ex.Message}]";
+        }
+    }
+
+    return result;
+}*/
+#endregion

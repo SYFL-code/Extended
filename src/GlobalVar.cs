@@ -34,16 +34,21 @@ namespace ExtensionLib
 
             if (world.game.session is ArenaGameSession)//竞技场模式
             {
-                if (GlobalVar.playerVars.TryGetValue(N, out PlayerVar pv))
+                if (GlobalVar.playerVars.TryGetValue(N, out _))
                 {
                     GlobalVar.playerVars.Remove(N);
                 }
             }
 
 			//playerVars.Add(player, new PlayerVar(player));
-			player.GetPlayerVar();
+			player.GetPlayerVar(out PlayerVar pv);
 
-			MyPlayer.Player_ctor(orig, player, abstractCreature, world);
+            if (Log.EnableLog)
+            {
+                pv.myDebug = new MyDebug(player);
+            }
+
+            MyPlayer.Player_ctor(orig, player, abstractCreature, world);
         }
 
 		public static PlayerVar GetPlayerVar(this Player player)

@@ -26,7 +26,9 @@ namespace ExtensionLib
 
 		public WorldCoordinate coord;
 
-		public class StomachData
+        public MyDebug? myDebug = null;//调试图像
+
+        public class StomachData
 		{
 			public PlayerVar Owner;
 
@@ -39,7 +41,7 @@ namespace ExtensionLib
 			public List<string> _serializedHistory = new();
 
             //开始吞咽/反刍/物品制作流程
-            public bool swallowAndRegurgitate = false;
+            public bool swallowOrRegurgitate = false;
 
 			public StomachData(PlayerVar owner)
 			{
@@ -152,40 +154,6 @@ namespace ExtensionLib
 			coord = player.coord;
 		}
 
-
-
-		#region swallowedObjects
-		//public int StorageCapacity = 1;
-		//[JsonIgnore]
-		//public List<AbstractPhysicalObject> objectsInStomach = new();//胃部存储列表
-		//public List<string> swallowedObjects = new();
-		//[JsonIgnore]
-		//public WorldCoordinate coord;
-
-		//// 获取胃部容量
-		//public int GetStomachCapacity(Player player)
-		//{
-		//	int Capacity = StorageCapacity;
-
-		//	/*if (MyOptions.Instance?.StomachCapacity != null)
-		//          {
-		//              Capacity = MyOptions.Instance.StomachCapacity.Value;
-		//          }*/
-		//	/*if (ModManager.MSC && player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
-		//          {
-		//              Capacity += 2;
-		//          }*/
-
-		//	return Capacity;
-		//}
-
-		//// 检查是否有空间
-		//public bool HasSpace(Player player)
-		//{
-		//	return objectsInStomach.Count < GetStomachCapacity(player);
-		//}
-		#endregion
-
 		#region Save/Load
 
 		[OnSerializing]// 保存时自动调用
@@ -232,12 +200,10 @@ namespace ExtensionLib
 				}
 			}*/
 		}
-		#endregion
+        #endregion
 
 
 
 
-
-
-	}
+    }
 }

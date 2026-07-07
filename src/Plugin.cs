@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using System;
+using System.Linq;
 using UnityEngine;
 
 
@@ -35,8 +36,13 @@ namespace ExtensionLib
 
 			On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
 
-			// Put your custom hooks here!-在此放置你自己的钩子
-			On.RainWorld.LoadSetupValues += RainWorldLoadSetupValues;
+            if (ModManager.ActiveMods.Any(mod => mod.id == "henpemaz_rainmeadow"))
+            {
+                MeadowCompat.MeadowEnabled = true;
+            }
+
+            // Put your custom hooks here!-在此放置你自己的钩子
+            On.RainWorld.LoadSetupValues += RainWorldLoadSetupValues;
 
 			GlobalVar.Hook();
 

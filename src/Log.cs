@@ -15,7 +15,7 @@ namespace ExtensionLib
 		//public static ManualLogSource? log { get; private set; }
 		private static ManualLogSource? log;
 
-		private static bool EnableLog => Plugin.EnableLog;
+		public static bool EnableLog => Plugin.EnableLog;
 		private static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
 
 		public static void SetLog(ManualLogSource logger) => log = logger;
@@ -169,7 +169,7 @@ namespace ExtensionLib
 
 		public static void Write(string msg, bool other = true)
 		{
-            if (!Plugin.EnableLog)
+            if (!Log.EnableLog)
 			{
 				return;
 			}
