@@ -9,7 +9,7 @@ namespace ExtensionLib
 	public static class GlobalVar
 	{
 		//玩家变量
-		public static Dictionary<int, PlayerVar> playerVars = new();
+		public static Dictionary<string, PlayerVar> playerVars = new();
 		//全局系统变量
 		public static RainWorldGame? game = null;
 
@@ -25,50 +25,66 @@ namespace ExtensionLib
 
 		private static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abstractCreature, World world)
 		{
-            orig.Invoke(player, abstractCreature, world);
+			orig.Invoke(player, abstractCreature, world);
 
-            //赋值给全局变量供其他函数使用
-            GlobalVar.game = world.game;
+			//赋值给全局变量供其他函数使用
+			GlobalVar.game = world.game;
 
-            int N = player.playerState.playerNumber;
+			int N = player.playerState.playerNumber;
 
-            if (world.game.session is ArenaGameSession)//竞技场模式
-            {
-                if (GlobalVar.playerVars.TryGetValue(N, out _))
-                {
-                    GlobalVar.playerVars.Remove(N);
-                }
-            }
+			if (world.game.session is ArenaGameSession)//竞技场模式
+			{
+				if (GlobalVar.playerVars.TryGetValue(N.ToString(), out _))
+				{
+					GlobalVar.playerVars.Remove(N.ToString());
+				}
+			}
 
 			//playerVars.Add(player, new PlayerVar(player));
 			player.GetPlayerVar(out PlayerVar pv);
 
-            if (Plugin.DebugMode)
-            {
-                pv.myDebug = new MyDebug(player);
-            }
+			if (Plugin.DebugMode)
+			{
+				pv.myDebug = new MyDebug(player);
+			}
 
-            MyPlayer.Player_ctor(orig, player, abstractCreature, world);
-        }
+			MyPlayer.Player_ctor(orig, player, abstractCreature, world);
+		}
 
 		public static PlayerVar GetPlayerVar(this Player player)
 		{
-			int N = player.playerState.playerNumber;
+			string key = GetPlayerKey(player);
 
-			if (playerVars.TryGetValue(N, out PlayerVar pv))
+			if (playerVars.TryGetValue(key, out PlayerVar pv))
 			{
 				player.BindPlayerRef(pv);
 				return pv;
 			}
 			pv = new PlayerVar(player);
 			player.BindPlayerRef(pv);
-			playerVars.Add(N, pv);
+			playerVars.Add(key, pv);
 			return pv;
 		}
 		public static PlayerVar GetPlayerVar(this Player player, out PlayerVar pv)
 		{
 			pv = GetPlayerVar(player);
 			return pv;
+		}
+		public static string GetPlayerKey(Player player)
+		{
+			if (MeadowCompat.IsModEnabled_RainMeadow)
+			{
+				if (MeadowCompat.IsMeadowStoryMode())
+				{
+                    string UniqueID = MeadowCompat.GetUniqueID(player);
+					if (UniqueID != "Null" && UniqueID != "")
+					{
+						return UniqueID;
+					}
+                }
+			}
+
+			return player.playerState.playerNumber.ToString();
 		}
 
 		public static bool BindPlayerRef(this Player player, PlayerVar pv)

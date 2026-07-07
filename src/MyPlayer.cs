@@ -800,6 +800,15 @@ namespace ExtensionLib
 
 			pv.coord = player.coord;
 
+			if (Plugin.EnableLog)
+			{
+                int now = player.room?.world.game.clock ?? -1;
+                if (now % 40 == 0)
+				{
+                    //Log.LogInfo($"N: {N}, pos: {player.mainBodyChunk.pos}");
+                }
+            }
+
 			if (Plugin.DebugMode && Input.GetKey("c"))
 			{
 				if (pv.myDebug == null)

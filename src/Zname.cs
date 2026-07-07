@@ -48,6 +48,7 @@ namespace ExtensionLib;
 
 		// mklink /j "D:\Steam\steamapps\common\Rain World\RainWorld_Data\StreamingAssets\mods\EnderPearl" "D:\Other\EnderPearl\mod"
 		// \Rain World\BepInEx\config\BepInEx.cfg里面有个[Logging.Console] 的Enabled改成true
+		// HopToDesk
 
 		// https://gist.github.com/EtiTheSpirit/655d8e81732ba516ca768dbd7410ddf4 这里有一个文档讲了一些关于rw shader的注意事项
 
@@ -90,14 +91,14 @@ namespace ExtensionLib;
 			//ExtensionLib.GlobalVar.playerVars = new Dictionary<int, ExtensionLib.PlayerVar>();
 
 			// 2. 查看字典中有哪些玩家
-			for (int i = 0; i < dict.Count; i++)
-			{
-				Console.WriteLine($"玩家索引: {i}, 玩家数据: {dict[i]}");
-			}
-			//dict.Keys.ToList().ForEach(Console.WriteLine);
+        foreach (var item in dict)
+        {
+            Console.WriteLine($"玩家索引: {item.Key}, 玩家数据: {item.Value}");
+        }
+        //dict.Keys.ToList().ForEach(Console.WriteLine);
 
-			// 3. 获取玩家0的数据
-			var pv0 = dict[0];
+        // 3. 获取玩家0的数据
+        var pv0 = dict["0"];
 
 			if (ExtensionLib.GlobalVar.game?.Players[0].realizedCreature is Player player)
 			{

@@ -54,6 +54,38 @@ public static class MeadowCompat
 		}
         return IsModEnabled_RainMeadow && IsMeadowStoryMode(out _);
     }
+    public static OnlinePlayer? GetOnlinePlayer(Player player)
+    {
+        if (IsModEnabled_RainMeadow)
+        {
+            if (IsMeadowStoryMode())
+            {
+                // // 1. 获取 OnlineObject
+                if (player.abstractCreature.GetOnlineObject(out OnlinePhysicalObject? opo) && opo != null)
+                {
+                    return opo.owner;
+                }
+            }
+        }
+        Log.LogWarning($"GetOnlinePlayer: Failed to get OnlinePlayer for {player}");
+        return null;
+    }
+    public static string GetUniqueID(Player player)
+    {
+        if (IsModEnabled_RainMeadow)
+        {
+            if (IsMeadowStoryMode())
+            {
+                var onlinePlayer = GetOnlinePlayer(player);
+                if (onlinePlayer != null)
+                {
+                    return onlinePlayer.GetUniqueID();
+                }
+            }
+        }
+        Log.LogWarning($"GetUniqueID: Failed to get UniqueID for {player}");
+        return "Null";
+    }
 
 
 
@@ -79,9 +111,9 @@ public static class MeadowCompat
 			// 3. 判断执行权：自己是房间所有者（isOwner）且（拥有该实体 或 当前已在 RPC 事件中）
 			if (opo!.roomSession.isOwner && (opo.isMine || RPCEvent.currentRPCEvent is not null))
 			{
-				// 我是所有者 → 直接广播 RPC 给所有玩家
-				// 参数：要调用的方法（opo.Explode），以及方法的参数（爆炸位置）
-				opo.BroadcastRPCInRoom(opo.Explode, self.bodyChunks[0].pos);
+                // 我是所有者 → 直接广播 RPC 给所有玩家
+                // 参数：要调用的方法（opo.Explode），以及方法的参数（爆炸位置）
+                opo.BroadcastRPCInRoom(opo.Explode, self.bodyChunks[0].pos);
 			}
 			else if (RPCEvent.currentRPCEvent is null)  // 当前不是由 RPC 触发的
 			{
