@@ -165,20 +165,28 @@ namespace ExtensionLib
 
 	public static class Logs
 	{
+		private static bool LogReset = true;
+
 		private static readonly string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
 
 		public static void Write(string msg, bool other = true)
 		{
-            if (!Log.EnableLog)
+			if (LogReset && !Plugin.DebugMode)
+			{
+				LogReset = false;
+				File.WriteAllText(path, $"======[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{Plugin.version}]====== Log Reset\n");
+			}
+
+			if (!Log.EnableLog)
 			{
 				return;
 			}
 
-            if (!other)
+			if (!other)
 			{
-                File.AppendAllText(path, $"{msg}\n");
+				File.AppendAllText(path, $"{msg}\n");
 				return;
-            }
+			}
 			File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{Plugin.version}] {msg}\n");
 		}
 	}

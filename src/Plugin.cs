@@ -21,10 +21,6 @@ namespace ExtensionLib
 
 
         private static bool isEnabled;
-        public static bool MeadowEnabled()
-        {
-            return ModManager.ActiveMods.Any(m => m.id == "henpemaz.rainmeadow");
-        }
 
 
 

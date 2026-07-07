@@ -9,10 +9,53 @@ namespace ExtensionLib;
 
 public static class MeadowCompat
 {
-	public static bool MeadowEnabled => Plugin.MeadowEnabled();
-	public static bool MeadowInLobby => MeadowEnabled && OnlineManager.lobby != null;
 
-    //public static bool MeadowInLobby => MeadowEnabled && OnlineManager.lobby != null;
+    public static bool IsModEnabled_RainMeadow => 
+		ModManager.ActiveMods.Any(m => m.id == "henpemaz.rainmeadow" || m.id == "henpemaz_rainmeadow");
+
+    public static bool RainMeadow_IsHost => !IsModEnabled_RainMeadow || MeadowCompat.IsHost;
+    public static bool RainMeadow_IsOnline => IsModEnabled_RainMeadow && MeadowCompat.IsOnline;
+    public static bool IsHost => !MeadowCompat.IsOnline || OnlineManager.lobby.isOwner;
+    public static bool IsOnline => OnlineManager.lobby != null;
+    public static bool IsOnlineFriendlyFire => RainMeadow.RainMeadow.isStoryMode(out StoryGameMode? storyGameMode) && storyGameMode.friendlyFire;
+
+    public static void InitModCompat()
+    {
+        if (IsModEnabled_RainMeadow)
+        {
+            MeadowCompat.InitCompat();
+        }
+    }
+
+    internal static void InitCompat()
+    {
+        OnlineResource.OnAvailable += MeadowCompat.OnlineResourceOnOnAvailable;
+    }
+    // 可用的在线资源
+    private static void OnlineResourceOnOnAvailable(OnlineResource resource)
+    {
+    }
+
+    public static bool IsMeadowStoryMode(out StoryGameMode? gameMode)
+	{
+		gameMode = null;
+		if (IsModEnabled_RainMeadow && RainMeadow.RainMeadow.isStoryMode(out var meadowMode))
+		{
+			gameMode = meadowMode;
+			return true;
+		}
+        return false;
+    }
+    public static bool IsMeadowStoryMode()
+    {
+		if (!IsModEnabled_RainMeadow)
+		{
+			return false;
+		}
+        return IsModEnabled_RainMeadow && IsMeadowStoryMode(out _);
+    }
+
+
 
     // copied code from rain meadow's explode hooks
     // 从Rain Meadow的爆炸钩子上复制了代码
@@ -23,7 +66,7 @@ public static class MeadowCompat
     public static bool ExplodeRPC(PhysicalObject self)
 	{
 		// 1. 检查是否在 Meadow 大厅中（即处于多人模式）
-		if (MeadowInLobby)
+		if (IsMeadowStoryMode())
 		{
 			// 2. 获取该物体的网络对象（OnlinePhysicalObject）
 			//    如果物体尚未被 Meadow 托管，则无法同步。
@@ -55,4 +98,5 @@ public static class MeadowCompat
 		}
 		return false;  // 未处理网络同步（例如单机模式），本地继续执行爆炸
 	}
+
 }

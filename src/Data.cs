@@ -15,21 +15,8 @@ namespace ExtensionLib
 	{
 		public virtual string id { get; set; } = "Default";
 
-        public virtual string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
-        {
-            string fileName = $"{id}{saveSlot}{slugcat.value}.json";
-            return fileName;
-        }
-        public virtual bool IsMatch(string fileName, int saveSlot)
-        {
-            // 预编译
-            Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            return pattern.IsMatch(fileName);
-        }
-
-
-        public virtual string Save()
+		public virtual string Save()
 		{
 			return "";
 		}
@@ -48,6 +35,27 @@ namespace ExtensionLib
 		{
 		}
 
+
+		public virtual string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
+		{
+			string fileName = $"{id}_{saveSlot}_{slugcat.value}.json";
+			return fileName;
+		}
+		public virtual bool IsMatch(string fileName, int saveSlot)
+		{
+			if (string.IsNullOrEmpty(fileName))
+				return false;
+
+			// 使用字符串操作代替正则（更快）
+			string starts = $"{id}_{saveSlot}_";
+
+			return fileName.StartsWith(starts, StringComparison.OrdinalIgnoreCase)
+				   && fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+
+			//Regex pattern = new Regex($"^{id}{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+			//return pattern.IsMatch(fileName);
+		}
+
 	}
 
 
@@ -61,35 +69,10 @@ namespace ExtensionLib
 			Formatting = Formatting.Indented,// 可读性好，方便调试
 			ReferenceLoopHandling = ReferenceLoopHandling.Ignore,// 防止意外循环引用
 
-            ContractResolver = new JsonPropertyOnlyContractResolver()
-        };
+			ContractResolver = new JsonPropertyOnlyContractResolver()
+		};
 
-        public override string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
-        {
-            /*Log.LogInfo($"MeadowInLobby : {MeadowCompat.MeadowInLobby}");
-            if (MeadowCompat.MeadowInLobby)
-			{
-                string fileName = $"RainMeadow{saveSlot}{slugcat.value}.json";
-                return fileName;
-            }*/
-            string fileName = $"Vanilla{saveSlot}{slugcat.value}.json";
-            return fileName;
-        }
-        public override bool IsMatch(string fileName, int saveSlot)
-        {
-            /*Log.LogInfo($"MeadowInLobby : {MeadowCompat.MeadowInLobby}");
-            if (MeadowCompat.MeadowInLobby)
-            {
-                Regex pattern_ = new Regex($"^RainMeadow{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                return pattern_.IsMatch(fileName);
-            }*/
-            // 预编译
-            Regex pattern = new Regex($"^Vanilla{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            return pattern.IsMatch(fileName);
-        }
-
-        public override string Save()
+		public override string Save()
 		{
 			// 自动序列化所有公开属性和字段
 			return JsonConvert.SerializeObject(GlobalVar.playerVars, _settings);
@@ -144,34 +127,83 @@ namespace ExtensionLib
 			GlobalVar.playerVars.Clear();
 		}
 
+		// 缓存正则实例，避免每次 IsMatch 都重新编译
+		//private static readonly Regex _vanillaRegex = new Regex(@"^Vanilla(\d+)[^0-9].*\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		//private static readonly Regex _meadowRegex = new Regex(@"^RainMeadow(\d+)[^0-9].*\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+		public override string GetFileName(int saveSlot, SlugcatStats.Name slugcat)
+		{
+			bool isMeadow = MeadowCompat.IsModEnabled_RainMeadow && MeadowCompat.IsMeadowStoryMode();
+			Log.LogInfo($"IsMeadow : {isMeadow}");
+
+			string prefix = isMeadow ? "RainMeadow" : "Vanilla";
+			return $"{prefix}_{saveSlot}_{slugcat.value}.json";
+		}
+		public override bool IsMatch(string fileName, int saveSlot)
+		{
+			bool isMeadow = MeadowCompat.IsModEnabled_RainMeadow && MeadowCompat.IsMeadowStoryMode();
+			Log.LogInfo($"IsMeadow : {isMeadow}");
+
+			string prefix = isMeadow ? "RainMeadow" : "Vanilla";
+
+			string starts = $"{prefix}_{saveSlot}_";
+
+			return fileName.StartsWith(starts, StringComparison.OrdinalIgnoreCase)
+				   && fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+
+			// 额外检查 saveSlot 是否匹配
+			//var match = regex.Match(fileName);
+			//if (!match.Success) return false;
+
+			//// 提取 slot 数字并验证
+			//if (int.TryParse(match.Groups[1].Value, out int slot))
+			//{
+			//	return slot == saveSlot;
+			//}
+			//return false;
+
+			/*bool isMeadow = MeadowCompat.IsModEnabled_RainMeadow && MeadowCompat.IsMeadowStoryMode();
+
+			Log.LogInfo($"IsMeadow : {isMeadow}");
+
+			if (isMeadow)
+			{
+				Regex pattern_ = new Regex($"^RainMeadow{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+				return pattern_.IsMatch(fileName);
+			}
+
+			Regex pattern = new Regex($"^Vanilla{saveSlot}[^0-9].*\\.json$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+			return pattern.IsMatch(fileName);*/
+		}
+
 	}
 
 
-    public class JsonPropertyOnlyContractResolver : DefaultContractResolver
-    {
-        protected override List<MemberInfo> GetSerializableMembers(Type objectType)
-        {
-            // ⭐ 只返回标记了 [JsonProperty] 的成员
-            var members = new List<MemberInfo>();
+	public class JsonPropertyOnlyContractResolver : DefaultContractResolver
+	{
+		protected override List<MemberInfo> GetSerializableMembers(Type objectType)
+		{
+			// ⭐ 只返回标记了 [JsonProperty] 的成员
+			var members = new List<MemberInfo>();
 
-            // 获取所有公共字段和属性
-            var allMembers = objectType.GetMembers(
-                BindingFlags.Public |
-                BindingFlags.NonPublic |
-                BindingFlags.Instance
-            );
+			// 获取所有公共字段和属性
+			var allMembers = objectType.GetMembers(
+				BindingFlags.Public |
+				BindingFlags.NonPublic |
+				BindingFlags.Instance
+			);
 
-            foreach (var member in allMembers)
-            {
-                // 检查是否有 [JsonProperty] 特性
-                if (member.GetCustomAttribute<JsonPropertyAttribute>() != null)
-                {
-                    members.Add(member);
-                }
-            }
+			foreach (var member in allMembers)
+			{
+				// 检查是否有 [JsonProperty] 特性
+				if (member.GetCustomAttribute<JsonPropertyAttribute>() != null)
+				{
+					members.Add(member);
+				}
+			}
 
-            return members;
-        }
-    }
+			return members;
+		}
+	}
 
 }
