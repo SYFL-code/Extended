@@ -86,7 +86,7 @@ namespace ExtensionLib
 
 			try
 			{
-				var loaded = JsonConvert.DeserializeObject<Dictionary<int, PlayerVar>>(data, _settings);
+				var loaded = JsonConvert.DeserializeObject<Dictionary<string, PlayerVar>>(data, _settings);
 				if (loaded != null)
 				{
 					foreach (var kvp in loaded)
