@@ -998,7 +998,7 @@ namespace ExtensionLib
 
         public static void Player_ctor(On.Player.orig_ctor orig, Player player, AbstractCreature abs, World world)
 		{
-			orig(player, abs, world);
+			//orig(player, abs, world);
 
 
 			Log.LogDebug("Player ctor");
