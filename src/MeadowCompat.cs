@@ -10,33 +10,33 @@ namespace ExtensionLib;
 public static class MeadowCompat
 {
 
-    public static bool IsModEnabled_RainMeadow => 
+	public static bool IsModEnabled_RainMeadow => 
 		ModManager.ActiveMods.Any(m => m.id == "henpemaz.rainmeadow" || m.id == "henpemaz_rainmeadow");
 
-    public static bool RainMeadow_IsHost => !IsModEnabled_RainMeadow || MeadowCompat.IsHost;
-    public static bool RainMeadow_IsOnline => IsModEnabled_RainMeadow && MeadowCompat.IsOnline;
-    public static bool IsHost => !MeadowCompat.IsOnline || OnlineManager.lobby.isOwner;
-    public static bool IsOnline => OnlineManager.lobby != null;
-    public static bool IsOnlineFriendlyFire => RainMeadow.RainMeadow.isStoryMode(out StoryGameMode? storyGameMode) && storyGameMode.friendlyFire;
+	public static bool RainMeadow_IsHost => !IsModEnabled_RainMeadow || MeadowCompat.IsHost;
+	public static bool RainMeadow_IsOnline => IsModEnabled_RainMeadow && MeadowCompat.IsOnline;
+	public static bool IsHost => !MeadowCompat.IsOnline || OnlineManager.lobby.isOwner;
+	public static bool IsOnline => OnlineManager.lobby != null;
+	public static bool IsOnlineFriendlyFire => RainMeadow.RainMeadow.isStoryMode(out StoryGameMode? storyGameMode) && storyGameMode.friendlyFire;
 
-    public static void InitModCompat()
-    {
-        if (IsModEnabled_RainMeadow)
-        {
-            MeadowCompat.InitCompat();
-        }
-    }
+	public static void InitModCompat()
+	{
+		if (IsModEnabled_RainMeadow)
+		{
+			MeadowCompat.InitCompat();
+		}
+	}
 
-    internal static void InitCompat()
-    {
-        OnlineResource.OnAvailable += MeadowCompat.OnlineResourceOnOnAvailable;
-    }
-    // 可用的在线资源
-    private static void OnlineResourceOnOnAvailable(OnlineResource resource)
-    {
-    }
+	internal static void InitCompat()
+	{
+		OnlineResource.OnAvailable += MeadowCompat.OnlineResourceOnOnAvailable;
+	}
+	// 可用的在线资源
+	private static void OnlineResourceOnOnAvailable(OnlineResource resource)
+	{
+	}
 
-    public static bool IsMeadowStoryMode(out StoryGameMode? gameMode)
+	public static bool IsMeadowStoryMode(out StoryGameMode? gameMode)
 	{
 		gameMode = null;
 		if (IsModEnabled_RainMeadow && RainMeadow.RainMeadow.isStoryMode(out var meadowMode))
@@ -44,58 +44,67 @@ public static class MeadowCompat
 			gameMode = meadowMode;
 			return true;
 		}
-        return false;
-    }
-    public static bool IsMeadowStoryMode()
-    {
+		return false;
+	}
+	public static bool IsMeadowStoryMode()
+	{
 		if (!IsModEnabled_RainMeadow)
 		{
 			return false;
 		}
-        return IsModEnabled_RainMeadow && IsMeadowStoryMode(out _);
-    }
-    public static OnlinePlayer? GetOnlinePlayer(Player player)
-    {
-        if (IsModEnabled_RainMeadow)
-        {
-            if (IsMeadowStoryMode())
-            {
-                // // 1. 获取 OnlineObject
-                if (player.abstractCreature.GetOnlineObject(out OnlinePhysicalObject? opo) && opo != null)
-                {
-                    return opo.owner;
-                }
-            }
-        }
-        Log.LogWarning($"GetOnlinePlayer: Failed to get OnlinePlayer for {player}");
-        return null;
-    }
-    public static string GetUniqueID(Player player)
-    {
-        if (IsModEnabled_RainMeadow)
-        {
-            if (IsMeadowStoryMode())
-            {
-                var onlinePlayer = GetOnlinePlayer(player);
-                if (onlinePlayer != null)
-                {
-                    return onlinePlayer.GetUniqueID();
-                }
-            }
-        }
-        Log.LogWarning($"GetUniqueID: Failed to get UniqueID for {player}");
-        return "Null";
-    }
+		return IsModEnabled_RainMeadow && IsMeadowStoryMode(out _);
+	}
+	public static OnlinePlayer? GetOnlinePlayer(Player player)
+	{
+		if (IsModEnabled_RainMeadow)
+		{
+			if (IsMeadowStoryMode())
+			{
+				// // 1. 获取 OnlineObject
+				if (player.abstractCreature.GetOnlineObject(out OnlinePhysicalObject? opo) && opo != null)
+				{
+					return opo.owner;
+				}
+			}
+		}
+		Log.LogWarning($"GetOnlinePlayer: Failed to get OnlinePlayer for {player}");
+		return null;
+	}
+	public static string GetUniqueID(Player player)
+	{
+		if (IsModEnabled_RainMeadow)
+		{
+			if (IsMeadowStoryMode())
+			{
+				var onlinePlayer = GetOnlinePlayer(player);
+				if (onlinePlayer != null)
+				{
+					if (onlinePlayer.id is SteamMatchmakingManager.SteamPlayerId steamPlayerID)
+					{
+                        return $"steam_{onlinePlayer.GetUniqueID()}";
+                        //return $"steam_{onlinePlayer.id.GetPersonaName()}";
+                    }
+					else
+					{
+                        return $"lan_{onlinePlayer.id.GetPersonaName()}" ?? $"lan_{onlinePlayer.inLobbyId.ToString()}";
+                    }
+					//return onlinePlayer.id is SteamMatchmakingManager.SteamPlayerId steamPlayerID ? steamPlayerID.steamID.m_SteamID.ToString() : inLobbyId.ToString();
+				}
+			}
+		}
+		Log.LogWarning($"GetUniqueID: Failed to get UniqueID for {player}");
+		return "Null";
+	}
 
 
 
-    // copied code from rain meadow's explode hooks
-    // 从Rain Meadow的爆炸钩子上复制了代码
-    /// <summary>
-    /// 处理风弹爆炸的网络同步。
-    /// 返回值表示“是否已经处理了网络同步”（若为 true，则本地不再执行爆炸逻辑）。
-    /// </summary>
-    public static bool ExplodeRPC(PhysicalObject self)
+	// copied code from rain meadow's explode hooks
+	// 从Rain Meadow的爆炸钩子上复制了代码
+	/// <summary>
+	/// 处理风弹爆炸的网络同步。
+	/// 返回值表示“是否已经处理了网络同步”（若为 true，则本地不再执行爆炸逻辑）。
+	/// </summary>
+	public static bool ExplodeRPC(PhysicalObject self)
 	{
 		// 1. 检查是否在 Meadow 大厅中（即处于多人模式）
 		if (IsMeadowStoryMode())
@@ -111,9 +120,9 @@ public static class MeadowCompat
 			// 3. 判断执行权：自己是房间所有者（isOwner）且（拥有该实体 或 当前已在 RPC 事件中）
 			if (opo!.roomSession.isOwner && (opo.isMine || RPCEvent.currentRPCEvent is not null))
 			{
-                // 我是所有者 → 直接广播 RPC 给所有玩家
-                // 参数：要调用的方法（opo.Explode），以及方法的参数（爆炸位置）
-                opo.BroadcastRPCInRoom(opo.Explode, self.bodyChunks[0].pos);
+				// 我是所有者 → 直接广播 RPC 给所有玩家
+				// 参数：要调用的方法（opo.Explode），以及方法的参数（爆炸位置）
+				opo.BroadcastRPCInRoom(opo.Explode, self.bodyChunks[0].pos);
 			}
 			else if (RPCEvent.currentRPCEvent is null)  // 当前不是由 RPC 触发的
 			{

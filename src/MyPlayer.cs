@@ -4,6 +4,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.Utils;
 using MoreSlugcats;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using RainMeadow;
 using static ExtensionLib.Helper;
 using static ExtensionLib.PlayerVar;
 
@@ -802,24 +802,11 @@ namespace ExtensionLib
 
 			if (Plugin.EnableLog)
 			{
-                int now = player.room?.world.game.clock ?? -1;
-                if (now % 40 == 0)
+				int now = player.room?.world.game.clock ?? -1;
+				if (now % 40 == 0)
 				{
-                    //Log.LogInfo($"N: {N}, pos: {player.mainBodyChunk.pos}");
-                }
-            }
-
-			if (Plugin.DebugMode && Input.GetKey("c"))
-			{
-				if (pv.myDebug == null)
-				{
-					pv.myDebug = new MyDebug(player);
+					//Log.LogInfo($"N: {N}, pos: {player.mainBodyChunk.pos}");
 				}
-			}
-
-			if (pv.myDebug != null)
-			{
-				pv.myDebug.outStr_ = N.ToString();
 			}
 
 			/*if (pv.swallowedObjectsTemp.Count != 0)
@@ -836,55 +823,97 @@ namespace ExtensionLib
 				pv.swallowedObjectsTemp.Clear();
 			}*/
 
-			if (Plugin.DebugMode && Input.GetKeyDown("n"))
+
+
+			if (Input.GetKey("v"))
 			{
-				int grasp = InHand(player, false);
-
-				if (grasp >= 0)
+				try
 				{
-					player.SwallowObject(grasp);
-				}
-
-				/*if (player.objectInStomach != null)
-				{
-					pv.objectsInStomach.Add(player.objectInStomach);
-					player.objectInStomach = null;
-				}*/
-			}
-
-			if (Plugin.DebugMode && Input.GetKeyDown("m"))
-			{
-				player.Regurgitate();
-
-				/*int grasp = -1;
-				for (int i = 0; i < player.grasps.Length; i++)
-				{
-					if (player.grasps[i]?.grabbed.abstractPhysicalObject == null)
+					if (SteamManager.Initialized)
 					{
-						grasp = i;
+						CSteamID steamID = SteamUser.GetSteamID();
+						ulong steamId64 = steamID.m_SteamID;
+						Log.LogInfo($"Steam ID: {steamId64}");
+					}
+					else
+					{
+						Log.LogInfo("Steam 尚未初始化，稍后再试");
 					}
 				}
-				if (grasp >= 0)
+				catch (Exception ex)
 				{
-					AbstractPhysicalObject? obj = PopCurrent(player);
+					Log.LogWarning($"获取 Steam ID 失败: {ex}");
+				}
+			}
 
-					if (obj != null)
+			if (Plugin.DebugMode)
+			{
+
+				if (Input.GetKey("c"))
+				{
+					if (pv.myDebug == null)
 					{
-						if (player.grasps[grasp] == null)
+						pv.myDebug = new MyDebug(player);
+					}
+				}
+
+				if (pv.myDebug != null)
+				{
+					pv.myDebug.outStr_ = N.ToString();
+				}
+
+
+				if (Input.GetKeyDown("n"))
+				{
+					int grasp = InHand(player, false);
+
+					if (grasp >= 0)
+					{
+						player.SwallowObject(grasp);
+					}
+
+					/*if (player.objectInStomach != null)
+					{
+						pv.objectsInStomach.Add(player.objectInStomach);
+						player.objectInStomach = null;
+					}*/
+				}
+
+				if (Input.GetKeyDown("m"))
+				{
+					player.Regurgitate();
+
+					/*int grasp = -1;
+					for (int i = 0; i < player.grasps.Length; i++)
+					{
+						if (player.grasps[i]?.grabbed.abstractPhysicalObject == null)
 						{
-							player.grasps[grasp] = new Player.Grasp(player, grasp);
+							grasp = i;
 						}
-
-						player.objectInStomach = obj;
 					}
-				}*/
+					if (grasp >= 0)
+					{
+						AbstractPhysicalObject? obj = PopCurrent(player);
 
-				/*if (pv.objectsInStomach.Count > 0 && player.objectInStomach == null)
-				{
-					player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
-					pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
-				}*/
+						if (obj != null)
+						{
+							if (player.grasps[grasp] == null)
+							{
+								player.grasps[grasp] = new Player.Grasp(player, grasp);
+							}
+
+							player.objectInStomach = obj;
+						}
+					}*/
+
+					/*if (pv.objectsInStomach.Count > 0 && player.objectInStomach == null)
+					{
+						player.objectInStomach = pv.objectsInStomach[pv.objectsInStomach.Count - 1];
+						pv.objectsInStomach.RemoveAt(pv.objectsInStomach.Count - 1);
+					}*/
+				}
 			}
+
 		}
 
 		private static void Player_Destroy(On.Player.orig_Destroy orig, Player player)

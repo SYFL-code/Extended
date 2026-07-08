@@ -72,22 +72,29 @@ namespace ExtensionLib
 		}
 		public static string GetPlayerKey(Player player)
 		{
-			if (MeadowCompat.IsModEnabled_RainMeadow)
+            if (playerKeys.TryGetValue(player, out string key))
+            {
+                return key;
+            }
+            if (MeadowCompat.IsModEnabled_RainMeadow)
 			{
 				if (MeadowCompat.IsMeadowStoryMode())
 				{
                     string UniqueID = MeadowCompat.GetUniqueID(player);
 					if (UniqueID != "Null" && UniqueID != "")
 					{
-						return UniqueID;
+						playerKeys.Add(player, UniqueID);
+                        return UniqueID;
 					}
                 }
 			}
-
-			return player.playerState.playerNumber.ToString();
+			string N = player.playerState.playerNumber.ToString();
+            playerKeys.Add(player, N);	
+            return N;
 		}
+        public static ConditionalWeakTable<Player, string> playerKeys = new();
 
-		public static bool BindPlayerRef(this Player player, PlayerVar pv)
+        public static bool BindPlayerRef(this Player player, PlayerVar pv)
 		{
 			// 检查现有引用是否有效
 			if (pv.PlayerRef.TryGetTarget(out Player? target) && target != null && target == player && !target.slatedForDeletetion)
