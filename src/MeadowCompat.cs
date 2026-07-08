@@ -125,6 +125,53 @@ public static class MeadowCompat
 		return "Null";
 	}
 
+	public static bool Compat
+    {
+		get
+		{
+			//return false;
+
+			if (MeadowCompat.IsModEnabled_RainMeadow)
+			{
+				if (MeadowCompat.IsMeadowStoryMode())
+				{
+					return !MeadowCompat.AllPlayersHaveMod(Plugin.GUID);
+                    //return true;
+                }
+            }
+			return false;
+		}
+	}
+
+	public static bool AllPlayersHaveMod(string modID)
+	{
+		if (IsModEnabled_RainMeadow)
+		{
+			if (IsMeadowStoryMode())
+			{
+				if (OnlineManager.lobby == null) return false;
+				if (OnlineManager.players == null || OnlineManager.players.Count == 0) return false;
+
+				foreach (var player in OnlineManager.players)
+				{
+					if (player.isMe) continue;
+
+					if (!OnlineManager.lobby.clientSettings.TryGetValue(player, out var settings))
+						return false;
+
+					if (!settings.TryGetData<CustomClientSettings>(out var customSettings))
+						return false;
+
+					if (!customSettings.keys.Contains(modID))
+						return false;
+				}
+
+				return true;
+			}
+		}
+		return true;
+	}
+
 
 
 	// copied code from rain meadow's explode hooks

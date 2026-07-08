@@ -115,7 +115,7 @@ namespace ExtensionLib
 		}
 		#endregion
 
-		public static FileDict steamMapping = new FileDict(Path.Combine(path(LibData.ID), "steamMapping.json"));
+		public static SteamMapping steamMapping = new SteamMapping(Path.Combine(path(LibData.ID), "steamMapping.json"));
 
 
 		// 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）

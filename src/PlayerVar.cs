@@ -26,9 +26,9 @@ namespace ExtensionLib
 
 		public WorldCoordinate coord;
 
-        public MyDebug? myDebug = null;//调试图像
+		public MyDebug? myDebug = null;//调试图像
 
-        public class StomachData
+		public class StomachData
 		{
 			public PlayerVar Owner;
 
@@ -40,10 +40,12 @@ namespace ExtensionLib
 			[JsonProperty("historyInStomach")]
 			public List<string> _serializedHistory = new();
 
-            //开始吞咽/反刍/物品制作流程
-            public bool swallowOrRegurgitate = false;
+			//开始吞咽/反刍/物品制作流程
+			//public bool swallowOrRegurgitate = false;
+			public bool IsSwallowing = false;
 
-			public StomachData(PlayerVar owner)
+
+            public StomachData(PlayerVar owner)
 			{
 				Owner = owner;
 			}
@@ -54,10 +56,10 @@ namespace ExtensionLib
 					Owner._playerRef.TryGetTarget(out Player? player);
 					if (player == null)
 					{
-                        Log.LogError("_playerRef.player: null");
-                        //throw new NullReferenceException("_playerRef.player: null".MessageLog());
-                        return null;
-                    }
+						Log.LogError("_playerRef.player: null");
+						//throw new NullReferenceException("_playerRef.player: null".MessageLog());
+						return null;
+					}
 					return player.objectInStomach;
 				}
 				set
@@ -66,9 +68,9 @@ namespace ExtensionLib
 					if (player == null)
 					{
 						Log.LogError("_playerRef.player: null");
-                        //throw new NullReferenceException("_playerRef.player: null".MessageLog());
-                        return;
-                    }
+						//throw new NullReferenceException("_playerRef.player: null".MessageLog());
+						return;
+					}
 					player.objectInStomach = value;
 				}
 			}// 指向 player.objectInStomach
@@ -200,10 +202,10 @@ namespace ExtensionLib
 				}
 			}*/
 		}
-        #endregion
+		#endregion
 
 
 
 
-    }
+	}
 }

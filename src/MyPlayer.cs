@@ -310,6 +310,31 @@ namespace ExtensionLib
 										var stomachData = pv.stomachData;
 
 										Log.LogInfo($"[logIndex:brtrue edition] SwallowObject IsFull: {stomachData.IsFull}");
+
+										bool Regurgitate;
+										int inHand = InHand(player, true);
+										if (inHand != -1 && !stomachData.IsFull)
+										{
+											Regurgitate = false;
+										}
+										else
+										{
+											Regurgitate = !stomachData.IsEmpty;
+										}
+										bool swallow = true;
+										if (Regurgitate)
+										{
+											swallow = false;
+										}
+										if (stomachData.IsFull)
+										{
+											swallow = false;
+										}
+										if (swallow)
+										{
+											stomachData.IsSwallowing = true;
+										}
+
 										return stomachData.IsFull;
 									});
 
@@ -371,36 +396,34 @@ namespace ExtensionLib
 				}
 
 
-				c.Index = 0;
-				//IL_1869: ldloc.1
-				//IL_186a: brfalse IL_1af2
-				if (c.TryGotoNext(MoveType.After,
-					i => i.MatchLdloc(1),
-					i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转 跳出去）
-				))
-				{
-					Logs.Write($"[logIndex:flag3 edition]");
+				//c.Index = 0;
+				////IL_1869: ldloc.1
+				////IL_186a: brfalse IL_1af2
+				//if (c.TryGotoNext(MoveType.After,
+				//	i => i.MatchLdloc(1),
+				//	i => i.Match(OpCodes.Brfalse_S) || i.Match(OpCodes.Brfalse) // 匹配 brfalse（假时跳转 跳出去）
+				//))
+				//{
+				//	Logs.Write($"[logIndex:flag3 edition]");
 
-					c.Index -= 1;
+				//	c.Index -= 1;
 
-					// Ldarg.0	将索引为 0 的参数加载到计算堆栈上。
-					// Ldloc.0	将索引 0 处的局部变量加载到计算堆栈上。
+				//	// Ldarg.0	将索引为 0 的参数加载到计算堆栈上。
+				//	// Ldloc.0	将索引 0 处的局部变量加载到计算堆栈上。
 
-					c.Emit(OpCodes.Ldarg_0);
-					c.EmitDelegate<Func<bool, Player, bool>>((flag3, player) =>
-					{
-						//Log.LogInfo($"flag3: {flag3}");
+				//	c.Emit(OpCodes.Ldarg_0);
+				//	c.EmitDelegate<Func<bool, Player, bool>>((flag3, player) =>
+				//	{
+				//		//Log.LogInfo($"flag3: {flag3}");
 
-						player.GetPlayerVar(out var pv);
-						var stomachData = pv.stomachData;
+				//		player.GetPlayerVar(out var pv);
+				//		var stomachData = pv.stomachData;
 
-						pv.stomachData.swallowOrRegurgitate = flag3;
+				//		pv.stomachData.swallowOrRegurgitate = flag3;
 
-						return flag3;
-					});
-
-
-				}
+				//		return flag3;
+				//	});
+				//}
 
 				Logs.Write(il.ToString(), false);
 			}
@@ -561,56 +584,9 @@ namespace ExtensionLib
 			player.GetPlayerVar(out var pv);
 			var stomachData = pv.stomachData;
 
-			if (stomachData.swallowOrRegurgitate)
+			if (!MeadowCompat.Compat)
 			{
-				bool Regurgitate;
-
-				int inHand = InHand(player, true);
-				if (inHand != -1 && !stomachData.IsFull)
-				{
-					Regurgitate = false;
-				}
-				else
-				{
-					Regurgitate = !stomachData.IsEmpty;
-				}
-
-				bool swallow = true;
-
-				if (Regurgitate)
-				{
-					swallow = false;
-				}
-				if (stomachData.IsFull)
-				{
-					swallow = false;
-				}
-
-				//Log.LogInfo($"swallow: {swallow}");
-				if (swallow)
-				{
-					player.objectInStomach = null;
-
-				}
-			}
-
-			orig(playerGraphics);
-
-			player.objectInStomach = originalObject;
-		}
-
-		public static void SlugcatHand_Update(On.SlugcatHand.orig_Update orig, SlugcatHand  hand)
-		{
-			if (hand.owner is PlayerGraphics playerGraphics)
-			{
-				// 保存原版 objectInStomach 状态
-				Player player = playerGraphics.player;
-				var originalObject = player.objectInStomach;
-
-				player.GetPlayerVar(out var pv);
-				var stomachData = pv.stomachData;
-
-				if (stomachData.swallowOrRegurgitate)
+				if (player.swallowAndRegurgitateCounter > 0)
 				{
 					bool Regurgitate;
 
@@ -635,11 +611,64 @@ namespace ExtensionLib
 						swallow = false;
 					}
 
-					Log.LogInfo($"swallow: {swallow}");
+					//Log.LogInfo($"swallow: {swallow}");
 					if (swallow)
 					{
 						player.objectInStomach = null;
 
+					}
+				}
+			}
+
+			orig(playerGraphics);
+
+			player.objectInStomach = originalObject;
+		}
+
+		public static void SlugcatHand_Update(On.SlugcatHand.orig_Update orig, SlugcatHand  hand)
+		{
+			if (hand.owner is PlayerGraphics playerGraphics)
+			{
+				// 保存原版 objectInStomach 状态
+				Player player = playerGraphics.player;
+				var originalObject = player.objectInStomach;
+
+				player.GetPlayerVar(out var pv);
+				var stomachData = pv.stomachData;
+
+				if (!MeadowCompat.Compat)
+				{
+					if (player.swallowAndRegurgitateCounter > 0)
+					{
+						bool Regurgitate;
+
+						int inHand = InHand(player, true);
+						if (inHand != -1 && !stomachData.IsFull)
+						{
+							Regurgitate = false;
+						}
+						else
+						{
+							Regurgitate = !stomachData.IsEmpty;
+						}
+
+						bool swallow = true;
+
+						if (Regurgitate)
+						{
+							swallow = false;
+						}
+						if (stomachData.IsFull)
+						{
+							swallow = false;
+						}
+
+						Log.LogInfo($"swallow: {swallow}");
+						if (swallow)
+						{
+							player.objectInStomach = null;
+
+						}
 					}
 				}
 
@@ -754,14 +783,35 @@ namespace ExtensionLib
 
 		private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
 		{
-			// 防御层：补位逻辑
 			player.GetPlayerVar(out var pv);
 			var stomachData = pv.stomachData;
 			int N = player.playerState.playerNumber;
 
-			if (stomachData.Current == null && stomachData.HistoryCount > 0)
+			if (player.swallowAndRegurgitateCounter > 0)
 			{
-				stomachData.Current = stomachData.PopHistory();
+			}
+			else
+			{
+				stomachData.IsSwallowing = false;
+			}
+
+			bool defense = true;
+			if (stomachData.IsSwallowing)
+			{
+				if (MeadowCompat.Compat)
+				{
+					defense = false;
+					stomachData.Swallow(null);
+				}
+			}
+
+			// 防御层：补位逻辑
+			if (defense)
+			{
+				if (stomachData.Current == null && stomachData.HistoryCount > 0)
+				{
+					stomachData.Current = stomachData.PopHistory();
+				}
 			}
 
 
