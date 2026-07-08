@@ -93,7 +93,7 @@ public static class MeadowCompat
 					}
 					else
 					{
-						if (GetSteamID(out ulong steamID))
+						if (onlinePlayer.isMe && GetSteamID(out ulong steamID))
 						{
 							string uniqueID = steamID.ToString();
 							if (GetSteamName(out string steamName))
