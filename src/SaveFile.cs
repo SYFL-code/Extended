@@ -1,4 +1,5 @@
-﻿using On;
+﻿using CoralBrain;
+using On;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,6 +18,9 @@ namespace ExtensionLib
 	{
 		public static void SaveHooks()
 		{
+			LibData libData = new LibData();
+			SaveFile.AddData(libData);
+
 			On.StoryGameSession.AddPlayer += StoryGameSession_AddPlayer;
 			On.SaveState.SessionEnded += SaveState_SessionEnded;
 
@@ -25,6 +29,8 @@ namespace ExtensionLib
 		}
 		public static void SaveHooks_()
 		{
+			Datum.Clear();
+
 			On.StoryGameSession.AddPlayer -= StoryGameSession_AddPlayer;
 			On.SaveState.SessionEnded -= SaveState_SessionEnded;
 
@@ -90,7 +96,7 @@ namespace ExtensionLib
 			WipeAll(progression.rainWorld.options.saveSlot);
 		}
 
-		
+		#region Data
 		private static Dictionary<string, Data> Datum = new();
 
 		public static void AddData(Data data)
@@ -107,6 +113,10 @@ namespace ExtensionLib
 			}
 			Datum.Add(id, data);
 		}
+		#endregion
+
+		public static FileDict steamMapping = new FileDict(Path.Combine(path(LibData.ID), "steamMapping.json"));
+
 
 		// 构建目标目录路径：Application.persistentDataPath 是持久化数据目录（各平台不同）
 		// 这里组合成 "[persistentDataPath]/ExtensionData/[id]" 目录

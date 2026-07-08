@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Steamworks;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -72,29 +73,29 @@ namespace ExtensionLib
 		}
 		public static string GetPlayerKey(Player player)
 		{
-            if (playerKeys.TryGetValue(player, out string key))
-            {
-                return key;
-            }
-            if (MeadowCompat.IsModEnabled_RainMeadow)
+			if (playerKeys.TryGetValue(player, out string key))
+			{
+				return key;
+			}
+			if (MeadowCompat.IsModEnabled_RainMeadow)
 			{
 				if (MeadowCompat.IsMeadowStoryMode())
 				{
-                    string UniqueID = MeadowCompat.GetUniqueID(player);
+					string UniqueID = MeadowCompat.GetUniqueID(player);
 					if (UniqueID != "Null" && UniqueID != "")
 					{
 						playerKeys.Add(player, UniqueID);
-                        return UniqueID;
+						return UniqueID;
 					}
-                }
+				}
 			}
 			string N = player.playerState.playerNumber.ToString();
-            playerKeys.Add(player, N);	
-            return N;
+			playerKeys.Add(player, N);	
+			return N;
 		}
-        public static ConditionalWeakTable<Player, string> playerKeys = new();
+		public static ConditionalWeakTable<Player, string> playerKeys = new();
 
-        public static bool BindPlayerRef(this Player player, PlayerVar pv)
+		public static bool BindPlayerRef(this Player player, PlayerVar pv)
 		{
 			// 检查现有引用是否有效
 			if (pv.PlayerRef.TryGetTarget(out Player? target) && target != null && target == player && !target.slatedForDeletetion)
@@ -108,5 +109,56 @@ namespace ExtensionLib
 			return true;
 		}
 		#endregion
+
+		public static bool GetSteamID(out ulong steamID)
+		{
+			try
+			{
+				if (SteamManager.Initialized)
+				{
+					CSteamID cSteamID = SteamUser.GetSteamID();
+					steamID = cSteamID.m_SteamID;
+					Log.LogInfo($"Steam ID: {steamID}");
+					return true;
+				}
+				else
+				{
+					Log.LogInfo("Steam 尚未初始化，稍后再试");
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.LogWarning($"获取 Steam ID 失败: {ex}");
+			}
+			steamID = 0;
+			return false;
+		}
+		public static bool GetSteamName(out string steamName)
+		{
+			try
+			{
+				if (SteamManager.Initialized)
+				{
+					steamName = SteamFriends.GetPersonaName();
+					// 例如，获取某个好友的名字
+					//CSteamID friendID = new CSteamID(/* 这里填好友的64位SteamID */);
+					//string friendName = SteamFriends.GetFriendPersonaName(friendID);
+					Log.LogInfo($"Steam Name: {steamName}");
+					return true;
+				}
+				else
+				{
+					Log.LogInfo("Steam 尚未初始化，稍后再试");
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.LogWarning($"获取 Steam Name 失败: {ex}");
+			}
+			steamName = string.Empty;
+			return false;
+		}
+
+
 	}
 }

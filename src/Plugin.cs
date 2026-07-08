@@ -43,7 +43,6 @@ namespace ExtensionLib
 			GlobalVar.Hook();
 
 			// 保存加载
-			SaveFile.AddData(new LibData());
 			SaveFile.SaveHooks();
 
 			MyPlayer.Hook();

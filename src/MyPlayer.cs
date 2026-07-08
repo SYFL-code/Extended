@@ -825,26 +825,26 @@ namespace ExtensionLib
 
 
 
-			if (Input.GetKey("v"))
-			{
-				try
-				{
-					if (SteamManager.Initialized)
-					{
-						CSteamID steamID = SteamUser.GetSteamID();
-						ulong steamId64 = steamID.m_SteamID;
-						Log.LogInfo($"Steam ID: {steamId64}");
-					}
-					else
-					{
-						Log.LogInfo("Steam 尚未初始化，稍后再试");
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.LogWarning($"获取 Steam ID 失败: {ex}");
-				}
-			}
+			//if (Input.GetKey("v"))
+			//{
+			//	try
+			//	{
+			//		if (SteamManager.Initialized)
+			//		{
+			//			CSteamID steamID = SteamUser.GetSteamID();
+			//			ulong steamId64 = steamID.m_SteamID;
+			//			Log.LogInfo($"Steam ID: {steamId64}");
+			//		}
+			//		else
+			//		{
+			//			Log.LogInfo("Steam 尚未初始化，稍后再试");
+			//		}
+			//	}
+			//	catch (Exception ex)
+			//	{
+			//		Log.LogWarning($"获取 Steam ID 失败: {ex}");
+			//	}
+			//}
 
 			if (Plugin.DebugMode)
 			{

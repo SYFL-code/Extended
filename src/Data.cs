@@ -61,7 +61,9 @@ namespace ExtensionLib
 
 	public class LibData : Data
 	{
-		public override string id { get; set; } = "ExtensionLib";// 唯一标识符，确保不会与其他 mod 冲突
+		public static string ID = "ExtensionLib";
+
+        public override string id => ID;// 唯一标识符，确保不会与其他 mod 冲突
 
 
 		private static JsonSerializerSettings _settings = new JsonSerializerSettings

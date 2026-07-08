@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static ExtensionLib.GlobalVar;
+using static ExtensionLib.SaveFile;
 using RainMeadow;
 
 namespace ExtensionLib;
@@ -81,13 +83,40 @@ public static class MeadowCompat
 				{
 					if (onlinePlayer.id is SteamMatchmakingManager.SteamPlayerId steamPlayerID)
 					{
-                        return $"steam_{onlinePlayer.GetUniqueID()}";
-                        //return $"steam_{onlinePlayer.id.GetPersonaName()}";
-                    }
+						string uniqueID = onlinePlayer.GetUniqueID();
+						string personaName = onlinePlayer.id.GetPersonaName();
+
+						steamMapping[personaName] = uniqueID;
+
+						return $"{uniqueID}";
+						//return $"{onlinePlayer.id.GetPersonaName()}";
+					}
 					else
 					{
-                        return $"lan_{onlinePlayer.id.GetPersonaName()}" ?? $"lan_{onlinePlayer.inLobbyId.ToString()}";
-                    }
+						if (GetSteamID(out ulong steamID))
+						{
+							string uniqueID = steamID.ToString();
+							if (GetSteamName(out string steamName))
+							{
+								string personaName = steamName;
+
+								steamMapping[personaName] = uniqueID;
+							}
+							return $"{uniqueID}";
+						}
+						else
+						{
+							string personaName = onlinePlayer.id.GetPersonaName();
+							string inLobbyId = onlinePlayer.inLobbyId.ToString();
+
+							if (steamMapping.TryGetValue(personaName, out string mappedID))
+							{
+								return $"{mappedID}";
+							}
+
+							return $"{personaName}" ?? $"{inLobbyId}";
+						}
+					}
 					//return onlinePlayer.id is SteamMatchmakingManager.SteamPlayerId steamPlayerID ? steamPlayerID.steamID.m_SteamID.ToString() : inLobbyId.ToString();
 				}
 			}
