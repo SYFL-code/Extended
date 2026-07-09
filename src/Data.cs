@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using RainMeadow;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -63,7 +64,7 @@ namespace ExtensionLib
 	{
 		public static string ID = "ExtensionLib";
 
-        public override string id => ID;// 唯一标识符，确保不会与其他 mod 冲突
+		public override string id => ID;// 唯一标识符，确保不会与其他 mod 冲突
 
 
 		private static JsonSerializerSettings _settings = new JsonSerializerSettings
@@ -138,7 +139,14 @@ namespace ExtensionLib
 			bool isMeadow = MeadowCompat.IsModEnabled_RainMeadow && MeadowCompat.IsMeadowStoryMode();
 			Log.LogInfo($"IsMeadow : {isMeadow}");
 
-			string prefix = isMeadow ? "RainMeadow" : "Vanilla";
+			string lobbyIdentifier = "null";
+			if (isMeadow)
+			{
+				lobbyIdentifier = MeadowCompat.GetLobbyIdentifier();
+			}
+			Log.LogInfo($"Lobby : {lobbyIdentifier}");
+
+			string prefix = isMeadow ? $"RainMeadow_{lobbyIdentifier}" : "Vanilla";
 			return $"{prefix}_{saveSlot}_{slugcat.value}.json";
 		}
 		public override bool IsMatch(string fileName, int saveSlot)
@@ -146,7 +154,14 @@ namespace ExtensionLib
 			bool isMeadow = MeadowCompat.IsModEnabled_RainMeadow && MeadowCompat.IsMeadowStoryMode();
 			Log.LogInfo($"IsMeadow : {isMeadow}");
 
-			string prefix = isMeadow ? "RainMeadow" : "Vanilla";
+			string lobbyIdentifier = "null";
+			if (isMeadow)
+			{
+				lobbyIdentifier = MeadowCompat.GetLobbyIdentifier();
+			}
+			Log.LogInfo($"Lobby : {lobbyIdentifier}");
+
+			string prefix = isMeadow ? $"RainMeadow_{lobbyIdentifier}" : "Vanilla";
 
 			string starts = $"{prefix}_{saveSlot}_";
 

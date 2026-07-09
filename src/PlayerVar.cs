@@ -26,13 +26,11 @@ namespace ExtensionLib
 
 		public WorldCoordinate coord;
 
-		public MyDebug? myDebug = null;//调试图像
-
 		public class StomachData
 		{
 			public PlayerVar Owner;
 
-			public List<AbstractPhysicalObject> historyInStomach = new();  // 历史栈（不含当前）
+			public List<AbstractPhysicalObject?> historyInStomach = new();  // 历史栈（不含当前）
 
 			[JsonProperty("capacity")]
 			public int capacity = 5;                               // 容量限制
@@ -44,8 +42,9 @@ namespace ExtensionLib
 			//public bool swallowOrRegurgitate = false;
 			public bool IsSwallowing = false;
 
+			public int OnlineHistoryCount = 0;
 
-            public StomachData(PlayerVar owner)
+			public StomachData(PlayerVar owner)
 			{
 				Owner = owner;
 			}
@@ -75,7 +74,7 @@ namespace ExtensionLib
 				}
 			}// 指向 player.objectInStomach
 			public int HistoryCount => historyInStomach.Count;
-			public int TotalCount => (Current != null ? 1 : 0) + HistoryCount;
+            public int TotalCount => (Current != null ? 1 : 0) + HistoryCount;
 			public bool IsEmpty => Current == null && HistoryCount == 0;
 			public bool IsFull => TotalCount >= capacity;
 			public int RemainingSpace => capacity - TotalCount;
@@ -129,9 +128,9 @@ namespace ExtensionLib
 			}
 
 			// 获取完整内容（用于遍历/显示）
-			public List<AbstractPhysicalObject> GetAllContents()
+			public List<AbstractPhysicalObject?> GetAllContents()
 			{
-				var result = new List<AbstractPhysicalObject>(historyInStomach);  // 历史（从底到顶）
+				var result = new List<AbstractPhysicalObject?>(historyInStomach);  // 历史（从底到顶）
 				if (Current != null)
 					result.Add(Current);    // 当前（栈顶）
 				return result;

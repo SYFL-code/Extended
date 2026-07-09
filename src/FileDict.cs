@@ -87,7 +87,12 @@ namespace ExtensionLib
 			}
 		}
 
-	}
+        public override bool TryGetValue(string key, out string value)
+        {
+            return _data.TryGetValue(key.ToLowerInvariant(), out value);
+        }
+
+    }
 
 
 }

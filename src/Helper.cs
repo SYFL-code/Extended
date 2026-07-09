@@ -11,10 +11,15 @@ namespace ExtensionLib
 	{
 
 		// 将物品转为字符串
-		public static string ObjectToString(AbstractPhysicalObject Object, WorldCoordinate coord, bool setCoord)
+		public static string ObjectToString(AbstractPhysicalObject? Object, WorldCoordinate coord, bool setCoord)
 		{
 			try
 			{
+				if (Object == null) 
+				{
+					return "null";
+				}
+
 				if (Object is AbstractCreature ac)
 				{
 					if (ac.world.GetAbstractRoom(ac.pos.room) == null)
@@ -33,7 +38,11 @@ namespace ExtensionLib
 				Log.LogWarning($"将物品转为字符串失败: {ex.Message}");
 			}
 
-			return Object.ToString();
+            if (Object == null)
+            {
+                return "null";
+            }
+            return Object.ToString();
 		}
 		// 从字符串解析物品
 		public static AbstractPhysicalObject? ObjectFromString(string itemStr, World world, WorldCoordinate? coord, WorldCoordinate? pos)
@@ -43,7 +52,10 @@ namespace ExtensionLib
 				if (string.IsNullOrEmpty(itemStr))
 					return null;
 
-				AbstractPhysicalObject? physicalObject = null;
+				if (itemStr == "null" || itemStr == "Null")
+                    return null;
+
+                AbstractPhysicalObject? physicalObject = null;
 
 				if (itemStr.Contains("<oA>"))
 				{

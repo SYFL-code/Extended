@@ -1,7 +1,9 @@
 ﻿using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using UnityEngine;
 
 
@@ -10,7 +12,10 @@ namespace ExtensionLib
 	public static class GlobalVar
 	{
 		//玩家变量
+
+		public static ConditionalWeakTable<Player, PlayerModule> playerModules = new();
 		public static Dictionary<string, PlayerVar> playerVars = new();
+
 		//全局系统变量
 		public static RainWorldGame? game = null;
 
@@ -42,14 +47,50 @@ namespace ExtensionLib
 			}
 
 			//playerVars.Add(player, new PlayerVar(player));
-			player.GetPlayerVar(out PlayerVar pv);
-
 			if (Plugin.DebugMode)
 			{
-				pv.myDebug = new MyDebug(player);
+				player.GetPlayerModule(out var module);
+
+				module.myDebug = new MyDebug(player);
 			}
 
 			MyPlayer.Player_ctor(orig, player, abstractCreature, world);
+		}
+
+		public static PlayerModule GetPlayerModule(this Player player)
+		{
+			if (playerModules.TryGetValue(player, out PlayerModule Module))
+			{
+				return Module;
+			}
+			Module = new PlayerModule(player);
+			playerModules.Add(player, Module);
+			return Module;
+		}
+		public static PlayerModule GetPlayerModule(this Player player, out PlayerModule module)
+		{
+			module = GetPlayerModule(player);
+			return module;
+		}
+
+		public static bool EnableStomach(this Player player)
+		{
+			player.GetPlayerModule(out PlayerModule module);
+			if (module.StomachExtension)
+			{
+				if (MeadowCompat.IsModEnabled_RainMeadow)
+				{
+					if (MeadowCompat.IsMeadowStoryMode())
+					{
+						if (MeadowCompat.Compat && !MeadowCompat.IsMe(player))
+						{
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			return false;
 		}
 
 		public static PlayerVar GetPlayerVar(this Player player)
@@ -73,10 +114,12 @@ namespace ExtensionLib
 		}
 		public static string GetPlayerKey(Player player)
 		{
-			if (playerKeys.TryGetValue(player, out string key))
+			player.GetPlayerModule(out var module);
+			if (module.key != "" && module.key != "Null")
 			{
-				return key;
+				return module.key;
 			}
+
 			if (MeadowCompat.IsModEnabled_RainMeadow)
 			{
 				if (MeadowCompat.IsMeadowStoryMode())
@@ -84,16 +127,19 @@ namespace ExtensionLib
 					string UniqueID = MeadowCompat.GetUniqueID(player);
 					if (UniqueID != "Null" && UniqueID != "")
 					{
-						playerKeys.Add(player, UniqueID);
+						module.key = UniqueID;
 						return UniqueID;
+					}
+					else
+					{
+						
 					}
 				}
 			}
 			string N = player.playerState.playerNumber.ToString();
-			playerKeys.Add(player, N);	
+			module.key = N;
 			return N;
 		}
-		public static ConditionalWeakTable<Player, string> playerKeys = new();
 
 		public static bool BindPlayerRef(this Player player, PlayerVar pv)
 		{
@@ -110,6 +156,7 @@ namespace ExtensionLib
 		}
 		#endregion
 
+		#region Steam
 		public static bool GetSteamID(out ulong steamID)
 		{
 			try
@@ -158,7 +205,7 @@ namespace ExtensionLib
 			steamName = string.Empty;
 			return false;
 		}
-
+		#endregion
 
 	}
 }
