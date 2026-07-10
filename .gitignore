@@ -366,3 +366,7 @@ FodyWeavers.xsd
 lib/*.dll
 mod/newest/plugins/*.dll
 mod/plugins/*.dll
+*.xml
+lib/*.xml
+mod/newest/plugins/*.xml
+mod/plugins/*.xml
