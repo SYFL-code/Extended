@@ -179,7 +179,7 @@ public static class MeadowCompat
 				}
 			}
 		}
-		Log.LogWarning($"GetUniqueID: Failed to get UniqueID for {player}");
+		Log.LogWarning($"GetUniqueID: Failed to get UniqueID for {onlinePlayer}");
 		return "Null";
 	}
 
@@ -334,24 +334,24 @@ public static class MeadowCompat
 
 	// 在容量变化时触发
 	// 吞咽时
-	public void OnSwallow(Player player)
-	{
-		var pv = player.GetPlayerVar();
-		//pv.stomachData.historyInStomach.Add(item);
+	//public void OnSwallow(Player player)
+	//{
+	//	var pv = player.GetPlayerVar();
+	//	//pv.stomachData.historyInStomach.Add(item);
 
-		// 广播容量变化
-		BroadcastCapacity(player);
-	}
+	//	// 广播容量变化
+	//	BroadcastCapacity(player);
+	//}
 
-	// 反刍时
-	public void OnRegurgitate(Player player)
-	{
-		var pv = player.GetPlayerVar();
-		//pv.stomachData.historyInStomach.RemoveAt(pv.stomachData.historyInStomach.Count - 1);
+	//// 反刍时
+	//public void OnRegurgitate(Player player)
+	//{
+	//	var pv = player.GetPlayerVar();
+	//	//pv.stomachData.historyInStomach.RemoveAt(pv.stomachData.historyInStomach.Count - 1);
 
-		// 广播容量变化
-		BroadcastCapacity(player);
-	}
+	//	// 广播容量变化
+	//	BroadcastCapacity(player);
+	//}
 
 	// 接收端的处理
 	public static void UpdatePlayerStomachDisplay(Player player, int current, int max)
@@ -383,27 +383,27 @@ public static class MeadowCompat
 	//}
 
 	// 容量变化时广播
-	public static void CheckAndBroadcast(Player player)
-	{
-		var pv = player.GetPlayerVar();
-		if (pv == null) return;
+	//public static void CheckAndBroadcast(Player player)
+	//{
+	//	var pv = player.GetPlayerVar();
+	//	if (pv == null) return;
 
-		// 只在容量变化时广播，避免频繁发送
-		int current = pv.stomachData.historyInStomach.Count;
-		int max = pv.stomachData.capacity;
+	//	// 只在容量变化时广播，避免频繁发送
+	//	int current = pv.stomachData.historyInStomach.Count;
+	//	int max = pv.stomachData.capacity;
 
-		var onlinePlayer = player.GetOnlinePlayer();
-		if (onlinePlayer == null) return;
+	//	var onlinePlayer = player.GetOnlinePlayer();
+	//	if (onlinePlayer == null) return;
 
-		// 检查是否变化
-		if (_lastBroadcast.TryGetValue(onlinePlayer.inLobbyId, out var last))
-		{
-			if (last.current == current && last.max == max) return;
-		}
+	//	// 检查是否变化
+	//	if (_lastBroadcast.TryGetValue(onlinePlayer.inLobbyId, out var last))
+	//	{
+	//		if (last.current == current && last.max == max) return;
+	//	}
 
-		_lastBroadcast[onlinePlayer.inLobbyId] = (current, max);
-		BroadcastCapacity(player);
-	}
+	//	_lastBroadcast[onlinePlayer.inLobbyId] = (current, max);
+	//	BroadcastCapacity(player);
+	//}
 
 
 

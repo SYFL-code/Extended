@@ -14,7 +14,7 @@ namespace ExtensionLib
 		public const string Name = "Extension Lib";
 		public const string Version = "0.1.0";
 
-		public const string version = "0.1.48";
+		public const string version = "0.1.49";
         public static bool EnableLog = true;// false
         private static bool EnableStartScreen = true;// true
 		public static bool DebugMode = false;//  false

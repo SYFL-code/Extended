@@ -116,7 +116,7 @@ namespace ExtensionLib;
 				Console.WriteLine($"胃部物品数量: {stomachData.TotalCount}");
 				for (int i = 0; i < stomachData.TotalCount; i++)
 				{
-					Console.WriteLine(stomachData.GetAllContents()[i].ToString());
+					Console.WriteLine($"{stomachData.GetAllContents()[i]?.ToString()}");
 				}
 			}
 

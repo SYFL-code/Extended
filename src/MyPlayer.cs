@@ -4,6 +4,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.Utils;
 using MoreSlugcats;
+using RainMeadow;
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -389,15 +390,15 @@ namespace ExtensionLib
 					// 插入条件判断
 					c.EmitDelegate<Func<Player, bool>>(player =>
 					{
-                        if (player.EnableStomach())
-                        {
+						if (player.EnableStomach())
+						{
 
-                            player.GetPlayerVar(out var pv);
-                            var stomachData = pv.stomachData;
+							player.GetPlayerVar(out var pv);
+							var stomachData = pv.stomachData;
 
-                            Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
-                            return !stomachData.IsEmpty;
-                        }
+							Log.LogInfo($"[logIndex:brtrue edition] IsEmpty: {stomachData.IsEmpty}");
+							return !stomachData.IsEmpty;
+						}
 						return player.objectInStomach != null;
 
 						//return false;
@@ -854,6 +855,15 @@ namespace ExtensionLib
 					if (stomachData.Current == null && stomachData.HistoryCount > 0)
 					{
 						stomachData.Current = stomachData.PopHistory();
+
+
+						if (MeadowCompat.IsModEnabled_RainMeadow)
+						{
+							if (MeadowCompat.IsMeadowStoryMode())
+							{
+								MeadowCompat.BroadcastCapacity(player);
+							}
+						}
 					}
 				}
 
@@ -867,9 +877,9 @@ namespace ExtensionLib
 					}*/
 
 					int lanternCount = 0;
-                    lanternCount = stomachData.historyInStomach.Count(obj => obj?.type == AbstractPhysicalObject.AbstractObjectType.Lantern);
+					lanternCount = stomachData.historyInStomach.Count(obj => obj?.type == AbstractPhysicalObject.AbstractObjectType.Lantern);
 
-                    if (lanternCount > 0)
+					if (lanternCount > 0)
 					{
 						lanternCount = Math.Min(lanternCount, 4);
 
@@ -1057,12 +1067,20 @@ namespace ExtensionLib
 					Log.LogInfo($"吞咽成功！胃部物品数量: {stomachData.TotalCount}");
 					for (int i = 0; i < stomachData.TotalCount; i++)
 					{
-						Log.LogInfo(stomachData.GetAllContents()[i].ToString());
+						Log.LogInfo($"{stomachData.GetAllContents()[i]?.ToString()}");
 					}
 				}
 				else
 				{
 					Log.LogInfo("原版吞咽函数没有处理物品");
+				}
+
+				if (MeadowCompat.IsModEnabled_RainMeadow)
+				{
+					if (MeadowCompat.IsMeadowStoryMode())
+					{
+						MeadowCompat.BroadcastCapacity(player);
+					}
 				}
 			}
 			else
@@ -1092,12 +1110,21 @@ namespace ExtensionLib
 					Log.LogInfo($"胃部物品数量: {stomachData.TotalCount}");
 					for (int i = 0; i < stomachData.TotalCount; i++)
 					{
-						Log.LogInfo(stomachData.GetAllContents()[i].ToString());
+						Log.LogInfo($"{stomachData.GetAllContents()[i]?.ToString()}");
 					}
 				}
 				else
 				{
 					//Log.LogInfo("原版反刍函数没有处理物品");
+				}
+
+
+				if (MeadowCompat.IsModEnabled_RainMeadow)
+				{
+					if (MeadowCompat.IsMeadowStoryMode())
+					{
+						MeadowCompat.BroadcastCapacity(player);
+					}
 				}
 
 				//bool hasItems = pv.objectsInStomach.Count > 0;
