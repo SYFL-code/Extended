@@ -370,3 +370,11 @@ mod/plugins/*.dll
 lib/*.xml
 mod/newest/plugins/*.xml
 mod/plugins/*.xml
+
+# ±àÒë²úÎï
+*.dll
+*.pdb
+*.xml
+*.exe
+lib/
+mod/newest/plugins/
