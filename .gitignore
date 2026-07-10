@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# DLL files
+*.dll
+lib/*.dll
+mod/newest/plugins/*.dll
+mod/plugins/*.dll
