@@ -6,21 +6,23 @@ using System.Threading.Tasks;
 
 namespace ExtensionLib
 {
-    public class PlayerModule
-    {
-        WeakReference<Player> playerRef;
+	public class PlayerModule
+	{
+		WeakReference<Player> playerRef;
 
-        public string key = "";
+		public string key = "";
 
-        public MyDebug? myDebug = null;//调试图像
+		public MyDebug? myDebug = null;//调试图像
 
-        public bool StomachExtension = true;
+		public bool StomachExtension;
 
-        public PlayerModule(Player player)
-        {
-            playerRef = new WeakReference<Player>(player);
-        }
+		public PlayerModule(Player player)
+		{
+			playerRef = new WeakReference<Player>(player);
 
-    }
+			StomachExtension = false;
+		}
+
+	}
 
 }
