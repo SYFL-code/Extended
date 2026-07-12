@@ -825,7 +825,36 @@ namespace ExtensionLib
 
 		private static void Player_Update(On.Player.orig_Update orig, Player player, bool eu)
 		{
-			if (player.EnableStomach())
+			player.GetPlayerModule(out var module);
+
+            if (player.EnableStomach() && !module.StartSpawnStomach)
+            {
+                module.StartSpawnStomach = true;
+
+                player.GetPlayerVar(out var pv);
+                var stomachData = pv.stomachData;
+
+                pv.coord = player.coord;
+
+                if (stomachData._serializedHistory.Count != 0)
+                {
+                    foreach (var s in stomachData._serializedHistory)
+                    {
+                        Log.LogDebug($"Trying to spawn {s}");
+
+                        var Object = Helper.ObjectFromString(s, player.room.world, player.coord, player.coord);
+
+                        if (Object != null)
+                        {
+                            Log.LogDebug($"Successfully spawn {s}");
+                            stomachData.historyInStomach.Add(Object);
+                        }
+                    }
+                    stomachData._serializedHistory.Clear();
+                }
+            }
+
+            if (player.EnableStomach())
 			{
 				player.GetPlayerVar(out var pv);
 				var stomachData = pv.stomachData;
@@ -915,7 +944,6 @@ namespace ExtensionLib
 
 			if (Plugin.DebugMode)
 			{
-				player.GetPlayerModule(out var module);
 				int N = player.playerState.playerNumber;
 
 				if (Input.GetKey("c"))

@@ -1,9 +1,21 @@
-﻿using System;
+﻿using BepInEx.Logging;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using MonoMod.Utils;
+using MoreSlugcats;
+using RainMeadow;
+using Steamworks;
+using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Globalization;
 using System.Threading.Tasks;
+using UnityEngine;
+using System.Text.RegularExpressions;
 
 namespace ExtensionLib
 {
@@ -77,6 +89,66 @@ namespace ExtensionLib
 			}
 			return null;
 		}
+		
+		public static Color GetRoomWaterColor(AbstractRoom abstractRoom)
+        {
+            if (abstractRoom == null || abstractRoom.world == null)
+            {
+                return Color.white;
+            }
+
+            try
+            {
+                RoomSettings? settings = null;
+                if (abstractRoom.realizedRoom != null)
+                {
+                    settings = abstractRoom.realizedRoom.roomSettings;
+                }
+                if (settings == null)
+                {
+                    settings = new RoomSettings(null, WorldLoader.RoomNameManipulator(abstractRoom.FileName, abstractRoom.world.game), abstractRoom.world.region, template: false, firstTemplate: false, abstractRoom.world.game?.TimelinePoint, abstractRoom.world.game);
+                }
+                if (settings == null)
+                {
+                    return Color.white;
+                }
+                Texture2D paletteTex = LoadRoomPalette(settings.Palette);
+                if (paletteTex == null)
+                {
+                    return Color.white;
+                }
+                Color waterColor = Color.Lerp(paletteTex.GetPixel(4, 15), paletteTex.GetPixel(4, 7),0.5f);
+                return waterColor;
+            }
+            catch
+            {
+                return Color.white;
+            }
+        }
+        
+        private static Texture2D LoadRoomPalette(int paletteNumber)
+        {
+            Texture2D texture = new Texture2D(32, 16, TextureFormat.ARGB32, mipChain: false);
+
+            string path = AssetManager.ResolveFilePath(
+                "palettes" + Path.DirectorySeparatorChar +
+                "palette" + paletteNumber.ToString(CultureInfo.InvariantCulture) + ".png"
+            );
+
+            try
+            {
+                AssetManager.SafeWWWLoadTexture(ref texture, "file:///" + path, clampWrapMode: false, crispPixels: true);
+            }
+            catch
+            {
+                path = AssetManager.ResolveFilePath("palettes" + Path.DirectorySeparatorChar + "palette-1.png");
+                AssetManager.SafeWWWLoadTexture(ref texture, "file:///" + path, clampWrapMode: false, crispPixels: true);
+            }
+
+            texture.Apply(updateMipmaps: false);
+            return texture;
+        }
+		
 
 		public static (bool, List<int>) IncludeById(List<AbstractPhysicalObject> b, AbstractPhysicalObject a)
         {

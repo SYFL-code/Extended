@@ -15,12 +15,15 @@ namespace ExtensionLib
 		public MyDebug? myDebug = null;//调试图像
 
 		public bool StomachExtension;
+		public bool StartSpawnStomach = false;
 
-		public PlayerModule(Player player)
+
+        public PlayerModule(Player player)
 		{
 			playerRef = new WeakReference<Player>(player);
 
 			StomachExtension = false;
+			StartSpawnStomach = false;
 		}
 
 	}

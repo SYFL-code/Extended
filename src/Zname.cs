@@ -51,6 +51,7 @@ namespace ExtensionLib;
 		// HopToDesk
 
 		// https://gist.github.com/EtiTheSpirit/655d8e81732ba516ca768dbd7410ddf4 这里有一个文档讲了一些关于rw shader的注意事项
+		// 可以看看Menu.StoryGameStasticsScreen里的AddBkgIllustration
 
 		// <DefineConstants>MYDEBUG</DefineConstants>
 
